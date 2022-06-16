@@ -1,10 +1,10 @@
-# This code is adapted from the plotting scripts in GGchem/tools and Plot_different_materials.ipynb by Merijn Lambregts. It is used to plot the condensation data by temperature for only the required solids.
-
+# This program plots the condensation sequences as a function of radius instead of temperature using the power law relationship in Jorge et al. (2022)
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, ScalarFormatter, LogLocator
 from matplotlib.backends.backend_pdf import PdfPages
+from jorge_diskprop import inner_radius, r_from_T
 from pyvalem.formula import Formula
 plt.rcParams['axes.linewidth'] = 1.5
 
@@ -34,7 +34,19 @@ def main():
     Tmin  = np.min(Tg)               # Minimum gas temperature
     Tmax  = np.max(Tg)               # Maximum gas temperature
 
-    # Some stylistic choices    
+    # Converting temperatures to corresponding radii
+    T0 = 1500               # Sublimation temperature (K)
+    Qr = 1                  # Ratio of absorption efficiencies (assumed to be black body)
+    R_sun = 0.00465047      # Sun's radius (AU)
+    T_sun = 5780            # Effective temperature of the sun (K)
+
+    R_in = inner_radius(Qr, T0, R_sun, T_sun)
+    T_arr = np.linspace(Tmin, Tmax, NPOINT+1)
+    R_arr = r_from_T(R_in, T_arr, T0)
+    Rmin = np.min(R_arr)    # Minimum radius
+    Rmax  =np.max(R_arr)    # Maximum radius
+
+    # Some stylistic choices
     colo = ['blue','black', 'red', 'darkorange', 'gold', 'darkorchid', 'aqua', 'cadetblue', 'cornflowerblue', 'chartreuse', 'limegreen', 'darkgreen', 'chocolate', 'darkgoldenrod', 'darkkhaki', 'pink', 'moccasin', 'darkolivegreen', 'darkmagenta', 'aquamarine', 'coral', 'burlywood', 'silver', 'beige', 'darkorange', 'crimson', 'darkcyan', 'bisque']
     Ncolor = len(colo)
     colo = colo*10
@@ -46,17 +58,17 @@ def main():
     csize = 5
 
     # All 52 condensates for Sun from Fig C.1 Jorge et al. 2022:
-    minerals = (['SZrSiO4', 'SV2O3', 'SCaTiSiO5', 'SCr2O3', 'SCaMgSi2O6', 'SMg2SiO4','SMgSiO3','SMg3Si2O9H4', 'SMgCr2O4', 'SMnTiO3', 'SNi', 'SFe', 'SZrO2', 'SFeS', 'SCa3Al2Si2O8', 'SMgAl2O4', 'SFeTiO3', 'SMnS', 'SNaAlSi3O8', 'SW', 'SCaTiO3', 'SMn3Al2Si3O12', 'SKAlSi3O8', 'SNi3S2', 'SNaCl', 'SVO', 'SFeAl2O4', 'SAlO2H', 'SFe2SiO4', 'SCa5P3O13H', 'SCa2MgSiO7', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2', 'SLi2SiO3', 'SWO3', 'SLiCl', 'SMg3Si4O12H2', 'SMnAl2SiO7H2', 'SFeAl2SiO7H2', 'SFe3O4', 'SCa3Fe2Si3O12', 'STi3O5', 'STi4O7', 'SSiO', 'SKFe3AlSi3O12H2', 'SCr', 'SMg3Si2O9H4', 'SCaAl2Si2O10H4', 'SH2O', 'SFe3Si2O9H4'])
+    # minerals = (['SZrSiO4', 'SV2O3', 'SCaTiSiO5', 'SCr2O3', 'SCaMgSi2O6', 'SMg2SiO4','SMgSiO3','SMg3Si2O9H4', 'SMgCr2O4', 'SMnTiO3', 'SNi', 'SFe', 'SZrO2', 'SFeS', 'SCa3Al2Si2O8', 'SMgAl2O4', 'SFeTiO3', 'SMnS', 'SNaAlSi3O8', 'SW', 'SCaTiO3', 'SMn3Al2Si3O12', 'SKAlSi3O8', 'SNi3S2', 'SNaCl', 'SVO', 'SFeAl2O4', 'SAlO2H', 'SFe2SiO4', 'SCa5P3O13H', 'SCa2MgSiO7', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2', 'SLi2SiO3', 'SWO3', 'SLiCl', 'SMg3Si4O12H2', 'SMnAl2SiO7H2', 'SFeAl2SiO7H2', 'SFe3O4', 'SCa3Fe2Si3O12', 'STi3O5', 'STi4O7', 'SSiO', 'SKFe3AlSi3O12H2', 'SCr', 'SMg3Si2O9H4', 'SCaAl2Si2O10H4', 'SH2O', 'SFe3Si2O9H4'])
 
     # Fe based condensation sequences from Fig 4. Jorge et al. 2022:
-    # minerals = ['SFe', 'SFeS', 'SMnS', 'SFe2SiO4', 'SFeAl2O4', 'SFeTiO3', 'SFeAl2SiO7H2', 'SKFe3AlSi3O12H2', 'SFe3O4', 'SFe3Si2O9H4', 'SNi3S2', 'SCa3Fe2Si3O12']
+    minerals = ['SFe', 'SFeS', 'SMnS', 'SFe2SiO4', 'SFeAl2O4', 'SFeTiO3', 'SFeAl2SiO7H2', 'SKFe3AlSi3O12H2', 'SFe3O4', 'SFe3Si2O9H4', 'SNi3S2', 'SCa3Fe2Si3O12']
 
     # Mg based condensation sequences from Fig 3. Jorge et al. 2022:
     # minerals = ['SMg2SiO4', 'SMgSiO3', 'SSiO', 'SMgCr2O4', 'SCaMgSi2O6', 'SMgAl2O4', 'SCa2MgSi2O7', 'SMg3Si2O9H4', 'SMg3Si4O12H2', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2']
     
-    filename = 'Sun/sun_all_condensates.pdf'
+    filename = 'Sun/sun_Fe_condensates_zoomed.pdf'
 
-    points = np.where((Tg>Tmin) & (Tg<Tmax))[0]             # Excluding the indices of the maximum and minimum gas temperature
+    points = np.where((R_arr>Rmin) & (R_arr<Rmax))[0]             # Excluding the indices of the maximum and minimum gas temperature
     solids = []
     smean = []
     
@@ -92,24 +104,25 @@ def main():
       raw_solid = r"{}".format(fancy)
       
       if (np.max(yy[points])>ymin):
-        plt.plot(Tg[points], yy[points], c = colo[count], ls = styl[count], lw = widt[count], label = raw_solid)
+        plt.plot(R_arr[points], yy[points], c = colo[count], ls = styl[count], lw = widt[count], label = raw_solid)
         colors.append(colo[count])
         count = count + 1
 
         
-    # Plot formatting    
-    plt.title('All Condensates - Sun', fontsize=20)
-    plt.xlabel(r'$T\ \mathrm{[K]}$', fontsize=12)
+    # Plot formatting
+    Rlimit = 0.3                                            # Radius limit for zoomed in plot (AU)
+    plt.title('Fe Condensates (Sun) vs Radius', fontsize=20)
+    plt.xlabel(r'$R\ \mathrm{[AU]}$', fontsize=12)
     plt.ylabel(r'$\mathrm{log}_{10}\ n_\mathrm{solid}/n_\mathrm{\langle H\rangle}$', fontsize=12)
-    plt.xlim(Tmin, Tmax)
+    plt.xlim(Rmin, Rlimit)
     plt.ylim(ymin, ymax)
-    plt.tick_params(bottom=True, top=True, left=True, right=True)
-    plt.tick_params(labelbottom=True, labeltop=False, labelleft=True, labelright=False)
-    plt.tick_params(axis='y',which='both',direction='in',length=7,right=True)
-    plt.tick_params(axis='x',which='both',direction='in',length=7,right=True)
-    plt.setp(ax.spines.values(), linewidth=1.5)
-    ax.xaxis.set_tick_params(width=1.5)
-    ax.yaxis.set_tick_params(width=1.5)
+##    plt.tick_params(bottom=True, top=True, left=True, right=True)
+##    plt.tick_params(labelbottom=True, labeltop=False, labelleft=True, labelright=False)
+##    plt.tick_params(axis='y',which='both',direction='in',length=7,right=True)
+##    plt.tick_params(axis='x',which='both',direction='in',length=7,right=True)
+##    plt.setp(ax.spines.values(), linewidth=1.5)
+##    ax.xaxis.set_tick_params(width=1.5)
+##    ax.yaxis.set_tick_params(width=1.5)
     
     leg = plt.legend(loc='upper right', fontsize=9, fancybox=True, handlelength=0.5, prop={'size':csize}, ncol=3)       # Legend properties
     for color, text in zip(colors, leg.get_texts()):

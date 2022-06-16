@@ -17,11 +17,21 @@ def inner_radius(Qr, T0, R_star, T_star):
 def midplaneT_profile(R_in, T0, r_arr):
 
     """
-    Calculates the midplane temperature T (in K) in a disk to plots its radial dependence
+    Calculates an array of midplane temperatures T (in K) in a disk to plots its radial dependence based on the given array of radii
     """
 
     T_arr = T0 * (r_arr/R_in)**(-3/4)
     return T_arr
+
+
+def r_from_T(R_in, T_arr, T0):
+
+    """
+    Essentially the inverse of midplaneT_profile. Calculates an array of radii of the disk R_arr (in AU) for a given array of temperature based on the power-law relationship
+    """
+
+    R_arr = R_in * (T_arr/T0)**(-4/3)
+    return R_arr
 
 
 def surface_density(Sigma0, r):
