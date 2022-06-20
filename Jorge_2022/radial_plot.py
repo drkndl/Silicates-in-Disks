@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, ScalarFormatter, LogLocator
 from matplotlib.backends.backend_pdf import PdfPages
-from jorge_diskprop import inner_radius, r_from_T
+from jorge_diskprop import inner_radius, r_from_T, midplaneT_profile
 from pyvalem.formula import Formula
 plt.rcParams['axes.linewidth'] = 1.5
 
@@ -41,8 +41,7 @@ def main():
     T_sun = 5780            # Effective temperature of the sun (K)
 
     R_in = inner_radius(Qr, T0, R_sun, T_sun)
-    T_arr = np.linspace(Tmin, Tmax, NPOINT+1)
-    R_arr = r_from_T(R_in, T_arr, T0)
+    R_arr = r_from_T(R_in, Tg, T0)
     Rmin = np.min(R_arr)    # Minimum radius
     Rmax  =np.max(R_arr)    # Maximum radius
 
@@ -66,7 +65,7 @@ def main():
     # Mg based condensation sequences from Fig 3. Jorge et al. 2022:
     # minerals = ['SMg2SiO4', 'SMgSiO3', 'SSiO', 'SMgCr2O4', 'SCaMgSi2O6', 'SMgAl2O4', 'SCa2MgSi2O7', 'SMg3Si2O9H4', 'SMg3Si4O12H2', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2']
     
-    filename = 'Sun/sun_Fe_condensates_zoomed.pdf'
+    filename = 'Sun/sun_Fe_condensates_radial.pdf'
 
     points = np.where((R_arr>Rmin) & (R_arr<Rmax))[0]             # Excluding the indices of the maximum and minimum gas temperature
     solids = []
@@ -85,6 +84,7 @@ def main():
 
     # Creating the plots
     fig, ax = plt.subplots()
+    ax2 = ax.twiny()                                        # Adding the temperatures as an X-axis on top of the plot
     indices = np.argsort(smean)
     
     colors = []
@@ -110,12 +110,22 @@ def main():
 
         
     # Plot formatting
-    Rlimit = 0.3                                            # Radius limit for zoomed in plot (AU)
-    plt.title('Fe Condensates (Sun) vs Radius', fontsize=20)
-    plt.xlabel(r'$R\ \mathrm{[AU]}$', fontsize=12)
-    plt.ylabel(r'$\mathrm{log}_{10}\ n_\mathrm{solid}/n_\mathrm{\langle H\rangle}$', fontsize=12)
-    plt.xlim(Rmin, Rlimit)
-    plt.ylim(ymin, ymax)
+    Rlimit = 0.6                                            # Radius limit for zoomed in plot (AU)
+    plt.title('Fe Condensates (Sun) vs Radius', fontsize=12)
+    ax.set_xlabel(r'$R\ \mathrm{[AU]}$', fontsize=10)
+    ax.set_ylabel(r'$\mathrm{log}_{10}\ n_\mathrm{solid}/n_\mathrm{\langle H\rangle}$', fontsize=10)
+    # ax.set_xlim(Rmin, Rlimit)
+    ax.set_ylim(ymin, ymax)
+
+    # Adding the temperature axis on top
+    x_ticks = np.array([0.05, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2])
+    # x_ticks = np.array([0.05, 0.2, 0.4, 0.6])
+    T_ticks = midplaneT_profile(R_in, T0, x_ticks).astype(int)
+    ax2.set_xlim(ax.get_xlim())
+    ax2.set_xticks(x_ticks)
+    ax2.set_xticklabels(T_ticks)
+    ax2.set_xlabel(r"$T \mathrm{[K]}$", fontsize=10)
+    
 ##    plt.tick_params(bottom=True, top=True, left=True, right=True)
 ##    plt.tick_params(labelbottom=True, labeltop=False, labelleft=True, labelright=False)
 ##    plt.tick_params(axis='y',which='both',direction='in',length=7,right=True)
