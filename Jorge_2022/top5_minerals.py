@@ -65,7 +65,7 @@ def most_abundant(abundances, R_arr, min_names):
     top_solids = np.reshape(top_solids, [NBins, top])
     print(top_solids)
 
-    return top_abunds, top_solids    
+    return R_bins, top_abunds, top_solids    
 
 def main():
     
@@ -109,7 +109,25 @@ def main():
     
     abundances, solid_names = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
     print(np.shape(abundances), len(solid_names))
-    most_abundant(abundances, R_arr, solid_names)
+    R_bins, top_abunds, top_solids = most_abundant(abundances, R_arr, solid_names)
+    
+    # Plotting a bar graph of the top most abundant condensates
+    top_ab_plots = np.transpose(top_abunds)
+    top_ab_plots = np.where(top_ab_plots == -300, 0, top_ab_plots)
+    top_sol_plots = np.transpose(top_solids)
+    fig, ax =  plt.subplots()
+
+    w = 0.03
+    offset = [-w, 0, w]
+    color = ['b', 'r', 'g']
+    for i in range(3):
+        ax.bar(R_bins + offset[i], top_ab_plots[i], width = w, color = color[i], alpha=0.5, edgecolor='black', align='center')
+
+    plt.show()
+##    for radius in len(range(top_abunds)):
+##        for element in len(range(top_abunds[radius])):
+##
+##            ax.bar(
     
 
 if __name__ == "__main__":
