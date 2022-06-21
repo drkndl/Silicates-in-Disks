@@ -8,6 +8,14 @@ def inner_radius(Qr, T0, R_star, T_star):
 
     """
     Calculates the inner disk radius R_in (in AU) from the power law planet forming disk model
+
+    Parameters:-
+    Qr:           Ratio of absorption efficiencies (assumed to be black body)
+    T0:           Dust sublimation temperature in K (float)
+    R_star:       Radius of the star in AU (float)
+    T_star:       Effective temperature of the star in K (float)
+
+    Returns the inner radius of the planet forming disk inside which dust grains cannot condense out from the gas (R_in) in AU
     """
 
     R_in = 0.5 * np.sqrt(Qr) * (T_star/T0)**2 * R_star
@@ -18,6 +26,13 @@ def midplaneT_profile(R_in, T0, r_arr):
 
     """
     Calculates an array of midplane temperatures T (in K) in a disk to plots its radial dependence based on the given array of radii
+
+    Parameters:-
+    R_in:        The inner radius of the protodisk inside of which the gas cannot condense into dust grains in AU (float)
+    T0:          Dust sublimation temperature in K (float)
+    r_arr:       A 1D array of radii
+
+    Returns a 1D array of temperature in K calculated using the power law relationship
     """
 
     T_arr = T0 * (r_arr/R_in)**(-3/4)
@@ -28,6 +43,13 @@ def r_from_T(R_in, T_arr, T0):
 
     """
     Essentially the inverse of midplaneT_profile. Calculates an array of radii of the disk R_arr (in AU) for a given array of temperature based on the power-law relationship
+
+    Parameters:-
+    R_in:        The inner radius of the protodisk inside of which the gas cannot condense into dust grains in AU (float)
+    T_arr:       1D array of disk temperatures in K
+    T0:          Dust sublimation temperature in K (float)
+
+    Returns a 1D array of radii in AU 
     """
 
     R_arr = R_in * (T_arr/T0)**(-4/3)
@@ -38,6 +60,12 @@ def surface_density(Sigma0, r):
 
     """
     Calculates the surface density Sigma (in g/cm^2)
+
+    Parameters:-
+    Sigma0:       Surface density with MMSN in g/cm^2 (float)
+    r:            1D array of radii
+
+    Returns the surface density in g/cm^2 (float)
     """
 
     Sigma = Sigma0 * (r)**(-3/2)

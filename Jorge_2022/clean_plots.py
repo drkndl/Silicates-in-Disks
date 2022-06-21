@@ -7,6 +7,7 @@ from matplotlib.ticker import MultipleLocator, FormatStrFormatter, ScalarFormatt
 from matplotlib.backends.backend_pdf import PdfPages
 from pyvalem.formula import Formula
 plt.rcParams['axes.linewidth'] = 1.5
+plt.rcParams["figure.figsize"] = (14, 7)
 
 
 def main():
@@ -35,7 +36,7 @@ def main():
     Tmax  = np.max(Tg)               # Maximum gas temperature
 
     # Some stylistic choices    
-    colo = ['blue','black', 'red', 'darkorange', 'gold', 'darkorchid', 'aqua', 'cadetblue', 'cornflowerblue', 'chartreuse', 'limegreen', 'darkgreen', 'chocolate', 'darkgoldenrod', 'darkkhaki', 'pink', 'moccasin', 'darkolivegreen', 'darkmagenta', 'aquamarine', 'coral', 'burlywood', 'silver', 'beige', 'darkorange', 'crimson', 'darkcyan', 'bisque']
+    colo = ['blue','black', 'red', 'darkorange', 'gold', 'darkorchid', 'aqua', 'cadetblue', 'cornflowerblue', 'chartreuse', 'limegreen', 'darkgreen', 'chocolate', 'darkgoldenrod', 'darkkhaki', 'pink', 'moccasin', 'darkolivegreen', 'darkmagenta', 'aquamarine', 'coral', 'burlywood', 'silver', 'darkorange', 'crimson', 'darkcyan', 'bisque', 'indigo', 'peru', 'sienna', 'orangered', 'lightskyblue', 'navy', 'paleturquoise', 'deepskyblue', 'springgreen', 'plum', 'darkslateblue', 'mediumslateblue', 'goldenrod', 'gray', 'royalblue', 'cornflowerblue', 'lightcoral', 'rosybrown', 'saddlebrown', 'lime', 'forestgreen', 'lavender', 'hotpink', 'deeppink', 'gainsboro', 'peachpuff', 'beige']
     Ncolor = len(colo)
     colo = colo*10
     styl = ['-']*Ncolor + ['--']*Ncolor + [':']*Ncolor + ['-.']*Ncolor*7 

@@ -8,7 +8,17 @@ from jorge_diskprop import inner_radius, r_from_T
 def final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST):
     
     """
-    Returns the abundances (log10 n_solil/n<H>) for each condensate
+    Returns the abundances (log10 n_solid/n<H>) for each condensate
+
+    Parameters:-
+    keyword:        1D list of the Static_Conc.dat column heading names, used to identify the various solids
+    minerals:       1D list of the condensates whose abundances are extracted
+    dat:            File that contains the output (headers skipped)
+    NELEM:          Total number of elements used
+    NMOLE:          Number of molecules created
+    NDUST:          Number of condensates created
+
+    Returns abundances, a 2D array of shape (NPOINT, no.of minerals) and the corresponding solid names as a 1D list named solid_names
     """
 
     abundances = []
@@ -32,7 +42,16 @@ def final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST):
 def most_abundant(top, NBins, abundances, R_arr, min_names):
 
     """
-    Plots the top N most abundant minerals at each radial bin
+    Finds the top N most abundant minerals at each radial bin
+
+    Parameters:-
+    top:            Top X condensates whose abundance is the highest (integer)
+    NBins:          Number of radial bins at which the most abundant species are extracted (integer)
+    abundances:     2D array of abundances for all the condensates present. Shape: (NPOINT, no.of condensates)
+    R_arr:          1D array of derived radii from the temperature array in the output file
+    min_names:      1D list of the condensate names
+
+    Returns the 1D array of radial bins (R_bins), 2D array (shape: (top, NBins)) of the abundances of the top X most abundant species at each radial bin (top_abunds) and the corresponding solid names (top_solids), also as a 2D array of the same shape
     """
 
     # Manually choosing bins that are roughly equally spaced radially, not the most efficient but works for now
@@ -102,7 +121,7 @@ def main():
     R_arr = r_from_T(R_in, Tg, T0)
 
     NBins = 13              # Number of radial bins at which the most abundant species are extracted
-    top = 5                 # Top X species whose abundance is the highest
+    top = 5                 # Top X condensates whose abundance is the highest
 
     # All 52 condensates for Sun from Fig C.1 Jorge et al. 2022:
     minerals = (['SZrSiO4', 'SV2O3', 'SCaTiSiO5', 'SCr2O3', 'SCaMgSi2O6', 'SMg2SiO4','SMgSiO3','SMg3Si2O9H4', 'SMgCr2O4', 'SMnTiO3', 'SNi', 'SFe', 'SZrO2', 'SFeS', 'SCa3Al2Si3O12', 'SNaAlSiO4', 'SCaAl2Si2O8', 'SMgAl2O4', 'SFeTiO3', 'SMnS', 'SNaAlSi3O8', 'SW', 'SCaTiO3', 'SMn3Al2Si3O12', 'SKAlSi3O8', 'SNi3S2', 'SNaCl', 'SVO', 'SFeAl2O4', 'SAlO2H', 'SFe2SiO4', 'SCa5P3O12F', 'SCa2MgSi2O7', 'SCa5P3O13H', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2', 'SLi2SiO3', 'SWO3', 'SLiCl', 'SMg3Si4O12H2', 'SMnAl2SiO7H2', 'SFeAl2SiO7H2', 'SFe3O4', 'SCa3Fe2Si3O12', 'STi3O5', 'STi4O7', 'SSiO', 'SKFe3AlSi3O12H2', 'SCr', 'SMg3Si2O9H4', 'SCaAl2Si2O10H4', 'SH2O', 'SFe3Si2O9H4'])
@@ -114,17 +133,20 @@ def main():
     R_bins, top_abunds, top_solids = most_abundant(top, NBins, abundances, R_arr, solid_names)
 
     # Write down abundances and corresponding solids element by element in a file
-    with open('Sun/sun_most_abundant.dat', 'w') as f:
+    filename = 'Sun/sun_most_abundant.dat'
+    with open(filename, 'w') as f:
         
-        f.write('{0:47} {1:47} {2:47} {3:47} {4:47} Radius \n'.format(str(1), str(2), str(3), str(4), str(5)))
+        f.write('{0:47} {1:47} {2:47} {3:47} {4:47} Radius \n'.format(str(1), str(2), str(3), str(4), str(5)))                  # Adding headers with some formatting to help readability
         for radius in range(len(top_abunds)):
             for element in range(len(top_abunds[radius])):
-                f.write('{0:20} : {1:20} '.format(str(top_solids[radius][element]), str(top_abunds[radius][element])))
+                f.write('{0:20} : {1:20} '.format(str(top_solids[radius][element]), str(top_abunds[radius][element])))          # Adding the top 5 most abundant solids and their corresponding abundances
                 if (element+1) % top == 0:
-                    f.write(str(R_bins[radius]) + '\n')
+                    f.write(str(R_bins[radius]) + '\n')                                                                         # If all 5 solids are written, then add the radius in the last column and move to the next line
                 else:
                     f.write('\t ')
-                    
+
+    print("Abundances written to {}".format(filename))
+    
 
 if __name__ == "__main__":
     main()
