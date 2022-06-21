@@ -1,4 +1,5 @@
 # This program plots the condensation sequences as a function of radius instead of temperature using the power law relationship in Jorge et al. (2022)
+# NOTE: CHANGE PLOT FORMATTING BASED ON YOUR NEED
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,6 +8,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from jorge_diskprop import inner_radius, r_from_T, midplaneT_profile
 from pyvalem.formula import Formula
 plt.rcParams['axes.linewidth'] = 1.5
+plt.rcParams["figure.figsize"] = (14, 7)
 
 
 def main():
@@ -46,26 +48,26 @@ def main():
     Rmax  =np.max(R_arr)    # Maximum radius
 
     # Some stylistic choices
-    colo = ['blue','black', 'red', 'darkorange', 'gold', 'darkorchid', 'aqua', 'cadetblue', 'cornflowerblue', 'chartreuse', 'limegreen', 'darkgreen', 'chocolate', 'darkgoldenrod', 'darkkhaki', 'pink', 'moccasin', 'darkolivegreen', 'darkmagenta', 'aquamarine', 'coral', 'burlywood', 'silver', 'beige', 'darkorange', 'crimson', 'darkcyan', 'bisque']
+    colo = ['blue','black', 'red', 'darkorange', 'gold', 'darkorchid', 'aqua', 'cadetblue', 'cornflowerblue', 'chartreuse', 'limegreen', 'darkgreen', 'chocolate', 'darkgoldenrod', 'darkkhaki', 'pink', 'moccasin', 'darkolivegreen', 'darkmagenta', 'aquamarine', 'coral', 'burlywood', 'silver', 'darkorange', 'crimson', 'darkcyan', 'bisque', 'indigo', 'peru', 'sienna', 'orangered', 'lightskyblue', 'navy', 'paleturquoise', 'deepskyblue', 'springgreen', 'plum', 'darkslateblue', 'mediumslateblue', 'goldenrod', 'gray', 'royalblue', 'cornflowerblue', 'lightcoral', 'rosybrown', 'saddlebrown', 'lime', 'forestgreen', 'lavender', 'hotpink', 'deeppink', 'gainsboro', 'peachpuff', 'beige']
     Ncolor = len(colo)
     colo = colo*10
     styl = ['-']*Ncolor + ['--']*Ncolor + [':']*Ncolor + ['-.']*Ncolor*7 
     widt = [2]*Ncolor
   
     ymin  = -12.0                # Minimum exponent on y-axis
-    ymax = -4.0                  # Maximum exponent on y-axis
+    ymax = -3.0                  # Maximum exponent on y-axis
     csize = 5
 
     # All 52 condensates for Sun from Fig C.1 Jorge et al. 2022:
-    # minerals = (['SZrSiO4', 'SV2O3', 'SCaTiSiO5', 'SCr2O3', 'SCaMgSi2O6', 'SMg2SiO4','SMgSiO3','SMg3Si2O9H4', 'SMgCr2O4', 'SMnTiO3', 'SNi', 'SFe', 'SZrO2', 'SFeS', 'SCa3Al2Si3O12', 'SNaAlSiO4', 'SCaAl2Si2O8', 'SMgAl2O4', 'SFeTiO3', 'SMnS', 'SNaAlSi3O8', 'SW', 'SCaTiO3', 'SMn3Al2Si3O12', 'SKAlSi3O8', 'SNi3S2', 'SNaCl', 'SVO', 'SFeAl2O4', 'SAlO2H', 'SFe2SiO4', 'SCa5P3O12F', 'SCa2MgSi2O7', 'SCa5P3O13H', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2', 'SLi2SiO3', 'SWO3', 'SLiCl', 'SMg3Si4O12H2', 'SMnAl2SiO7H2', 'SFeAl2SiO7H2', 'SFe3O4', 'SCa3Fe2Si3O12', 'STi3O5', 'STi4O7', 'SSiO', 'SKFe3AlSi3O12H2', 'SCr', 'SMg3Si2O9H4', 'SCaAl2Si2O10H4', 'SH2O', 'SFe3Si2O9H4'])
+    minerals = (['SZrSiO4', 'SV2O3', 'SCaTiSiO5', 'SCr2O3', 'SCaMgSi2O6', 'SMg2SiO4','SMgSiO3','SMg3Si2O9H4', 'SMgCr2O4', 'SMnTiO3', 'SNi', 'SFe', 'SZrO2', 'SFeS', 'SCa3Al2Si3O12', 'SNaAlSiO4', 'SCaAl2Si2O8', 'SMgAl2O4', 'SFeTiO3', 'SMnS', 'SNaAlSi3O8', 'SW', 'SCaTiO3', 'SMn3Al2Si3O12', 'SKAlSi3O8', 'SNi3S2', 'SNaCl', 'SVO', 'SFeAl2O4', 'SAlO2H', 'SFe2SiO4', 'SCa5P3O12F', 'SCa2MgSi2O7', 'SCa5P3O13H', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2', 'SLi2SiO3', 'SWO3', 'SLiCl', 'SMg3Si4O12H2', 'SMnAl2SiO7H2', 'SFeAl2SiO7H2', 'SFe3O4', 'SCa3Fe2Si3O12', 'STi3O5', 'STi4O7', 'SSiO', 'SKFe3AlSi3O12H2', 'SCr', 'SMg3Si2O9H4', 'SCaAl2Si2O10H4', 'SH2O', 'SFe3Si2O9H4'])
 
     # Fe based condensation sequences from Fig 4. Jorge et al. 2022:
-    minerals = ['SFe', 'SFeS', 'SMnS', 'SFe2SiO4', 'SFeAl2O4', 'SFeTiO3', 'SFeAl2SiO7H2', 'SKFe3AlSi3O12H2', 'SFe3O4', 'SFe3Si2O9H4', 'SNi3S2', 'SCa3Fe2Si3O12']
+    # minerals = ['SFe', 'SFeS', 'SMnS', 'SFe2SiO4', 'SFeAl2O4', 'SFeTiO3', 'SFeAl2SiO7H2', 'SKFe3AlSi3O12H2', 'SFe3O4', 'SFe3Si2O9H4', 'SNi3S2', 'SCa3Fe2Si3O12']
 
     # Mg based condensation sequences from Fig 3. Jorge et al. 2022:
     # minerals = ['SMg2SiO4', 'SMgSiO3', 'SSiO', 'SMgCr2O4', 'SCaMgSi2O6', 'SMgAl2O4', 'SCa2MgSi2O7', 'SMg3Si2O9H4', 'SMg3Si4O12H2', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2']
     
-    filename = 'Sun/sun_Fe_condensates_radial.pdf'
+    filename = 'Sun/sun_All_condensates_radial.pdf'
 
     points = np.where((R_arr>Rmin) & (R_arr<Rmax))[0]             # Excluding the indices of the maximum and minimum gas temperature
     solids = []
@@ -111,7 +113,7 @@ def main():
         
     # Plot formatting
     Rlimit = 0.6                                            # Radius limit for zoomed in plot (AU)
-    plt.title('Fe Condensates (Sun) vs Radius', fontsize=12)
+    plt.title('All Condensates (Sun) vs Radius', fontsize=12)
     ax.set_xlabel(r'$R\ \mathrm{[AU]}$', fontsize=10)
     ax.set_ylabel(r'$\mathrm{log}_{10}\ n_\mathrm{solid}/n_\mathrm{\langle H\rangle}$', fontsize=10)
     # ax.set_xlim(Rmin, Rlimit)
@@ -134,13 +136,14 @@ def main():
 ##    ax.xaxis.set_tick_params(width=1.5)
 ##    ax.yaxis.set_tick_params(width=1.5)
     
-    leg = plt.legend(loc='upper right', fontsize=9, fancybox=True, handlelength=0.5, prop={'size':csize}, ncol=3)       # Legend properties
+    leg = plt.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize=9, fancybox=True, handlelength=0.5, prop={'size':csize}, ncol=2)       # Legend properties
     for color, text in zip(colors, leg.get_texts()):
       text.set_color(color)
       text.set_size(10)
       
     plt.tight_layout()
     plt.savefig(pp,format='pdf')
+    plt.show()
     plt.clf()
     pp.close()
 

@@ -1,3 +1,5 @@
+# Code to find the top N most abundant minerals at each radius packet. Does not plot right now
+
 import numpy as np
 import matplotlib.pyplot as plt
 from jorge_diskprop import inner_radius, r_from_T
@@ -27,43 +29,41 @@ def final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST):
     return abundances, solid_names
 
 
-def most_abundant(abundances, R_arr, min_names):
+def most_abundant(top, NBins, abundances, R_arr, min_names):
 
     """
     Plots the top N most abundant minerals at each radial bin
     """
 
-    NBins = 9
-    top = 3
-    
-    # Geting evenly spaced radii in the array to define the radial bins
-    indices = np.round(np.linspace(0, len(R_arr) - 1, NBins)).astype(int)
-    R_bins = R_arr[indices]
-    print(R_bins)
-    # Note: Weird bins for now [0.0345255  0.04781386 0.06669758 0.0923685  0.12791976 0.17844072 0.24711991 0.34471807 0.47739495 0.66113721 0.9222484  1.27720817]
+    # Manually choosing bins that are roughly equally spaced radially, not the most efficient but works for now
+    R_bins = np.round(np.array([0.0345255, 0.10002111, 0.20034311, 0.30043879, 0.4012889, 0.50219863, 0.60178136, 0.70053822, 0.80378495, 0.90244413, 1.00590798, 1.10512427, 1.27720817]), 4)
+    print("RADIAL BINS: \n", R_bins)
+    R_arr = np.round(np.array(R_arr), 4)                        # Rounding up the two radii lists for easy comparison 
 
-    to_calc = abundances[indices]
-    print(to_calc)
-    print("SHAPE ", np.shape(to_calc))
+    indices = []                                                # Finding the indices where the bin radii correspond to the radius array
+    for r in range(len(R_arr)):
+        if R_arr[r] in R_bins:
+            indices.append(r)
+                   
+    to_calc = abundances[indices]                               # Abundances corresponding to radial bins. Shape is (NBins, no.of minerals)
     to_calc_sort = to_calc.copy()
     top_abunds = to_calc.copy()
 
-    top_abunds.sort()
-    # top_abunds = top_abunds[:, -top:]
+    top_abunds.sort()                                           # Finding the most abundant condensates at each radial bin
     top_abunds = np.flip(top_abunds[:, -top:], axis=1)          # Making the sort descending order
-    print("TOP ABUNDS", top_abunds)
-    indices = (-to_calc_sort).argsort(axis = -1)[:, :top]    
-    print(indices)
+    
+    print("\n TOP", top, "HIGHEST ABUNDANCES AT EACH RADIAL BIN : \n", top_abunds)
+    idx = (-to_calc_sort).argsort(axis = -1)[:, :top]    
 
     # Finding the corresponding solid names
     top_solids = []
-    for row in indices:
+    for row in idx:
         for i in range(top):
             top_solids.append(min_names[row[i]])
 
     top_solids = np.array(top_solids)
     top_solids = np.reshape(top_solids, [NBins, top])
-    print(top_solids)
+    print("\n CORRESPONDING TOP", top, "SPECIES AT EACH RADIAL BIN: \n", top_solids)
 
     return R_bins, top_abunds, top_solids    
 
@@ -101,34 +101,30 @@ def main():
     R_in = inner_radius(Qr, T0, R_sun, T_sun)
     R_arr = r_from_T(R_in, Tg, T0)
 
+    NBins = 13              # Number of radial bins at which the most abundant species are extracted
+    top = 5                 # Top X species whose abundance is the highest
+
     # All 52 condensates for Sun from Fig C.1 Jorge et al. 2022:
-    # minerals = (['SZrSiO4', 'SV2O3', 'SCaTiSiO5', 'SCr2O3', 'SCaMgSi2O6', 'SMg2SiO4','SMgSiO3','SMg3Si2O9H4', 'SMgCr2O4', 'SMnTiO3', 'SNi', 'SFe', 'SZrO2', 'SFeS', 'SCa3Al2Si3O12', 'SNaAlSiO4', 'SCaAl2Si2O8', 'SMgAl2O4', 'SFeTiO3', 'SMnS', 'SNaAlSi3O8', 'SW', 'SCaTiO3', 'SMn3Al2Si3O12', 'SKAlSi3O8', 'SNi3S2', 'SNaCl', 'SVO', 'SFeAl2O4', 'SAlO2H', 'SFe2SiO4', 'SCa5P3O12F', 'SCa2MgSi2O7', 'SCa5P3O13H', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2', 'SLi2SiO3', 'SWO3', 'SLiCl', 'SMg3Si4O12H2', 'SMnAl2SiO7H2', 'SFeAl2SiO7H2', 'SFe3O4', 'SCa3Fe2Si3O12', 'STi3O5', 'STi4O7', 'SSiO', 'SKFe3AlSi3O12H2', 'SCr', 'SMg3Si2O9H4', 'SCaAl2Si2O10H4', 'SH2O', 'SFe3Si2O9H4'])
+    minerals = (['SZrSiO4', 'SV2O3', 'SCaTiSiO5', 'SCr2O3', 'SCaMgSi2O6', 'SMg2SiO4','SMgSiO3','SMg3Si2O9H4', 'SMgCr2O4', 'SMnTiO3', 'SNi', 'SFe', 'SZrO2', 'SFeS', 'SCa3Al2Si3O12', 'SNaAlSiO4', 'SCaAl2Si2O8', 'SMgAl2O4', 'SFeTiO3', 'SMnS', 'SNaAlSi3O8', 'SW', 'SCaTiO3', 'SMn3Al2Si3O12', 'SKAlSi3O8', 'SNi3S2', 'SNaCl', 'SVO', 'SFeAl2O4', 'SAlO2H', 'SFe2SiO4', 'SCa5P3O12F', 'SCa2MgSi2O7', 'SCa5P3O13H', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2', 'SLi2SiO3', 'SWO3', 'SLiCl', 'SMg3Si4O12H2', 'SMnAl2SiO7H2', 'SFeAl2SiO7H2', 'SFe3O4', 'SCa3Fe2Si3O12', 'STi3O5', 'STi4O7', 'SSiO', 'SKFe3AlSi3O12H2', 'SCr', 'SMg3Si2O9H4', 'SCaAl2Si2O10H4', 'SH2O', 'SFe3Si2O9H4'])
 
     # Fe based condensation sequences from Fig 4. Jorge et al. 2022:
-    minerals = ['SFe', 'SFeS', 'SMnS', 'SFe2SiO4', 'SFeAl2O4', 'SFeTiO3', 'SFeAl2SiO7H2', 'SKFe3AlSi3O12H2', 'SFe3O4', 'SFe3Si2O9H4', 'SNi3S2', 'SCa3Fe2Si3O12']
+    # minerals = ['SFe', 'SFeS', 'SMnS', 'SFe2SiO4', 'SFeAl2O4', 'SFeTiO3', 'SFeAl2SiO7H2', 'SKFe3AlSi3O12H2', 'SFe3O4', 'SFe3Si2O9H4', 'SNi3S2', 'SCa3Fe2Si3O12']
     
     abundances, solid_names = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
-    print(np.shape(abundances), len(solid_names))
-    R_bins, top_abunds, top_solids = most_abundant(abundances, R_arr, solid_names)
-    
-    # Plotting a bar graph of the top most abundant condensates
-    top_ab_plots = np.transpose(top_abunds)
-    top_ab_plots = np.where(top_ab_plots == -300, 0, top_ab_plots)
-    top_sol_plots = np.transpose(top_solids)
-    fig, ax =  plt.subplots()
+    R_bins, top_abunds, top_solids = most_abundant(top, NBins, abundances, R_arr, solid_names)
 
-    w = 0.03
-    offset = [-w, 0, w]
-    color = ['b', 'r', 'g']
-    for i in range(3):
-        ax.bar(R_bins + offset[i], top_ab_plots[i], width = w, color = color[i], alpha=0.5, edgecolor='black', align='center')
-
-    plt.show()
-##    for radius in len(range(top_abunds)):
-##        for element in len(range(top_abunds[radius])):
-##
-##            ax.bar(
-    
+    # Write down abundances and corresponding solids element by element in a file
+    with open('Sun/sun_most_abundant.dat', 'w') as f:
+        
+        f.write('{0:47} {1:47} {2:47} {3:47} {4:47} Radius \n'.format(str(1), str(2), str(3), str(4), str(5)))
+        for radius in range(len(top_abunds)):
+            for element in range(len(top_abunds[radius])):
+                f.write('{0:20} : {1:20} '.format(str(top_solids[radius][element]), str(top_abunds[radius][element])))
+                if (element+1) % top == 0:
+                    f.write(str(R_bins[radius]) + '\n')
+                else:
+                    f.write('\t ')
+                    
 
 if __name__ == "__main__":
     main()
