@@ -56,7 +56,6 @@ def most_abundant(top, NBins, abundances, R_arr, min_names):
 
     # Manually choosing bins that are roughly equally spaced radially, not the most efficient but works for now
     R_bins = np.round(np.array([0.0345255, 0.10002111, 0.20034311, 0.30043879, 0.4012889, 0.50219863, 0.60178136, 0.70053822, 0.80378495, 0.90244413, 1.00590798, 1.10512427, 1.27720817]), 4)
-    print("RADIAL BINS: \n", R_bins)
     R_arr = np.round(np.array(R_arr), 4)                        # Rounding up the two radii lists for easy comparison 
 
     indices = []                                                # Finding the indices where the bin radii correspond to the radius array
@@ -71,7 +70,6 @@ def most_abundant(top, NBins, abundances, R_arr, min_names):
     top_abunds.sort()                                           # Finding the most abundant condensates at each radial bin
     top_abunds = np.flip(top_abunds[:, -top:], axis=1)          # Making the sort descending order
     
-    print("\n TOP", top, "HIGHEST ABUNDANCES AT EACH RADIAL BIN : \n", top_abunds)
     idx = (-to_calc_sort).argsort(axis = -1)[:, :top]    
 
     # Finding the corresponding solid names
@@ -82,7 +80,6 @@ def most_abundant(top, NBins, abundances, R_arr, min_names):
 
     top_solids = np.array(top_solids)
     top_solids = np.reshape(top_solids, [NBins, top])
-    print("\n CORRESPONDING TOP", top, "SPECIES AT EACH RADIAL BIN: \n", top_solids)
 
     return R_bins, top_abunds, top_solids    
 
@@ -132,6 +129,10 @@ def main():
     abundances, solid_names = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
     R_bins, top_abunds, top_solids = most_abundant(top, NBins, abundances, R_arr, solid_names)
 
+    print("RADIAL BINS: \n", R_bins)
+    print("\n TOP", top, "HIGHEST ABUNDANCES AT EACH RADIAL BIN : \n", top_abunds)
+    print("\n CORRESPONDING TOP", top, "SPECIES AT EACH RADIAL BIN: \n", top_solids)
+    
     # Write down abundances and corresponding solids element by element in a file
     filename = 'Sun/sun_most_abundant.dat'
     with open(filename, 'w') as f:
