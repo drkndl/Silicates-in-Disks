@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 from molmass import Formula
 from jorge_diskprop import inner_radius, r_from_T
 from top5_minerals import final_abundances, most_abundant
@@ -8,7 +9,7 @@ from top5_minerals import final_abundances, most_abundant
 def molecular_weight(solids):
     
     """
-    Calculates the molecular weight of the given solids
+    Calculates the molecular weight of the given solids in g
     """
 
     shape = np.shape(solids)    
@@ -53,8 +54,82 @@ def surface_density(molwt, top_abunds, nH_rbins):
 
     n_solid = nH_rbins * 10**top_abunds
     surf_dens = molwt * n_solid
+
+    # !!!!!!!!!!!!!!!!!! NOTE: CURRENTLY ADDING UP THE INDIVIDUAL SOLID DENSITIES AT EACH RADIAL BIN !!!!!!!!!!!!!!!!!!!!!!!!!!!
+    surf_dens_sum = np.sum(surf_dens, axis=1)
     
-    return n_solid, surf_dens
+    return n_solid, surf_dens_sum
+
+
+def Plancks(T, lamda, h, c, k):
+    
+    """
+    Calculates Planck function for an effective temperature and a range of wavelength
+    I units J/(s m^3 sr)
+    """
+
+    # Converting lamda to m
+    lamda = lamda * 10**6
+    
+    I = 2*h*c**2 / (lamda**5 * np.exp( h*c/(lamda*k*T) ) - 1)
+    return I
+
+
+def Qcurve_plotter(file):
+
+    """
+    Plots the Qcurve
+    List lengths 2001
+    """
+
+    Q_curve = pd.read_csv(file, delimiter='\s+', skiprows=1, names=['wavelength','kappa'])
+
+    lamda = Q_curve['wavelength'].to_numpy()
+    kappa = Q_curve['kappa'].to_numpy()
+
+    plt.plot(lamda, kappa)
+    plt.show()
+
+    return lamda, kappa
+
+
+def tau_calc(sigma, kappa):
+    
+    """
+    Calculates opacity tau
+    shape (r, lamda)
+    """
+
+    # Transposing 1D row array (shape: (1, NBins)) into 2D column array (shape: (NBins, 1)) for matrix multiplication
+    sigma = sigma[np.newaxis]
+    sigma = sigma.T
+
+    tau = sigma * kappa
+    
+    return tau
+    
+    
+
+def flux_map(tau, I, lamda, kappa, R_bins, surf_dens):
+
+    """
+    Plotting the flux map
+    """
+
+    # Transposing 1D row array (shape: (1, 2001)) into 2D column array (shape: (2001, 1)) for matrix multiplication
+##    I = I[np.newaxis]
+##    I = I.T
+
+    F_map = (1 - np.exp(-tau)) * I
+    print(np.shape(F_map))
+
+    temp = np.array([[1, 2], [4,3]])
+    plt.imshow(temp)
+    plt.colorbar()
+    plt.show()
+    
+    return 
+    
 
 
 def main():
@@ -74,7 +149,13 @@ def main():
     dat = np.loadtxt(file,skiprows=3)
     keyword = np.array(header.split())      # Array of parameter names such as molecule names
 
-    bar   = 1.E+6                    # 1 bar in dyn/cm^2 
+    # Some constants
+    h = 6.62607004e-34               # Planck's constant in Js
+    c = 299792458.0                  # Speed of light in m/s
+    k = 1.380649e-23                 # Boltzmann constant in J/K
+    bar   = 1.E+6                    # 1 bar in dyn/cm^2
+
+    # Extracting data from the output file
     Tg    = dat[:,0]                 # T [K]
     nHtot = dat[:,1]                 # n<H> [cm^-3]
     lognH = np.log10(nHtot)          
@@ -105,6 +186,15 @@ def main():
     molwt = molecular_weight(top_solids)
     nH_rbins = nH_in_Rbins(nHtot, R_arr, R_bins)
     n_solid, surf_dens = surface_density(molwt, top_abunds, nH_rbins)
+
+    # Plotting the Qcurves
+    opfile = 'qval_Fe2SiO4_rv2.0fmax_1.0.dat'
+    lamda, kappa = Qcurve_plotter(opfile)
+
+    # Plotting the flux map
+    I = Plancks(T_sun, lamda, h, c, k)
+    tau = tau_calc(surf_dens, kappa)
+    flux_map(tau, I, lamda, kappa, R_bins, surf_dens)
     
 
 if __name__ == "__main__":
