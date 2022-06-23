@@ -39,14 +39,14 @@ def final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST):
     return abundances, solid_names
 
 
-def most_abundant(top, NBins, abundances, R_arr, min_names):
+def most_abundant(top, NPOINT, abundances, R_arr, min_names):
 
     """
     Finds the top N most abundant minerals at each radial bin
 
     Parameters:-
     top:            Top X condensates whose abundance is the highest (integer)
-    NBins:          Number of radial bins at which the most abundant species are extracted (integer)
+    NPOINT:         Number of points in the simulation, also the length of R_arr (integer)
     abundances:     2D array of abundances for all the condensates present. Shape: (NPOINT, no.of condensates)
     R_arr:          1D array of derived radii from the temperature array in the output file
     min_names:      1D list of the condensate names
@@ -54,14 +54,7 @@ def most_abundant(top, NBins, abundances, R_arr, min_names):
     Returns the 1D array of radial bins (R_bins), 2D array (shape: (top, NBins)) of the abundances of the top X most abundant species at each radial bin (top_abunds) and the corresponding solid names (top_solids), also as a 2D array of the same shape
     """
 
-    # Manually choosing bins that are roughly equally spaced radially, not the most efficient but works for now
-    R_bins = np.round(np.array([0.0345255, 0.10002111, 0.20034311, 0.30043879, 0.4012889, 0.50219863, 0.60178136, 0.70053822, 0.80378495, 0.90244413, 1.00590798, 1.10512427, 1.27720817]), 4)
-    R_arr = np.round(np.array(R_arr), 4)                        # Rounding up the two radii lists for easy comparison 
-
-    indices = []                                                # Finding the indices where the bin radii correspond to the radius array
-    for r in range(len(R_arr)):
-        if R_arr[r] in R_bins:
-            indices.append(r)
+    indices = range(len(R_arr))                                                
                    
     to_calc = abundances[indices]                               # Abundances corresponding to radial bins. Shape is (NBins, no.of minerals)
     to_calc_sort = to_calc.copy()
@@ -79,9 +72,9 @@ def most_abundant(top, NBins, abundances, R_arr, min_names):
             top_solids.append(min_names[row[i]])
 
     top_solids = np.array(top_solids)
-    top_solids = np.reshape(top_solids, [NBins, top])
+    top_solids = np.reshape(top_solids, [NPOINT, top])
 
-    return R_bins, top_abunds, top_solids    
+    return top_abunds, top_solids    
 
 def main():
     
@@ -117,7 +110,6 @@ def main():
     R_in = inner_radius(Qr, T0, R_sun, T_sun)
     R_arr = r_from_T(R_in, Tg, T0)
 
-    NBins = 13              # Number of radial bins at which the most abundant species are extracted
     top = 5                 # Top X condensates whose abundance is the highest
 
     # All 52 condensates for Sun from Fig C.1 Jorge et al. 2022:
@@ -127,9 +119,8 @@ def main():
     # minerals = ['SFe', 'SFeS', 'SMnS', 'SFe2SiO4', 'SFeAl2O4', 'SFeTiO3', 'SFeAl2SiO7H2', 'SKFe3AlSi3O12H2', 'SFe3O4', 'SFe3Si2O9H4', 'SNi3S2', 'SCa3Fe2Si3O12']
     
     abundances, solid_names = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
-    R_bins, top_abunds, top_solids = most_abundant(top, NBins, abundances, R_arr, solid_names)
+    top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr, solid_names)
 
-    print("RADIAL BINS: \n", R_bins)
     print("\n TOP", top, "HIGHEST ABUNDANCES AT EACH RADIAL BIN : \n", top_abunds)
     print("\n CORRESPONDING TOP", top, "SPECIES AT EACH RADIAL BIN: \n", top_solids)
     
@@ -142,7 +133,7 @@ def main():
             for element in range(len(top_abunds[radius])):
                 f.write('{0:20} : {1:20} '.format(str(top_solids[radius][element]), str(top_abunds[radius][element])))          # Adding the top 5 most abundant solids and their corresponding abundances
                 if (element+1) % top == 0:
-                    f.write(str(R_bins[radius]) + '\n')                                                                         # If all 5 solids are written, then add the radius in the last column and move to the next line
+                    f.write(str(R_arr[radius]) + '\n')                                                                         # If all 5 solids are written, then add the radius in the last column and move to the next line
                 else:
                     f.write('\t ')
 

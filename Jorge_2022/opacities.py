@@ -54,11 +54,8 @@ def surface_density(molwt, top_abunds, nH_rbins):
 
     n_solid = nH_rbins * 10**top_abunds
     surf_dens = molwt * n_solid
-
-    # !!!!!!!!!!!!!!!!!! NOTE: CURRENTLY ADDING UP THE INDIVIDUAL SOLID DENSITIES AT EACH RADIAL BIN !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    surf_dens_sum = np.sum(surf_dens, axis=1)
     
-    return n_solid, surf_dens_sum
+    return n_solid, surf_dens
 
 
 def Plancks(T0, R_arr, R_in, lamda, h, c, k):
@@ -67,13 +64,17 @@ def Plancks(T0, R_arr, R_in, lamda, h, c, k):
     Calculates Planck function for an effective temperature and a range of wavelength
     I units J/(s m^3 sr)
     """
+    # Transposing 1D column array (shape: (Nbins, 1)) into 2D row array (shape: (1, NBins)) for matrix multiplication
+    lamda = lamda[np.newaxis]
+    lamda = lamda.T
 
     # Converting lamda to m
     lamda = lamda * 10**6
-
-    denominator = k*lamda*
+    print("LAMDA", np.shape(lamda), np.shape(R_arr))
+    denominator = k * T0 * (R_arr/R_in)**(-3/4) * lamda
     
-    I = 2*h*c**2 / (lamda**5 * np.exp( h*c/(lamda*k*T) ) - 1)
+    I = 2*h*c**2 / (lamda**5 * np.exp( h*c/denominator) - 1)
+    print(np.shape(I))
     return I
 
 
@@ -121,7 +122,8 @@ def flux_map(tau, I, lamda, kappa, R_bins, surf_dens):
     # Transposing 1D row array (shape: (1, 2001)) into 2D column array (shape: (2001, 1)) for matrix multiplication
 ##    I = I[np.newaxis]
 ##    I = I.T
-
+    
+    print(np.shape(tau))
     F_map = (1 - np.exp(-tau)) * I
     print(np.shape(F_map))
 
@@ -194,8 +196,8 @@ def main():
     lamda, kappa = Qcurve_plotter(opfile)
 
     # Plotting the flux map
-    I = Plancks(T_sun, lamda, h, c, k)
-    tau = tau_calc(surf_dens, kappa)
+    I = Plancks(T0, R_arr, R_in, lamda, h, c, k)
+    tau = tau_calc(surf_dens[:, 0], kappa)
     flux_map(tau, I, lamda, kappa, R_bins, surf_dens)
     
 
