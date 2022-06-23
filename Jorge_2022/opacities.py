@@ -23,59 +23,21 @@ def molecular_weight(solids):
     return molwt
 
 
-def nH_in_Rbins(nHtot, R_arr, R_bins):
-    
-    """
-    Finds the hydrogen particle density nH in the specific radial bins
-    """
-
-    R_arr = np.round(np.array(R_arr), 4)
-    indices = []                                                # Finding the indices where the bin radii correspond to the radius array
-    
-    for r in range(len(R_arr)):
-        if R_arr[r] in R_bins:
-            indices.append(r)
-
-    nH_rbins = nHtot[indices]
-
-    return nH_rbins
-
-
-def surface_density(molwt, top_abunds, nH_rbins):
+def surface_density(molwt, top_abunds, nHtot):
     
     """
     Calculates the surface density of the given solids
     !!!!!!!!!!! NOTE: CURRENTLY THE DENSITY IS G/CM^3 !!!!!!!!!!!!!!!!!!!
     """
 
-    # Transposing 1D column array (shape: (Nbins, 1)) into 2D row array (shape: (1, NBins)) for matrix multiplication
-    nH_rbins = nH_rbins[np.newaxis]
-    nH_rbins = nH_rbins.T
+    # Transposing 1D column array (shape: (NPOINT, 1)) into 2D row array (shape: (1, NPOINT)) for matrix multiplication
+    nHtot = nHtot[np.newaxis]
+    nHtot = nHtot.T
 
-    n_solid = nH_rbins * 10**top_abunds
+    n_solid = nHtot * 10**top_abunds
     surf_dens = molwt * n_solid
     
     return n_solid, surf_dens
-
-
-def Plancks(T0, R_arr, R_in, lamda, h, c, k):
-    
-    """
-    Calculates Planck function for an effective temperature and a range of wavelength
-    I units J/(s m^3 sr)
-    """
-    # Transposing 1D column array (shape: (Nbins, 1)) into 2D row array (shape: (1, NBins)) for matrix multiplication
-    lamda = lamda[np.newaxis]
-    lamda = lamda.T
-
-    # Converting lamda to m
-    lamda = lamda * 10**6
-    print("LAMDA", np.shape(lamda), np.shape(R_arr))
-    denominator = k * T0 * (R_arr/R_in)**(-3/4) * lamda
-    
-    I = 2*h*c**2 / (lamda**5 * np.exp( h*c/denominator) - 1)
-    print(np.shape(I))
-    return I
 
 
 def Qcurve_plotter(file):
@@ -96,6 +58,26 @@ def Qcurve_plotter(file):
     return lamda, kappa
 
 
+def Plancks(T0, R_arr, R_in, lamda, h, c, k):
+    
+    """
+    Calculates Planck function for an effective temperature and a range of wavelength
+    I units J/(s m^3 sr)
+    """
+    # Transposing 1D column array (shape: (NPOINT, 1)) into 2D row array (shape: (1, NPOINT)) for matrix multiplication
+    lamda = lamda[np.newaxis]
+    lamda = lamda.T
+
+    # !!!!!!!!!!!! SHOULD I DO THIS? Converting lamda to m !!!!!!!!!!!!!!!!!!!!!!!1
+    lamda = lamda * 10**6
+
+    denominator = k * T0 * (R_arr/R_in)**(-3/4) * lamda
+    
+    I = 2*h*c**2 / (lamda**5 * np.exp( h*c/denominator) - 1)
+    print(np.shape(I))
+    return I
+
+
 def tau_calc(sigma, kappa):
     
     """
@@ -103,7 +85,7 @@ def tau_calc(sigma, kappa):
     shape (r, lamda)
     """
 
-    # Transposing 1D row array (shape: (1, NBins)) into 2D column array (shape: (NBins, 1)) for matrix multiplication
+    # Transposing 1D row array (shape: (1, NPOINT)) into 2D column array (shape: (NPOINT, 1)) for matrix multiplication
     sigma = sigma[np.newaxis]
     sigma = sigma.T
 
@@ -113,7 +95,7 @@ def tau_calc(sigma, kappa):
     
     
 
-def flux_map(tau, I, lamda, kappa, R_bins, surf_dens):
+def flux_map(tau, I, lamda, kappa, R_arr, surf_dens):
 
     """
     Plotting the flux map
@@ -176,7 +158,6 @@ def main():
     R_in = inner_radius(Qr, T0, R_sun, T_sun)
     R_arr = r_from_T(R_in, Tg, T0)
 
-    NBins = 13              # Number of radial bins at which the most abundant species are extracted
     top = 5                 # Top X condensates whose abundance is the highest
 
     # All 52 condensates for Sun from Fig C.1 Jorge et al. 2022:
@@ -184,12 +165,11 @@ def main():
 
     # Finding the most abundant condensates
     abundances, solid_names = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
-    R_bins, top_abunds, top_solids = most_abundant(top, NBins, abundances, R_arr, solid_names)
+    top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr, solid_names)
 
     # Calculating the surface density
     molwt = molecular_weight(top_solids)
-    nH_rbins = nH_in_Rbins(nHtot, R_arr, R_bins)
-    n_solid, surf_dens = surface_density(molwt, top_abunds, nH_rbins)
+    n_solid, surf_dens = surface_density(molwt, top_abunds, nHtot)
 
     # Plotting the Qcurves
     opfile = 'qval_Fe2SiO4_rv2.0fmax_1.0.dat'
@@ -198,7 +178,7 @@ def main():
     # Plotting the flux map
     I = Plancks(T0, R_arr, R_in, lamda, h, c, k)
     tau = tau_calc(surf_dens[:, 0], kappa)
-    flux_map(tau, I, lamda, kappa, R_bins, surf_dens)
+    flux_map(tau, I, lamda, kappa, R_arr, surf_dens)
     
 
 if __name__ == "__main__":
