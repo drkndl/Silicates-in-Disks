@@ -61,7 +61,7 @@ def surface_density(molwt, top_abunds, nH_rbins):
     return n_solid, surf_dens_sum
 
 
-def Plancks(T, lamda, h, c, k):
+def Plancks(T0, R_arr, R_in, lamda, h, c, k):
     
     """
     Calculates Planck function for an effective temperature and a range of wavelength
@@ -70,6 +70,8 @@ def Plancks(T, lamda, h, c, k):
 
     # Converting lamda to m
     lamda = lamda * 10**6
+
+    denominator = k*lamda*
     
     I = 2*h*c**2 / (lamda**5 * np.exp( h*c/(lamda*k*T) ) - 1)
     return I
