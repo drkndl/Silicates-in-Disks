@@ -10,6 +10,12 @@ def molecular_weight(solids):
     
     """
     Calculates the molecular weight of the given solids in g
+
+    Parameters:
+
+    solids       : A 2D array of the names of the top 5 most abundant solids at every radius (Shape (r, 5))
+
+    Returns a 2D array of shape (r, 5) of the molecular weights (in g) of the given solids
     """
 
     shape = np.shape(solids)    
@@ -52,7 +58,21 @@ def Qcurve_plotter(file):
     lamda = Q_curve['wavelength'].to_numpy()
     kappa = Q_curve['kappa'].to_numpy()
 
+    # Taking only the first half of the data (don't need it till 200 microns)
+    lamda = lamda[: len(lamda)//2]
+    kappa = kappa[: len(kappa)//2]
+
+    # Still need to trim the wavelength down to about 500 points, but I need it till 20 microns. So I'll take every alternate value
+    lamda = lamda[::5]
+    kappa = kappa[::5]
+    
+    print("KAPPA LAMDA", np.shape(kappa), np.shape(lamda))
+    
     plt.plot(lamda, kappa)
+    plt.xlabel(r'$\lambda$ ($\mu$m)')
+    plt.ylabel(r'$\kappa_{abs}$ ($cm^2/g$)')
+    plt.title(r"Q-curve for Fe, r = 0.1, $f_{max}$ = 0.7")
+    plt.savefig("Qcurve_Fe_r0.1_f0.7.png")
     plt.show()
 
     return lamda, kappa
@@ -61,19 +81,19 @@ def Qcurve_plotter(file):
 def Plancks(T0, R_arr, R_in, lamda, h, c, k):
     
     """
-    Calculates Planck function for an effective temperature and a range of wavelength
-    I units J/(s m^3 sr)
+    Calculates Planck function for a range of radius (converted from the temperature based on the disk model) and a range of wavelength in J/(s m^3 sr)
     """
+    
     # Transposing 1D column array (shape: (NPOINT, 1)) into 2D row array (shape: (1, NPOINT)) for matrix multiplication
     lamda = lamda[np.newaxis]
     lamda = lamda.T
 
-    # !!!!!!!!!!!! SHOULD I DO THIS? Converting lamda to m !!!!!!!!!!!!!!!!!!!!!!!1
-    lamda = lamda * 10**6
+    # !!!!!!!!!!!! SHOULD I DO THIS? Converting lamda to cm !!!!!!!!!!!!!!!!!!!!!!!
+    lamda_cm = lamda * 10**3
 
-    denominator = k * T0 * (R_arr/R_in)**(-3/4) * lamda
+    denominator = k * T0 * (R_arr/R_in)**(-3/4) * lamda_cm
     
-    I = 2*h*c**2 / (lamda**5 * np.exp( h*c/denominator) - 1)
+    I = 2*h*c**2 / (lamda_cm**5 * np.exp( h*c/denominator) - 1)
     print("Planck function", np.shape(I))
     return I
 
@@ -107,11 +127,27 @@ def flux_map(tau, I, lamda, kappa, R_arr, surf_dens):
     print("Tau", np.shape(tau))
 
     F_map = (1 - np.exp(-tau)) * I
-    print(np.shape(F_map))
+    print("FMAP ", np.shape(F_map))
 
-    plt.imshow(F_map)
-    plt.colorbar()
-    plt.savefig("flux_map.png")
+    fig, ax = plt.subplots(1,1)
+    img = ax.imshow(F_map, origin='lower', interpolation='none')
+
+    # Axes formatting !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! SHOULD I TAKE LOGSPACE INSTEAD? !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    x_axis_labels = np.arange(0, 15, 2)
+    x_axis_locations = np.linspace(0, len(lamda), 8)
+    ax.set_xticks(x_axis_locations)
+    ax.set_xticklabels(x_axis_labels)
+    ax.set_xlabel(r'$\lambda$ ($\mu$m)')
+
+    y_axis_labels = np.round(np.linspace(0.03, 1.12, 8), 3)
+    y_axis_locations = np.linspace(0, len(R_arr), 8)
+    ax.set_yticks(y_axis_locations)
+    ax.set_yticklabels(y_axis_labels)
+    ax.set_ylabel('R (AU)')
+
+    ax.set_title(r"Flux Map for Fe, r = 0.1, $f_{max}$ = 0.7")
+    fig.colorbar(img)
+    plt.savefig("Fe_flux_map.png", bbox_inches = 'tight')
     plt.show()
     
     return 
@@ -135,10 +171,10 @@ def main():
     dat = np.loadtxt(file,skiprows=3)
     keyword = np.array(header.split())      # Array of parameter names such as molecule names
 
-    # Some constants
-    h = 6.62607004e-34               # Planck's constant in Js
-    c = 299792458.0                  # Speed of light in m/s
-    k = 1.380649e-23                 # Boltzmann constant in J/K
+    # Some constants in CGS 
+    h = 6.6261e-27                   # Planck's constant in cm^2 g s-1
+    c = 2.99792458e10                # Speed of light in cm/s                
+    k = 1.3807e-16                   # Boltzmann constant in cm^2 g s^-2 K^-1
     bar   = 1.E+6                    # 1 bar in dyn/cm^2
 
     # Extracting data from the output file
@@ -172,11 +208,15 @@ def main():
     n_solid, surf_dens = surface_density(molwt, top_abunds, nHtot)
 
     # Plotting the Qcurves
-    opfile = 'qval_Fe2SiO4_rv2.0fmax_1.0.dat'
+    opfile = 'qval_fe_met_rv0.1fmax_0.7.dat'
     lamda, kappa = Qcurve_plotter(opfile)
+
+    print('lamda before: ', lamda)
 
     # Plotting the flux map
     I = Plancks(T0, R_arr, R_in, lamda, h, c, k)
+    print('lamda after: ', lamda)
+    
     tau = tau_calc(surf_dens[:, 0], kappa)
     flux_map(tau, I, lamda, kappa, R_arr, surf_dens)
     
