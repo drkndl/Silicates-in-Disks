@@ -44,6 +44,7 @@ def surface_density(molwt, top_abunds, nHtot):
     
     """
     Calculates the surface density of the given solids. Note that the calculated "surface" densities are actually (g/cm^3), but we assume column height to be 1 cm, so the surface density can be g/cm^2
+    Shape of surf_dens = (NPOINT, top)
     """
 
     # Transposing 1D column array (shape: (NPOINT, 1)) into 2D row array (shape: (1, NPOINT)) for matrix multiplication
@@ -127,7 +128,7 @@ def tau_calc(sigma, kappa):
     
     
 
-def flux_map(tau, I, lamda, kappa, R_arr, surf_dens):
+def flux_map(tau, I, lamda, R_arr):
 
     """
     Plotting the flux map (r, lambda)
@@ -158,7 +159,38 @@ def flux_map(tau, I, lamda, kappa, R_arr, surf_dens):
     plt.savefig("Forst_flux_map.png", bbox_inches = 'tight')
     plt.show()
     
-    return 
+    return F_map
+
+
+
+def f(tau, I, r):
+    
+    """
+    f in numerical integration
+    """
+
+    return tau * I * 2*np.pi * r
+
+    
+    
+def plot_spectra(tau, I, R_arr, Rmin, Rmax):
+    
+    """
+    Plots the integrated flux vs wavelength
+    """
+
+    summ = 0
+    for r1 in range(len(R_arr)-1):
+        for r2 in range(r1+1, len(R_arr)):
+            delr = R_arr[r2] - R_arr[r1]
+            print(f(tau[r1, :], I[:, r1], R_arr[r1]))
+            print(f(tau[r2, :], I[:, r2], R_arr[r2]))
+            print()
+            # summ += delr * np.average(f(tau[r1, :], I[:, r1], R_arr[r1]), f(tau[r2, :], I[:, r2], R_arr[r2]))
+
+    print(summ.shape)
+    
+    return
     
 
 
@@ -219,7 +251,11 @@ def main():
     # Plotting the flux map
     I = Plancks(T0, R_arr, R_in, lamda)    
     tau = tau_calc(surf_dens[:, 1], kappa)
-    flux_map(tau, I, lamda, kappa, R_arr, surf_dens)
+    F_map = flux_map(tau, I, lamda, R_arr)
+
+
+    # Finding the integrated flux
+    plot_spectra(tau, I, R_arr, Rmin=0, Rmax=0)
     
 
 if __name__ == "__main__":
