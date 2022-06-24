@@ -74,7 +74,7 @@ def Plancks(T0, R_arr, R_in, lamda, h, c, k):
     denominator = k * T0 * (R_arr/R_in)**(-3/4) * lamda
     
     I = 2*h*c**2 / (lamda**5 * np.exp( h*c/denominator) - 1)
-    print(np.shape(I))
+    print("Planck function", np.shape(I))
     return I
 
 
@@ -101,17 +101,17 @@ def flux_map(tau, I, lamda, kappa, R_arr, surf_dens):
     Plotting the flux map
     """
 
-    # Transposing 1D row array (shape: (1, 2001)) into 2D column array (shape: (2001, 1)) for matrix multiplication
-##    I = I[np.newaxis]
-##    I = I.T
+    # Transposing I from (lamda, r) to (r, lamda) for element-wise matrix multiplication
+    I = I.T
     
-    print(np.shape(tau))
+    print("Tau", np.shape(tau))
+
     F_map = (1 - np.exp(-tau)) * I
     print(np.shape(F_map))
 
-    temp = np.array([[1, 2], [4,3]])
-    plt.imshow(temp)
+    plt.imshow(F_map)
     plt.colorbar()
+    plt.savefig("flux_map.png")
     plt.show()
     
     return 
