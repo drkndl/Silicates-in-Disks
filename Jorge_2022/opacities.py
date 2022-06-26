@@ -77,7 +77,7 @@ def Qcurve_plotter(file, dens, gs):
     # lamda = lamda[::5]
     # Q = Q[::5]
 
-    kappa = 3 * Q / (4 * np.pi * gs * dens)
+    kappa = 3 * Q / (4 * gs * dens)
     
     plt.plot(lamda, kappa)
     plt.xlabel(r'$\lambda$ ($\mu$m)')
