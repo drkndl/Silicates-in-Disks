@@ -173,22 +173,28 @@ def f(tau, I, r):
 
     
     
-def plot_spectra(tau, I, R_arr, Rmin, Rmax):
+def plot_spectra(tau, I, R_arr, lamda, Rmin, Rmax):
     
     """
     Plots the integrated flux vs wavelength
+
+    Summ shape (lamda, 1)
     """
 
     summ = 0
     for r1 in range(len(R_arr)-1):
         for r2 in range(r1+1, len(R_arr)):
-            delr = R_arr[r2] - R_arr[r1]
-            print(f(tau[r1, :], I[:, r1], R_arr[r1]))
-            print(f(tau[r2, :], I[:, r2], R_arr[r2]))
-            print()
-            # summ += delr * np.average(f(tau[r1, :], I[:, r1], R_arr[r1]), f(tau[r2, :], I[:, r2], R_arr[r2]))
 
-    print(summ.shape)
+            # Integration using the trapezoidal rule
+            delr = R_arr[r2] - R_arr[r1]
+            fr1 = f(tau[r1, :], I[:, r1], R_arr[r1])
+            fr2 = f(tau[r2, :], I[:, r2], R_arr[r2])
+            summ += delr * 0.5 * (fr1 + fr2)
+
+    fig = plt.figure()
+    plt.plot(lamda, summ)
+    plt.savefig("Spectrum_Forst_r0.1_f1.0.png")
+    plt.show()
     
     return
     
@@ -255,7 +261,7 @@ def main():
 
 
     # Finding the integrated flux
-    plot_spectra(tau, I, R_arr, Rmin=0, Rmax=0)
+    plot_spectra(tau, I, R_arr, lamda, Rmin=0, Rmax=0)
     
 
 if __name__ == "__main__":
