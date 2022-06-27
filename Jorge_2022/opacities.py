@@ -6,6 +6,7 @@ from jorge_diskprop import inner_radius, r_from_T
 from top5_minerals import final_abundances, most_abundant
 
 
+
 # Some constants in CGS
 Na = 6.022E23                    # Avogadro's number in /mol
 h = 6.6261e-27                   # Planck's constant in cm^2 g s-1
@@ -59,35 +60,47 @@ def surface_density(molwt, top_abunds, nHtot):
 
 
 
-def Qcurve_plotter(file, dens, gs):
-
-    """
-    Plots the Qcurve
-    """
-
-    Q_curve = pd.read_csv(file, delimiter='\s+', skiprows=1, names=['wavelength','Q'])
-
-    lamda = Q_curve['wavelength'].to_numpy()
-    Q = Q_curve['Q'].to_numpy()
-
-    # Taking only the first half of the data (don't need it till 200 microns)
-    lamda = lamda[: len(lamda) // 2]
-    Q = Q[: len(Q) // 2]
-
-    # Still need to trim the wavelength down to about 500 points, but I need it till 20 microns. So I'll take every alternate value
-    # lamda = lamda[::5]
-    # Q = Q[::5]
-
-    kappa = 3 * Q / (4 * gs * dens)
-    
-    plt.plot(lamda, kappa)
-    plt.xlabel(r'$\lambda$ ($\mu$m)')
-    plt.ylabel(r'$\kappa_{abs}$ ($cm^2/g$)')
-    plt.title(r"Q-curve for Forsterite, r = 0.1, $f_{max}$ = 1.0")
-    plt.savefig("Qcurve_Forst_r0.1_f1.0.png", bbox_inches = 'tight')
-    plt.show()
-
-    return lamda, kappa
+def Qcurve_plotter(opfile, dens, gs):
+	
+	"""
+	Plots the Qcurve
+	"""
+	
+	# Obtaining the mineral name, grain size value and fmax for plot labelling
+	filename = opfile.split('/')[1]
+	values = filename.split('_')
+	mineral = values[1]
+	
+	for i in range(len(values)):
+	
+		if values[i].startswith('rv'):
+			rv = values[i][2:5]
+		elif values[i].startswith('fmax'):
+			fmax = values[i][4:7]
+	
+	Q_curve = pd.read_csv(opfile, delimiter='\s+', skiprows=1, names=['wavelength','Q'])
+	
+	lamda = Q_curve['wavelength'].to_numpy()
+	Q = Q_curve['Q'].to_numpy()
+	
+	# Taking only the first half of the data (don't need it till 200 microns)
+	lamda = lamda[: len(lamda) // 2]
+	Q = Q[: len(Q) // 2]
+	
+	# Still need to trim the wavelength down to about 500 points, but I need it till 20 microns. So I'll take every alternate value
+	# lamda = lamda[::5]
+	# Q = Q[::5]
+	
+	kappa = 3 * Q / (4 * gs * dens)
+	
+	plt.plot(lamda, kappa)
+	plt.xlabel(r'$\lambda$ ($\mu$m)')
+	plt.ylabel(r'$\kappa_{abs}$ ($cm^2/g$)')
+	plt.title(r"Q-curve for {0}, r = {1}, $fmax$ = {2}".format(mineral, rv, fmax))
+	plt.savefig("Qcurves/Qcurve_{0}_r{1}_f{2}.png".format(mineral, rv, fmax), bbox_inches = 'tight')
+	# plt.show()
+	
+	return lamda, kappa
 
 
 
@@ -215,69 +228,81 @@ def plot_spectra(tau, I, R_arr, lamda, Rmin, Rmax):
 
 
 def main():
-
-    file   = 'Sun/sun_Static_Conc.dat'      # Simulation output file
-    data   = open(file)
-    dummy  = data.readline()                # Ignoring first line
-    dimens = data.readline()                
-    dimens = np.array(dimens.split())
-    NELEM  = int(dimens[0])                 # Total number of elements used
-    NMOLE  = int(dimens[1])                 # Number of molecules created
-    NDUST  = int(dimens[2])                 # Number of condensates created
-    NPOINT = int(dimens[3])                 # Number of points in simulation
-    header = data.readline()                # Saves parameter names such as molecule names
-    data.close()
-
-    dat = np.loadtxt(file,skiprows=3)
-    keyword = np.array(header.split())      # Array of parameter names such as molecule names 
-
-    # Extracting data from the output file
-    Tg    = dat[:,0]                        # T [K]
-    nHtot = dat[:,1]                        # n<H> [cm^-3]
-    lognH = np.log10(nHtot)          
-    press = dat[:,2]                        # p [dyn/cm^2]
-    Tmin  = np.min(Tg)                      # Minimum gas temperature
-    Tmax  = np.max(Tg)                      # Maximum gas temperature
-
-    # Converting temperatures to corresponding radii
-    T0 = 1500                               # Sublimation temperature (K)
-    Qr = 1                                  # Ratio of absorption efficiencies (assumed to be black body)
-    R_sun = 0.00465047                      # Sun's radius (AU)
-    T_sun = 5780                            # Effective temperature of the sun (K)
-
-    R_in = inner_radius(Qr, T0, R_sun, T_sun)
-    R_arr = r_from_T(R_in, Tg, T0)
-
-    top = 5                                 # Top X condensates whose abundance is the highest
-
-    fors_dens = 3.27                        # Density of forsterite (g/cm^3)
-    gs = 0.1E-4                             # Grain radius (cm)
-
-    # All 52 condensates for Sun from Fig C.1 Jorge et al. 2022:
-    minerals = (['SZrSiO4', 'SV2O3', 'SCaTiSiO5', 'SCr2O3', 'SCaMgSi2O6', 'SMg2SiO4','SMgSiO3','SMg3Si2O9H4', 'SMgCr2O4', 'SMnTiO3', 'SNi', 'SFe', 'SZrO2', 'SFeS', 'SCa3Al2Si3O12', 'SNaAlSiO4', 'SCaAl2Si2O8', 'SMgAl2O4', 'SFeTiO3', 'SMnS', 'SNaAlSi3O8', 'SW', 'SCaTiO3', 'SMn3Al2Si3O12', 'SKAlSi3O8', 'SNi3S2', 'SNaCl', 'SVO', 'SFeAl2O4', 'SAlO2H', 'SFe2SiO4', 'SCa5P3O12F', 'SCa2MgSi2O7', 'SCa5P3O13H', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2', 'SLi2SiO3', 'SWO3', 'SLiCl', 'SMg3Si4O12H2', 'SMnAl2SiO7H2', 'SFeAl2SiO7H2', 'SFe3O4', 'SCa3Fe2Si3O12', 'STi3O5', 'STi4O7', 'SSiO', 'SKFe3AlSi3O12H2', 'SCr', 'SMg3Si2O9H4', 'SCaAl2Si2O10H4', 'SH2O', 'SFe3Si2O9H4'])
-
-    # Finding the most abundant condensates
-    abundances, solid_names = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
-    top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr, solid_names)
-
-    # Calculating the surface density
-    molwt = molecular_weight(top_solids)
-    n_solid, surf_dens = surface_density(molwt, top_abunds, nHtot)
-
-    # Plotting the Qcurves
-    opfile = 'Q_Fo_Sogawa_DHS_f1.0_rv0.1.dat'
-    lamda, kappa = Qcurve_plotter(opfile, fors_dens, gs)
-
-    # Plotting the flux map
-    I = Plancks(T0, R_arr, R_in, lamda)    
-    tau = tau_calc(surf_dens[:, 1], kappa)
-    F_map = flux_map(tau, I, lamda, R_arr)
-
-    # Finding the integrated flux
-    int_flux = plot_spectra(tau, I, R_arr, lamda, Rmin=0.03, Rmax=1.28)
-    
-    # TODO: Plotting fluxes of multiple radii together
-    
+	
+	file   = 'Sun/sun_Static_Conc.dat'      # Simulation output file
+	data   = open(file)
+	dummy  = data.readline()                # Ignoring first line
+	dimens = data.readline()                
+	dimens = np.array(dimens.split())
+	NELEM  = int(dimens[0])                 # Total number of elements used
+	NMOLE  = int(dimens[1])                 # Number of molecules created
+	NDUST  = int(dimens[2])                 # Number of condensates created
+	NPOINT = int(dimens[3])                 # Number of points in simulation
+	header = data.readline()                # Saves parameter names such as molecule names
+	data.close()
+	
+	dat = np.loadtxt(file,skiprows=3)
+	keyword = np.array(header.split())      # Array of parameter names such as molecule names 
+	
+	# Extracting data from the output file
+	Tg    = dat[:,0]                        # T [K]
+	nHtot = dat[:,1]                        # n<H> [cm^-3]
+	lognH = np.log10(nHtot)          
+	press = dat[:,2]                        # p [dyn/cm^2]
+	Tmin  = np.min(Tg)                      # Minimum gas temperature
+	Tmax  = np.max(Tg)                      # Maximum gas temperature
+	
+	# Converting temperatures to corresponding radii
+	T0 = 1500                               # Sublimation temperature (K)
+	Qr = 1                                  # Ratio of absorption efficiencies (assumed to be black body)
+	R_sun = 0.00465047                      # Sun's radius (AU)
+	T_sun = 5780                            # Effective temperature of the sun (K)
+	
+	R_in = inner_radius(Qr, T0, R_sun, T_sun)
+	R_arr = r_from_T(R_in, Tg, T0)
+	
+	top = 5                                 # Top X condensates whose abundance is the highest
+	
+	gs = 0.1E-4                             # Grain radius (cm)
+	
+	# All 52 condensates for Sun from Fig C.1 Jorge et al. 2022:
+	minerals = (['SZrSiO4', 'SV2O3', 'SCaTiSiO5', 'SCr2O3', 'SCaMgSi2O6', 'SMg2SiO4','SMgSiO3','SMg3Si2O9H4', 'SMgCr2O4', 'SMnTiO3', 'SNi', 'SFe', 'SZrO2', 'SFeS', 'SCa3Al2Si3O12', 'SNaAlSiO4', 'SCaAl2Si2O8', 'SMgAl2O4', 'SFeTiO3', 'SMnS', 'SNaAlSi3O8', 'SW', 'SCaTiO3', 'SMn3Al2Si3O12', 'SKAlSi3O8', 'SNi3S2', 'SNaCl', 'SVO', 'SFeAl2O4', 'SAlO2H', 'SFe2SiO4', 'SCa5P3O12F', 'SCa2MgSi2O7', 'SCa5P3O13H', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2', 'SLi2SiO3', 'SWO3', 'SLiCl', 'SMg3Si4O12H2', 'SMnAl2SiO7H2', 'SFeAl2SiO7H2', 'SFe3O4', 'SCa3Fe2Si3O12', 'STi3O5', 'STi4O7', 'SSiO', 'SKFe3AlSi3O12H2', 'SCr', 'SMg3Si2O9H4', 'SCaAl2Si2O10H4', 'SH2O', 'SFe3Si2O9H4'])
+	
+	# Finding the most abundant condensates
+	abundances, solid_names = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
+	top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr, solid_names)
+	
+	# Calculating the surface density
+	molwt = molecular_weight(top_solids)
+	n_solid, surf_dens = surface_density(molwt, top_abunds, nHtot)
+	print("TOP ABUNDS: ", top_abunds)
+	print()
+	print("MOLECULAR WEIGHT: ", molwt)
+	print()
+	print("SURF_DENS: ", surf_dens)
+	print()
+	print("top abund, molwt, surf_dens shapes", top_abunds.shape, molwt.shape, surf_dens.shape)
+	
+	# Creating a dictionary of Qcurve input files and the corresponding material densities in g/cm^3
+	opfile_dens = {'Qcurve_inputs/Q_Diopside_rv0.1_fmaxxxx.dat' : 3.278, 'Qcurve_inputs/Q_Enstatite_Jaeger_DHS_fmax1.0_rv0.1.dat' : 3.2, 'Qcurve_inputs/Q_Forsterite_Sogawa_DHS_fmax1.0_rv0.1.dat' : 3.27, 'Qcurve_inputs/qval_Fe3O4_rv0.1_fmax0.7.dat' : 5.17, 'Qcurve_inputs/qval_Fe2SiO4_rv0.1_fmax1.0.dat' : 4.392, 'Qcurve_inputs/qval_Fe_met_rv0.1_fmax0.7.dat' : 7.874, 'Qcurve_inputs/qval_FeS_rv0.1_fmax0.7.dat' : 4.84, 'Qcurve_inputs/qval_Serpentine_rv0.1_fmax0.7.dat' : 2.6, 'Qcurve_inputs/qval_Spinel_rv0.1_fmax0.7.dat' : 3.64}
+	
+	# Plotting the Qcurves
+	lamdas = []
+	kappas = []
+	
+	for opfile, density in opfile_dens.items():
+		lamda, kappa = Qcurve_plotter(opfile, density, gs)
+	
+	# ~ # Plotting the flux map
+	# ~ I = Plancks(T0, R_arr, R_in, lamda)    
+	# ~ tau = tau_calc(surf_dens[:, 1], kappa)
+	# ~ F_map = flux_map(tau, I, lamda, R_arr)
+	
+	# ~ # Finding the integrated flux
+	# ~ int_flux = plot_spectra(tau, I, R_arr, lamda, Rmin=0.03, Rmax=1.28)
+	
+	# ~ # TODO: Plotting fluxes of multiple radii together
+	
 
 if __name__ == "__main__":
     main()
