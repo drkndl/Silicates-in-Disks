@@ -12,7 +12,7 @@ Na = 6.022E23                    # Avogadro's number in /mol
 h = 6.6261e-27                   # Planck's constant in cm^2 g s-1
 c = 2.99792458e10                # Speed of light in cm/s                
 k = 1.3807e-16                   # Boltzmann constant in cm^2 g s^-2 K^-1
-bar   = 1.E+6                    # 1 bar in dyn/cm^2
+bar = 1.E+6                      # 1 bar in dyn/cm^2
 
 
 
@@ -27,36 +27,35 @@ def molecular_weight(solids):
 
     Returns a 2D array of shape (r, 5) of the molecular weights (in g) of the given solids
     """
-
-    shape = np.shape(solids) 
-    molwt = np.zeros(shape)
     
-    for r in range(len(solids)):
-        for ele in range(len(solids[r])):
-            f = Formula(solids[r][ele])
-            molwt[r][ele] = f.mass
+    molwt = {key: None for key in solids}
 
-    molwt = molwt / Na
+    for solid in molwt.keys():
+        f = Formula(solid)
+        molwt[solid] = f.mass / Na
     
     return molwt
 
 
 
-def surface_density(molwt, top_abunds, nHtot):
+def surface_density(solids, molwt, top_abunds, nHtot):
     
     """
     Calculates the surface density of the given solids. Note that the calculated "surface" densities are actually (g/cm^3), but we assume column height to be 1 cm, so the surface density can be g/cm^2
     Shape of surf_dens = (NPOINT, top)
     """
 
-    # Transposing 1D column array (shape: (NPOINT, 1)) into 2D row array (shape: (1, NPOINT)) for matrix multiplication
+    # Transposing 1D row array (shape: (1, NPOINT)) into 2D column array (shape: (NPOINT, 1)) for matrix multiplication
     nHtot = nHtot[np.newaxis]
     nHtot = nHtot.T
 
-    n_solid = nHtot * 10**top_abunds
-    surf_dens = molwt * n_solid
+    surf_dens = {key: None for key in solids}
+
+    for solid in surf_dens.keys():
+        n_solid = nHtot * 10**top_abunds[solid]
+        surf_dens[solid] = molwt[solid] * n_solid
     
-    return n_solid, surf_dens
+    return surf_dens
 
 
 
@@ -109,8 +108,8 @@ def Plancks(T0, R_arr, R_in, lamda):
     """
     Calculates Planck function for a range of radius (converted from the temperature based on the disk model) and a range of wavelength in erg/(s cm^3 sr)
     """
-    
-    # Transposing 1D column array (shape: (NPOINT, 1)) into 2D row array (shape: (1, NPOINT)) for matrix multiplication
+    # !!!!!!!!!!!!!!!!!!!!!!!!!! CHECK THIS COMMENT LATER ON !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # Transposing 1D row array (shape: (1, NPOINT)) into 2D column array (shape: (NPOINT, 1)) for matrix multiplication
     lamda = lamda[np.newaxis]
     lamda = lamda.T
 
@@ -209,11 +208,11 @@ def plot_spectra(tau, I, R_arr, lamda, Rmin, Rmax):
 	for r1 in range(Rmin_id, Rmax_id-1):
 		for r2 in range(r1+1, Rmax_id):
 	
-			# Numerical integration using the trapezoidal rule
-			delr = R_arr[r2] - R_arr[r1]
-			fr1 = f(tau[r1, :], I[:, r1], R_arr[r1])
-			fr2 = f(tau[r2, :], I[:, r2], R_arr[r2])
-			summ += delr * 0.5 * (fr1 + fr2)
+                    # Numerical integration using the trapezoidal rule
+                    delr = R_arr[r2] - R_arr[r1]
+                    fr1 = f(tau[r1, :], I[:, r1], R_arr[r1])
+                    fr2 = f(tau[r2, :], I[:, r2], R_arr[r2])
+                    summ += delr * 0.5 * (fr1 + fr2)
 	
 	fig = plt.figure()
 	plt.plot(lamda, summ)
@@ -274,15 +273,9 @@ def main():
 	topabunds_radii = topabunds_by_radii(top_solids, solid_names, top_abunds)
 	
 	# Calculating the surface density
-	molwt = molecular_weight(top_solids)
-	n_solid, surf_dens = surface_density(molwt, top_abunds, nHtot)
-	print("TOP ABUNDS: ", top_abunds)
-	print()
-	print("MOLECULAR WEIGHT: ", molwt)
-	print()
-	print("SURF_DENS: ", surf_dens)
-	print()
-	print("top abund, molwt, surf_dens shapes", top_abunds.shape, molwt.shape, surf_dens.shape)
+	molwt = molecular_weight(solid_names)
+	surf_dens = surface_density(solid_names, molwt, topabunds_radii, nHtot)
+	print(surf_dens)
 	
 	# Creating a dictionary of Qcurve input files and the corresponding material densities in g/cm^3
 	opfile_dens = {'Qcurve_inputs/Q_Diopside_rv0.1_fmaxxxx.dat' : 3.278, 'Qcurve_inputs/Q_Enstatite_Jaeger_DHS_fmax1.0_rv0.1.dat' : 3.2, 'Qcurve_inputs/Q_Forsterite_Sogawa_DHS_fmax1.0_rv0.1.dat' : 3.27, 'Qcurve_inputs/qval_Fe3O4_rv0.1_fmax0.7.dat' : 5.17, 'Qcurve_inputs/qval_Fe2SiO4_rv0.1_fmax1.0.dat' : 4.392, 'Qcurve_inputs/qval_Fe_met_rv0.1_fmax0.7.dat' : 7.874, 'Qcurve_inputs/qval_FeS_rv0.1_fmax0.7.dat' : 4.84, 'Qcurve_inputs/qval_Serpentine_rv0.1_fmax0.7.dat' : 2.6, 'Qcurve_inputs/qval_Spinel_rv0.1_fmax0.7.dat' : 3.64}

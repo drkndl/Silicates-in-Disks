@@ -84,7 +84,7 @@ def topabunds_by_radii(top_solids, solid_names, top_abunds):
     """
 
     # Make dictionary of all minerals to save radii at which the minerals are top 5 most abundant
-    topabunds_radii = {key: np.full(500, -300) for key in solid_names}
+    topabunds_radii = {key: np.full(500, -300.0) for key in solid_names}
     
     # Radii indices where the solids are top 5 most abundant    
     for solid in topabunds_radii.keys():
