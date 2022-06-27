@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from molmass import Formula
 from jorge_diskprop import inner_radius, r_from_T
-from top5_minerals import final_abundances, most_abundant
+from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 
 
 
@@ -271,6 +271,7 @@ def main():
 	# Finding the most abundant condensates
 	abundances, solid_names = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
 	top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr, solid_names)
+	topabunds_radii = topabunds_by_radii(top_solids, solid_names, top_abunds)
 	
 	# Calculating the surface density
 	molwt = molecular_weight(top_solids)
