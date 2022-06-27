@@ -14,6 +14,7 @@ k = 1.3807e-16                   # Boltzmann constant in cm^2 g s^-2 K^-1
 bar   = 1.E+6                    # 1 bar in dyn/cm^2
 
 
+
 def molecular_weight(solids):
     
     """
@@ -26,7 +27,7 @@ def molecular_weight(solids):
     Returns a 2D array of shape (r, 5) of the molecular weights (in g) of the given solids
     """
 
-    shape = np.shape(solids)    
+    shape = np.shape(solids) 
     molwt = np.zeros(shape)
     
     for r in range(len(solids)):
@@ -138,7 +139,6 @@ def flux_map(tau, I, lamda, R_arr):
     F_map = (1 - np.exp(-tau)) * I                      # Calculating the flux map
 
     fig, ax = plt.subplots(1,1)
-    # img = ax.imshow(np.log(F_map[:, 100:]), interpolation='none')
     img = ax.imshow(F_map, cmap='jet', interpolation='none')
 
     # Axes formatting    
@@ -166,7 +166,7 @@ def flux_map(tau, I, lamda, R_arr):
 def f(tau, I, r):
     
     """
-    f in numerical integration
+    f in numerical integration to calculate the integrated flux for the s
     """
 
     return tau * I * 2*np.pi * r
@@ -174,29 +174,43 @@ def f(tau, I, r):
     
     
 def plot_spectra(tau, I, R_arr, lamda, Rmin, Rmax):
-    
-    """
-    Plots the integrated flux vs wavelength
-
-    Summ shape (lamda, 1)
-    """
-
-    summ = 0
-    for r1 in range(len(R_arr)-1):
-        for r2 in range(r1+1, len(R_arr)):
-
-            # Integration using the trapezoidal rule
-            delr = R_arr[r2] - R_arr[r1]
-            fr1 = f(tau[r1, :], I[:, r1], R_arr[r1])
-            fr2 = f(tau[r2, :], I[:, r2], R_arr[r2])
-            summ += delr * 0.5 * (fr1 + fr2)
-
-    fig = plt.figure()
-    plt.plot(lamda, summ)
-    plt.savefig("Spectrum_Forst_r0.1_f1.0.png")
-    plt.show()
-    
-    return
+	
+	"""
+	Plots the integrated flux vs wavelength
+	
+	Summ shape (lamda, 1)
+	"""
+	
+	# Finding the indices of Rmin and Rmax by taking the first instance of where they are in the rounded R_arr 
+	R_rounded = np.round(R_arr, 2)	
+	Rmin_id = np.where(R_rounded == Rmin)[0][0]
+	Rmax_id = np.where(R_rounded == Rmax)[0][0]
+	print(R_arr)
+	print()
+	print(R_rounded)
+	print(Rmin_id, Rmax_id)
+	print(R_rounded[Rmin_id], R_rounded[Rmax_id])
+	print(R_arr[Rmin_id], R_arr[Rmax_id])
+	
+	summ = 0
+	for r1 in range(Rmin_id, Rmax_id-1):
+		for r2 in range(r1+1, Rmax_id):
+	
+			# Numerical integration using the trapezoidal rule
+			delr = R_arr[r2] - R_arr[r1]
+			fr1 = f(tau[r1, :], I[:, r1], R_arr[r1])
+			fr2 = f(tau[r2, :], I[:, r2], R_arr[r2])
+			summ += delr * 0.5 * (fr1 + fr2)
+	
+	fig = plt.figure()
+	plt.plot(lamda, summ)
+	plt.xlabel(r'$\lambda$ ($\mu$m)')
+	plt.ylabel('Flux of some kind')
+	plt.title(r'Spectrum $Mg_2SiO_4$ r=0.1 $\mu$m f=1.0 R={0}-{1} AU'.format(Rmin, Rmax))
+	plt.savefig("Spectrum_Forst_r0.1_f1.0_R{0}-{1}.png".format(Rmin, Rmax))
+	plt.show()
+	
+	return summ
     
 
 
@@ -259,9 +273,10 @@ def main():
     tau = tau_calc(surf_dens[:, 1], kappa)
     F_map = flux_map(tau, I, lamda, R_arr)
 
-
     # Finding the integrated flux
-    plot_spectra(tau, I, R_arr, lamda, Rmin=0, Rmax=0)
+    int_flux = plot_spectra(tau, I, R_arr, lamda, Rmin=0.03, Rmax=1.28)
+    
+    # TODO: Plotting fluxes of multiple radii together
     
 
 if __name__ == "__main__":
