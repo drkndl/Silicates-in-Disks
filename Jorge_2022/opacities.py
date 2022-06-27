@@ -98,7 +98,7 @@ def Qcurve_plotter(opfile, dens, gs):
 	plt.ylabel(r'$\kappa_{abs}$ ($cm^2/g$)')
 	plt.title(r"Q-curve for {0}, r = {1}, $fmax$ = {2}".format(mineral, rv, fmax))
 	plt.savefig("Qcurves/Qcurve_{0}_r{1}_f{2}.png".format(mineral, rv, fmax), bbox_inches = 'tight')
-	# plt.show()
+	plt.show()
 	
 	return lamda, kappa
 
