@@ -4,7 +4,7 @@ import pandas as pd
 from molmass import Formula
 from jorge_diskprop import inner_radius, r_from_T
 from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
-
+from scipy.interpolate import UnivariateSpline
 
 
 # Some constants in CGS
@@ -42,12 +42,12 @@ def surface_density(solids, molwt, top_abunds, nHtot):
     
     """
     Calculates the surface density of the given solids. Note that the calculated "surface" densities are actually (g/cm^3), but we assume column height to be 1 cm, so the surface density can be g/cm^2
-    Shape of surf_dens = (NPOINT, top)
+    Shape of surf_dens = (NPOINT, 1)
     """
 
     # Transposing 1D row array (shape: (1, NPOINT)) into 2D column array (shape: (NPOINT, 1)) for matrix multiplication
-    nHtot = nHtot[np.newaxis]
-    nHtot = nHtot.T
+    # ~ nHtot = nHtot[np.newaxis]
+    # ~ nHtot = nHtot.T
 
     surf_dens = {key: None for key in solids}
 
@@ -82,24 +82,40 @@ def Qcurve_plotter(opfile, dens, gs):
 	lamda = Q_curve['wavelength'].to_numpy()
 	Q = Q_curve['Q'].to_numpy()
 	
-	# Taking only the first half of the data (don't need it till 200 microns)
-	lamda = lamda[: len(lamda) // 2]
-	Q = Q[: len(Q) // 2]
+	# Taking only the indices where the wavelength is between 4 to 16 microns
+	indices = np.where(np.logical_and(lamda >= 4.0, lamda <= 20.0))
+	lamda = lamda[indices]
+	Q = Q[indices]
 	
-	# Still need to trim the wavelength down to about 500 points, but I need it till 20 microns. So I'll take every alternate value
-	# lamda = lamda[::5]
-	# Q = Q[::5]
+	# Ensuring that there are an equal number of wavelength i.e. 600 points across all solids
+	if len(lamda) > 450:
+		
+		idx = np.round(np.linspace(0, len(lamda) - 1, 450)).astype(int) 
+		lamda = lamda[idx]
+		Q = Q[idx]
+	
+	elif len(lamda) < 450:
+		
+		old_indices = np.arange(0,len(lamda))
+		new_length = 450
+		new_indices = np.linspace(0, len(lamda)-1, new_length)
+		
+		spl1 = UnivariateSpline(old_indices, lamda, k=3, s=0)
+		lamda = spl1(new_indices)
+		
+		spl2 = UnivariateSpline(old_indices, Q, k=3, s=0)
+		Q = spl2(new_indices) 
 	
 	kappa = 3 * Q / (4 * gs * dens)
 	
 	plt.plot(lamda, kappa)
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel(r'$\kappa_{abs}$ ($cm^2/g$)')
-	plt.title(r"Q-curve for {0}, r = {1}, $fmax$ = {2}".format(mineral, rv, fmax))
-	plt.savefig("Qcurves/Qcurve_{0}_r{1}_f{2}.png".format(mineral, rv, fmax), bbox_inches = 'tight')
+	plt.title(r"Q-curve for {0}, r = {1}, $f_{{max}}$ = {2}".format(mineral, rv, fmax))
+	plt.savefig("Qcurves_trimmed/Qcurve_{0}_r{1}_f{2}.png".format(mineral, rv, fmax), bbox_inches = 'tight')
 	plt.show()
 	
-	return lamda, kappa
+	return mineral, rv, fmax, lamda, kappa
 
 
 
@@ -108,8 +124,9 @@ def Plancks(T0, R_arr, R_in, lamda):
     """
     Calculates Planck function for a range of radius (converted from the temperature based on the disk model) and a range of wavelength in erg/(s cm^3 sr)
     """
-    # !!!!!!!!!!!!!!!!!!!!!!!!!! CHECK THIS COMMENT LATER ON !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Transposing 1D row array (shape: (1, NPOINT)) into 2D column array (shape: (NPOINT, 1)) for matrix multiplication
+
+    # Transposing 1D row array (shape: (1, NUMPOINTS)) into 2D column array (shape: (NUMPOINTS, 1)) for matrix multiplication
+    # Note that NUMPOINTS, the number of wavelength points considered (which varies based on the material) is not the same as NPOINT, the number of points in the GGchem simuation
     lamda = lamda[np.newaxis]
     lamda = lamda.T
 
@@ -141,7 +158,7 @@ def tau_calc(sigma, kappa):
     
     
 
-def flux_map(tau, I, lamda, R_arr):
+def flux_map(solid_name, rv, fmax, tau, I, lamda, R_arr):
 
     """
     Plotting the flux map (r, lambda)
@@ -151,7 +168,7 @@ def flux_map(tau, I, lamda, R_arr):
     F_map = (1 - np.exp(-tau)) * I                      # Calculating the flux map
 
     fig, ax = plt.subplots(1,1)
-    img = ax.imshow(F_map, cmap='jet', interpolation='none')
+    img = ax.imshow(F_map, cmap='plasma', interpolation='none')
 
     # Axes formatting    
     x_axis_locations = np.linspace(0, len(lamda)-1, 8).astype(int)
@@ -166,9 +183,9 @@ def flux_map(tau, I, lamda, R_arr):
     ax.set_yticklabels(y_axis_labels)
     ax.set_ylabel('R (AU)')
 
-    ax.set_title(r"Flux Map for Forsterite, r = 0.1, $f_{max}$ = 1.0")
+    ax.set_title(r"Flux Map for {0}, r = {1}, $f_{{max}}$ = {2}".format(solid_name, rv, fmax))
     fig.colorbar(img)
-    plt.savefig("Forst_flux_map.png", bbox_inches = 'tight')
+    plt.savefig("Flux_Maps_trimmed/{0}_fluxmap_r{1}_fmax{2}.png".format(solid_name, rv, fmax), bbox_inches = 'tight')
     plt.show()
     
     return F_map
@@ -260,8 +277,7 @@ def main():
 	R_in = inner_radius(Qr, T0, R_sun, T_sun)
 	R_arr = r_from_T(R_in, Tg, T0)
 	
-	top = 5                                 # Top X condensates whose abundance is the highest
-	
+	top = 5                                 # Top X condensates whose abundance is the highest	
 	gs = 0.1E-4                             # Grain radius (cm)
 	
 	# All 52 condensates for Sun from Fig C.1 Jorge et al. 2022:
@@ -270,27 +286,44 @@ def main():
 	# Finding the most abundant condensates
 	abundances, solid_names = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
 	top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr, solid_names)
-	topabunds_radii = topabunds_by_radii(top_solids, solid_names, top_abunds)
+	top5_solids, topabunds_radii = topabunds_by_radii(top_solids, solid_names, top_abunds)
 	
 	# Calculating the surface density
-	molwt = molecular_weight(solid_names)
-	surf_dens = surface_density(solid_names, molwt, topabunds_radii, nHtot)
-	print(surf_dens)
+	molwt = molecular_weight(top5_solids)
+	surf_dens = surface_density(top5_solids, molwt, topabunds_radii, nHtot)
 	
 	# Creating a dictionary of Qcurve input files and the corresponding material densities in g/cm^3
-	opfile_dens = {'Qcurve_inputs/Q_Diopside_rv0.1_fmaxxxx.dat' : 3.278, 'Qcurve_inputs/Q_Enstatite_Jaeger_DHS_fmax1.0_rv0.1.dat' : 3.2, 'Qcurve_inputs/Q_Forsterite_Sogawa_DHS_fmax1.0_rv0.1.dat' : 3.27, 'Qcurve_inputs/qval_Fe3O4_rv0.1_fmax0.7.dat' : 5.17, 'Qcurve_inputs/qval_Fe2SiO4_rv0.1_fmax1.0.dat' : 4.392, 'Qcurve_inputs/qval_Fe_met_rv0.1_fmax0.7.dat' : 7.874, 'Qcurve_inputs/qval_FeS_rv0.1_fmax0.7.dat' : 4.84, 'Qcurve_inputs/qval_Serpentine_rv0.1_fmax0.7.dat' : 2.6, 'Qcurve_inputs/qval_Spinel_rv0.1_fmax0.7.dat' : 3.64}
+	opfile_dens = {'Qcurve_inputs/Q_CaMgSi2O6_rv0.1_fmaxxxx.dat' : 3.278, 'Qcurve_inputs/Q_MgSiO3_Jaeger_DHS_fmax1.0_rv0.1.dat' : 3.2, 'Qcurve_inputs/Q_Mg2SiO4_Sogawa_DHS_fmax1.0_rv0.1.dat' : 3.27, 'Qcurve_inputs/qval_Fe3O4_rv0.1_fmax0.7.dat' : 5.17, 'Qcurve_inputs/qval_Fe2SiO4_rv0.1_fmax1.0.dat' : 4.392, 'Qcurve_inputs/qval_Fe_met_rv0.1_fmax0.7.dat' : 7.874, 'Qcurve_inputs/qval_FeS_rv0.1_fmax0.7.dat' : 4.84, 'Qcurve_inputs/qval_Mg3Si2O9H4_rv0.1_fmax0.7.dat' : 2.6, 'Qcurve_inputs/qval_MgAl2O4_rv0.1_fmax0.7.dat' : 3.64}
 	
-	# Plotting the Qcurves
-	lamdas = []
-	kappas = []
+	# Plotting the Qcurves	
+	lamdas = {key: None for key in top5_solids}
+	kappas = {key: None for key in top5_solids}
+	rvs = {key: None for key in top5_solids}
+	fmaxs = {key: None for key in top5_solids}
 	
 	for opfile, density in opfile_dens.items():
-		lamda, kappa = Qcurve_plotter(opfile, density, gs)
+		mineral, rv, fmax, lamda, kappa = Qcurve_plotter(opfile, density, gs)
+		lamdas[mineral] = lamda
+		kappas[mineral] = kappa
+		rvs[mineral] = rv
+		fmaxs[mineral] = fmax
+		
+	# Since some opacity files are missing at the moment, some lamda and kappa values are None
 	
-	# ~ # Plotting the flux map
-	# ~ I = Plancks(T0, R_arr, R_in, lamda)    
-	# ~ tau = tau_calc(surf_dens[:, 1], kappa)
-	# ~ F_map = flux_map(tau, I, lamda, R_arr)
+	# Plotting the flux map
+	I = {key: None for key in top5_solids}
+	tau = {key: None for key in top5_solids}
+	
+	for solid in top5_solids:
+		
+		try: 
+			I[solid] = Plancks(T0, R_arr, R_in, lamdas[solid]) 
+			tau[solid] = tau_calc(surf_dens[solid], kappas[solid])
+			F_map = flux_map(solid, rvs[solid], fmaxs[solid], tau[solid], I[solid], lamdas[solid], R_arr)
+		except:
+			TypeError
+		
+	
 	
 	# ~ # Finding the integrated flux
 	# ~ int_flux = plot_spectra(tau, I, R_arr, lamda, Rmin=0.03, Rmax=1.28)

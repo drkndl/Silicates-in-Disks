@@ -83,8 +83,10 @@ def topabunds_by_radii(top_solids, solid_names, top_abunds):
     Returns a dictionary of top 5 abundance values by radius. If the solid is not present in top 5 in that radius, the abundance is aken to be -300
     """
 
+    top5_solids = np.unique(top_solids)
+    
     # Make dictionary of all minerals to save radii at which the minerals are top 5 most abundant
-    topabunds_radii = {key: np.full(500, -300.0) for key in solid_names}
+    topabunds_radii = {key: np.full(500, -300.0) for key in top5_solids}
     
     # Radii indices where the solids are top 5 most abundant    
     for solid in topabunds_radii.keys():
@@ -93,7 +95,7 @@ def topabunds_by_radii(top_solids, solid_names, top_abunds):
         radii = idx[0]
         topabunds_radii[solid][radii] = top_abunds[idx]
         
-    return topabunds_radii
+    return top5_solids, topabunds_radii
 
 
 
@@ -141,7 +143,7 @@ def main():
     
     abundances, solid_names = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
     top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr, solid_names)
-    topabunds_radii = topabunds_by_radii(top_solids, solid_names, top_abunds)
+    top5_solids, topabunds_radii = topabunds_by_radii(top_solids, solid_names, top_abunds)
 
     print("\n TOP", top, "HIGHEST ABUNDANCES AT EACH RADIAL BIN : \n", top_abunds)
     print("\n CORRESPONDING TOP", top, "SPECIES AT EACH RADIAL BIN: \n", top_solids)
@@ -158,21 +160,7 @@ def main():
                     f.write(str(R_arr[radius]) + '\n')                                                                          # If all 5 solids are written, then add the radius in the last column and move to the next line
                 else:
                     f.write('\t ')
-
-    # Write down abundances and corresponding solids element by element in a file with just tab spaces for later parsing 
-    filename2 = 'Sun/sun_most_abundant.dat'
-    with open(filename2, 'w') as f:
-        
-        for radius in range(len(top_abunds)):
-            for element in range(len(top_abunds[radius])):
-                f.write('{0}:{1}'.format(str(top_solids[radius][element]), str(top_abunds[radius][element])))          # Adding the top 5 most abundant solids and their corresponding abundances
-                if (element+1) % top == 0:
-                    f.write('\t' + str(R_arr[radius]) + '\n')                                                          # If all 5 solids are written, then add the radius in the last column and move to the next line
-                else:
-                    f.write('\t')
-
-    print("Abundances written to {}".format(filename))
-    
+                    
 
 if __name__ == "__main__":
     main()
