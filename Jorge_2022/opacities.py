@@ -127,7 +127,7 @@ def Qcurve_plotter(opfile, dens, gs, lmin, lmax, lsize):
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel(r'$\kappa_{abs}$ ($cm^2/g$)')
 	plt.title(r"Q-curve for {0}, r = {1}, $f_{{max}}$ = {2}".format(latex_name(mineral), rv, fmax))
-	plt.savefig("Temp/Qcurve_{0}_r{1}_f{2}.png".format(mineral, rv, fmax), bbox_inches = 'tight')
+	plt.savefig("Qcurves_trimmed/Qcurve_{0}_r{1}_f{2}.png".format(mineral, rv, fmax), bbox_inches = 'tight')
 	plt.show()
 	
 	return mineral, rv, fmax, lamda, kappa
@@ -200,7 +200,7 @@ def flux_map(solid_name, rv, fmax, tau, I, lamda, R_arr):
 
     ax.set_title(r"Flux Map for {0}, r = {1}, $f_{{max}}$ = {2}".format(latex_name(solid_name), rv, fmax))
     fig.colorbar(img)
-    plt.savefig("Temp/{0}_fluxmap_r{1}_fmax{2}.png".format(solid_name, rv, fmax), bbox_inches = 'tight')
+    plt.savefig("Flux_Maps_trimmed/{0}_fluxmap_r{1}_fmax{2}.png".format(solid_name, rv, fmax), bbox_inches = 'tight')
     plt.show()
     
     return F_map
@@ -250,7 +250,7 @@ def plot_individual_spectra(solid_name, rv, fmax, lamda, summ):
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux')
 	plt.title(r'Spectrum {0} r={1} $\mu$m $f_{{max}}$={2} R={3}-{4} AU'.format(latex_name(solid_name), rv, fmax, Rmin, Rmax))
-	plt.savefig("Temp/Spectrum_{0}_r{1}_f{2}_R{3}-{4}.png".format(solid_name, rv, fmax, Rmin, Rmax))
+	plt.savefig("Spectra/Spectrum_{0}_r{1}_f{2}_R{3}-{4}.png".format(solid_name, rv, fmax, Rmin, Rmax))
 	plt.show()
 	
 
@@ -340,7 +340,9 @@ def main():
 			I[solid] = Plancks(T0, R_arr, R_in, lamdas[solid]) 
 			tau[solid] = tau_calc(surf_dens[solid], kappas[solid])
 			F_map += flux_map(solid, rvs[solid], fmaxs[solid], tau[solid], I[solid], lamdas[solid], R_arr)
-			intflux_sum += calculate_spectra(tau[solid], I[solid], R_arr, lamdas[solid], Rmin, Rmax)
+			intflux = calculate_spectra(tau[solid], I[solid], R_arr, lamdas[solid], Rmin, Rmax)
+			intflux_sum += intflux
+			plot_individual_spectra(solid, rvs[solid], fmaxs[solid], lamdas[solid], intflux)
 
 		except:
 			
