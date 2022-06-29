@@ -6,37 +6,39 @@ from jorge_diskprop import inner_radius, r_from_T
 
 
 def final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST):
-    
-    """
-    Returns the abundances (log10 n_solid/n<H>) for each condensate
-
-    Parameters:-
-    keyword:        1D list of the Static_Conc.dat column heading names, used to identify the various solids
-    minerals:       1D list of the condensates whose abundances are extracted
-    dat:            File that contains the output (headers skipped)
-    NELEM:          Total number of elements used
-    NMOLE:          Number of molecules created
-    NDUST:          Number of condensates created
-
-    Returns abundances, a 2D array of shape (NPOINT, no.of minerals) and the corresponding solid names as a 1D list named solid_names
-    """
-
-    abundances = []
-    solid_names = []
-    for i in range(4+NELEM+NMOLE, 4+NELEM+NMOLE+NDUST, 1):
-        
-        solid = keyword[i]
-        if keyword[i] in minerals:
-            
-            print(' i = ',i, ' solid name = ', solid)
-            solid_names.append(solid[1:])
-            ind = np.where(keyword == 'n' + solid[1:])[0]           # Finds the index where nsolid data for the current solid is available
-            if (np.size(ind) == 0): continue
-            ind = ind[0]
-            abundances.append(dat[:, ind])                          # Saves the log10 nsolid/n<H> of the current solid
-
-    abundances = np.array(abundances).transpose()                   # Transforming row of abundances into columns
-    return abundances, solid_names
+	
+	"""
+	Returns the abundances (log10 n_solid/n<H>) for each condensate
+	
+	Parameters:-
+	keyword:        1D list of the Static_Conc.dat column heading names, used to identify the various solids
+	minerals:       1D list of the condensates whose abundances are extracted
+	dat:            File that contains the output (headers skipped)
+	NELEM:          Total number of elements used
+	NMOLE:          Number of molecules created
+	NDUST:          Number of condensates created
+	
+	Returns abundances, a 2D array of shape (NPOINT, no.of minerals) and the corresponding solid names as a 1D list named solid_names
+	"""
+	abundances = []
+	solid_names = []
+	
+	for i in range(4+NELEM+NMOLE, 4+NELEM+NMOLE+NDUST, 1):
+		
+		solid = keyword[i]
+		if keyword[i] in minerals:
+			
+			print(' i = ',i, ' solid name = ', solid)
+			solid_names.append(solid[1:])            
+			ind = np.where(keyword == 'n' + solid[1:])[0]           # Finds the index where nsolid data for the current solid is available
+			if (np.size(ind) == 0): continue
+			ind = ind[0]
+			abundances.append(dat[:, ind])                          # Saves the log10 nsolid/n<H> of the current solid
+	
+	abunds_dict = dict(zip(solid_names, abundances))
+	abundances = np.array(abundances).transpose()                   # Transforming row of abundances into columns
+	
+	return abundances, solid_names, abunds_dict
 
 
 def most_abundant(top, NPOINT, abundances, R_arr, min_names):
@@ -77,25 +79,37 @@ def most_abundant(top, NPOINT, abundances, R_arr, min_names):
     return top_abunds, top_solids
 
 
-def topabunds_by_radii(top_solids, solid_names, top_abunds):
-    
-    """
-    Returns a dictionary of top 5 abundance values by radius. If the solid is not present in top 5 in that radius, the abundance is aken to be -300
-    """
-
-    top5_solids = np.unique(top_solids)
-    
-    # Make dictionary of all minerals to save radii at which the minerals are top 5 most abundant
-    topabunds_radii = {key: np.full(500, -300.0) for key in top5_solids}
-    
-    # Radii indices where the solids are top 5 most abundant    
-    for solid in topabunds_radii.keys():
-        
-        idx = np.where(top_solids == solid)
-        radii = idx[0]
-        topabunds_radii[solid][radii] = top_abunds[idx]
-        
-    return top5_solids, topabunds_radii
+def topabunds_by_radii(top_solids, solid_names, top_abunds, abunds_dict):
+	
+	"""
+	Returns a dictionary of top 5 abundance values by radius. If the solid is not present in top 5 in that radius, the abundance is aken to be -300
+	"""
+	
+	top5_solids = np.unique(top_solids)
+	
+	# ----------------------------- THE -300 IMPLEMENTATION ----------------------------------
+	
+	# ~ # Make dictionary of all minerals to save radii at which the minerals are top 5 most abundant
+	# ~ topabunds_radii = {key: np.full(500, -300.0) for key in top5_solids}
+	
+	# ~ # Radii indices where the solids are top 5 most abundant    
+	# ~ for solid in topabunds_radii.keys():
+		
+		# ~ idx = np.where(top_solids == solid)
+		# ~ radii = idx[0]
+		# ~ topabunds_radii[solid][radii] = top_abunds[idx]
+		
+	# ----------------------------- THE NON -300 IMPLEMENTATION -------------------------------
+	
+	topabunds_radii = {key: None for key in top5_solids}
+	
+	for solid in topabunds_radii.keys():		
+		topabunds_radii[solid] = abunds_dict[solid]
+	
+	print(topabunds_radii['CaMgSi2O6'])
+	print(len(topabunds_radii))
+		    
+	return top5_solids, topabunds_radii
 
 
 
@@ -141,9 +155,11 @@ def main():
     # Fe based condensation sequences from Fig 4. Jorge et al. 2022:
     # minerals = ['SFe', 'SFeS', 'SMnS', 'SFe2SiO4', 'SFeAl2O4', 'SFeTiO3', 'SFeAl2SiO7H2', 'SKFe3AlSi3O12H2', 'SFe3O4', 'SFe3Si2O9H4', 'SNi3S2', 'SCa3Fe2Si3O12']
     
-    abundances, solid_names = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
+    abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
+    print(abunds_dict['CaMgSi2O6'], len(abunds_dict['CaMgSi2O6']))
+    
     top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr, solid_names)
-    top5_solids, topabunds_radii = topabunds_by_radii(top_solids, solid_names, top_abunds)
+    top5_solids, topabunds_radii = topabunds_by_radii(top_solids, solid_names, top_abunds, abunds_dict)
 
     print("\n TOP", top, "HIGHEST ABUNDANCES AT EACH RADIAL BIN : \n", top_abunds)
     print("\n CORRESPONDING TOP", top, "SPECIES AT EACH RADIAL BIN: \n", top_solids)

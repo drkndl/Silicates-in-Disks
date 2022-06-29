@@ -127,7 +127,7 @@ def Qcurve_plotter(opfile, dens, gs, lmin, lmax, lsize):
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel(r'$\kappa_{abs}$ ($cm^2/g$)')
 	plt.title(r"Q-curve for {0}, r = {1}, $f_{{max}}$ = {2}".format(latex_name(mineral), rv, fmax))
-	plt.savefig("Qcurves_trimmed/Qcurve_{0}_r{1}_f{2}.png".format(mineral, rv, fmax), bbox_inches = 'tight')
+	plt.savefig("NonMinus300/Qcurve_{0}_r{1}_f{2}.png".format(mineral, rv, fmax), bbox_inches = 'tight')
 	plt.show()
 	
 	return mineral, rv, fmax, lamda, kappa
@@ -200,7 +200,7 @@ def flux_map(solid_name, rv, fmax, tau, I, lamda, R_arr):
 
     ax.set_title(r"Flux Map for {0}, r = {1}, $f_{{max}}$ = {2}".format(latex_name(solid_name), rv, fmax))
     fig.colorbar(img)
-    plt.savefig("Flux_Maps_trimmed/{0}_fluxmap_r{1}_fmax{2}.png".format(solid_name, rv, fmax), bbox_inches = 'tight')
+    plt.savefig("NonMinus300/{0}_fluxmap_r{1}_fmax{2}.png".format(solid_name, rv, fmax), bbox_inches = 'tight')
     plt.show()
     
     return F_map
@@ -250,7 +250,7 @@ def plot_individual_spectra(solid_name, rv, fmax, lamda, summ):
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux')
 	plt.title(r'Spectrum {0} r={1} $\mu$m $f_{{max}}$={2} R={3}-{4} AU'.format(latex_name(solid_name), rv, fmax, Rmin, Rmax))
-	plt.savefig("Spectra/Spectrum_{0}_r{1}_f{2}_R{3}-{4}.png".format(solid_name, rv, fmax, Rmin, Rmax))
+	plt.savefig("NonMinus300/Spectrum_{0}_r{1}_f{2}_R{3}-{4}.png".format(solid_name, rv, fmax, Rmin, Rmax))
 	plt.show()
 	
 
@@ -301,9 +301,9 @@ def main():
 	minerals = (['SZrSiO4', 'SV2O3', 'SCaTiSiO5', 'SCr2O3', 'SCaMgSi2O6', 'SMg2SiO4','SMgSiO3','SMg3Si2O9H4', 'SMgCr2O4', 'SMnTiO3', 'SNi', 'SFe', 'SZrO2', 'SFeS', 'SCa3Al2Si3O12', 'SNaAlSiO4', 'SCaAl2Si2O8', 'SMgAl2O4', 'SFeTiO3', 'SMnS', 'SNaAlSi3O8', 'SW', 'SCaTiO3', 'SMn3Al2Si3O12', 'SKAlSi3O8', 'SNi3S2', 'SNaCl', 'SVO', 'SFeAl2O4', 'SAlO2H', 'SFe2SiO4', 'SCa5P3O12F', 'SCa2MgSi2O7', 'SCa5P3O13H', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2', 'SLi2SiO3', 'SWO3', 'SLiCl', 'SMg3Si4O12H2', 'SMnAl2SiO7H2', 'SFeAl2SiO7H2', 'SFe3O4', 'SCa3Fe2Si3O12', 'STi3O5', 'STi4O7', 'SSiO', 'SKFe3AlSi3O12H2', 'SCr', 'SMg3Si2O9H4', 'SCaAl2Si2O10H4', 'SH2O', 'SFe3Si2O9H4'])
 	
 	# Finding the most abundant condensates
-	abundances, solid_names = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
+	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
 	top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr, solid_names)
-	top5_solids, topabunds_radii = topabunds_by_radii(top_solids, solid_names, top_abunds)
+	top5_solids, topabunds_radii = topabunds_by_radii(top_solids, solid_names, top_abunds, abunds_dict)
 	
 	# Calculating the surface density
 	molwt = molecular_weight(top5_solids)
@@ -367,7 +367,7 @@ def main():
 	
 	ax.set_title(r"Overall Flux Map for r=0.1 microns")
 	fig.colorbar(img)
-	plt.savefig("Flux_Maps_trimmed/overall_fluxmap.png", bbox_inches = 'tight')
+	plt.savefig("NonMinus300/overall_fluxmap.png", bbox_inches = 'tight')
 	plt.show()
 
 	# Plotting the overall spectrum
@@ -377,7 +377,7 @@ def main():
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux')
 	plt.title(r'Overall Spectrum r=0.1 $\mu$m R={0}-{1} AU'.format(Rmin, Rmax))
-	plt.savefig("Spectra/Overall_spectrum_r0.1_R{0}-{1}.png".format(Rmin, Rmax))
+	plt.savefig("NonMinus300/Overall_spectrum_r0.1_R{0}-{1}.png".format(Rmin, Rmax))
 	plt.show()
 	
 	# Plotting the overall spectrum considering multiple radii together
@@ -399,7 +399,7 @@ def main():
 	plt.ylabel('Flux')
 	plt.title(r'Overall spectrum for multiple radii')
 	plt.legend()	
-	plt.savefig("Spectra/Overall_spectrum_multiple_radii.png")
+	plt.savefig("NonMinus300/Overall_spectrum_multiple_radii.png")
 	plt.show()
 
 if __name__ == "__main__":
