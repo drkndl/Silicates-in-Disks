@@ -9,12 +9,15 @@ from scipy.interpolate import UnivariateSpline
 plt.rcParams['axes.titlesize'] = 10
 
 
+
 # Some constants in CGS
 Na = 6.022E23                    # Avogadro's number in /mol
 h = 6.6261e-27                   # Planck's constant in cm^2 g s-1
 c = 2.99792458e10                # Speed of light in cm/s                
 k = 1.3807e-16                   # Boltzmann constant in cm^2 g s^-2 K^-1
 bar = 1.E+6                      # 1 bar in dyn/cm^2
+AU = 1.496E13                    # 1 astronomical unit in cm
+Jy = 1.E-23                      # Converting flux from CGS units to Jy
 
 
 
@@ -22,6 +25,15 @@ def latex_name(solid):
 	
 	"""
 	Creates latex friendly names of compounds for better plot formatting
+	
+	Parameters:
+	
+	solids         : The formula of the condensate (string)
+	
+	Example:
+	
+	>>> latex_name('CaMgSi2O6')
+	>>> $CaMgSi_2O_6$
 	"""
 	
 	f = Formula(solid)
@@ -35,13 +47,13 @@ def latex_name(solid):
 def molecular_weight(solids):
     
     """
-    Calculates the molecular weight of the given solids in g
+    Calculates the molecular weight of the given solids in g/mol
 
     Parameters:
 
-    solids       : A 2D array of the names of the top 5 most abundant solids at every radius (Shape (r, 5))
+    solids       : A 1D list of the names (strings) of the top 5 most abundant solids at every radius 
 
-    Returns a 2D array of shape (r, 5) of the molecular weights (in g) of the given solids
+    Returns a dictionary of the molecular weights (in g) for each of the given solids where the keys are the solid names and the values are the molecular weights
     """
     
     molwt = {key: None for key in solids}
@@ -127,7 +139,7 @@ def Qcurve_plotter(opfile, dens, gs, lmin, lmax, lsize):
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel(r'$\kappa_{abs}$ ($cm^2/g$)')
 	plt.title(r"Q-curve for {0}, r = {1}, $f_{{max}}$ = {2}".format(latex_name(mineral), rv, fmax))
-	plt.savefig("NonMinus300/Qcurve_{0}_r{1}_f{2}.png".format(mineral, rv, fmax), bbox_inches = 'tight')
+	plt.savefig("Qcurves_trimmed/Qcurve_{0}_r{1}_f{2}.png".format(mineral, rv, fmax), bbox_inches = 'tight')
 	plt.show()
 	
 	return mineral, rv, fmax, lamda, kappa
@@ -141,7 +153,7 @@ def Plancks(T0, R_arr, R_in, lamda):
     """
 
     # Transposing 1D row array (shape: (1, NUMPOINTS)) into 2D column array (shape: (NUMPOINTS, 1)) for matrix multiplication
-    # Note that NUMPOINTS, the number of wavelength points considered (which varies based on the material) is not the same as NPOINT, the number of points in the GGchem simuation
+    # Note that NUMPOINTS, the number of wavelength points considered (which depends on the opacity file) is not the same as NPOINT, the number of points in the GGchem simuation
     lamda = lamda[np.newaxis]
     lamda = lamda.T
 
@@ -200,24 +212,24 @@ def flux_map(solid_name, rv, fmax, tau, I, lamda, R_arr):
 
     ax.set_title(r"Flux Map for {0}, r = {1}, $f_{{max}}$ = {2}".format(latex_name(solid_name), rv, fmax))
     fig.colorbar(img)
-    plt.savefig("NonMinus300/{0}_fluxmap_r{1}_fmax{2}.png".format(solid_name, rv, fmax), bbox_inches = 'tight')
+    plt.savefig("Flux_Maps_trimmed/{0}_fluxmap_r{1}_fmax{2}.png".format(solid_name, rv, fmax), bbox_inches = 'tight')
     plt.show()
     
     return F_map
 
 
 
-def f(tau, I, r):
+def f(tau, I, r, delr):
     
     """
     f in numerical integration to calculate the integrated flux for the s
     """
 
-    return tau * I * 2*np.pi * r
+    return 0.5 * delr * AU * tau * I * 2*np.pi * r * AU
 
     
     
-def calculate_spectra(tau, I, R_arr, lamda, Rmin, Rmax):
+def calculate_spectra(tau, I, R_arr, Rmin, Rmax):
 	
 	"""
 	Plots the integrated flux vs wavelength
@@ -230,29 +242,45 @@ def calculate_spectra(tau, I, R_arr, lamda, Rmin, Rmax):
 	Rmin_id = np.where(R_rounded == Rmin)[0][0]
 	Rmax_id = np.where(R_rounded == Rmax)[0][0]
 	
-	summ = 0
-	for r1 in range(Rmin_id, Rmax_id-1):
-		for r2 in range(r1+1, Rmax_id):
+	# Transposing the matrices for element-wise matrix multiplication
+	R_arr = R_arr * AU
+	R_arr = R_arr[np.newaxis]
+	R_arr = R_arr.T 
+	I = I.T
 	
-			# Numerical integration using the trapezoidal rule
-			delr = R_arr[r2] - R_arr[r1]
-			fr1 = f(tau[r1, :], I[:, r1], R_arr[r1])
-			fr2 = f(tau[r2, :], I[:, r2], R_arr[r2])
-			summ += delr * 0.5 * (fr1 + fr2)
+	delr = (R_arr[Rmin_id+1: Rmax_id+1, :] - R_arr[Rmin_id: Rmax_id, :])	
+	f1 = R_arr[Rmin_id: Rmax_id, :] * tau[Rmin_id: Rmax_id, :] * I[Rmin_id: Rmax_id, :] * 2 * np.pi * delr * 0.5
+	f2 = R_arr[Rmin_id+1: Rmax_id+1, :] * tau[Rmin_id+1: Rmax_id+1, :] * I[Rmin_id+1: Rmax_id+1, :] * 2 * np.pi * delr * 0.5
+	# f1, f2 shape: (NPOINT - 1, lsize)
+	
+	temp = (f1 + f2)
+	summ = temp.sum(axis=0)       # summ shape: (lsize, 1)
 
-	return summ
-
-
-def plot_individual_spectra(solid_name, rv, fmax, lamda, summ):
-		
+	# Inefficient for loop method
+	# ~ summ = 0
+	# ~ for r1 in range(Rmin_id, Rmax_id-1):
+		# ~ for r2 in range(r1+1, Rmax_id):
+	
+			# ~ # Numerical integration using the trapezoidal rule
+			# ~ delr = R_arr[r2] - R_arr[r1]
+			# ~ fr1 = f(tau[r1, :], I[:, r1], R_arr[r1], delr)
+			# ~ fr2 = f(tau[r2, :], I[:, r2], R_arr[r2], delr)
+			# ~ summ += (fr1 + fr2)
+	
+	return summ / Jy
+	
+	
+	
+def plot_spectra(lamda, summ, solid_name, rv, fmax, Rmin, Rmax):
+	
 	fig = plt.figure()
 	plt.plot(lamda, summ)
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
-	plt.ylabel('Flux')
+	plt.ylabel('Flux [Jy]')
 	plt.title(r'Spectrum {0} r={1} $\mu$m $f_{{max}}$={2} R={3}-{4} AU'.format(latex_name(solid_name), rv, fmax, Rmin, Rmax))
-	plt.savefig("NonMinus300/Spectrum_{0}_r{1}_f{2}_R{3}-{4}.png".format(solid_name, rv, fmax, Rmin, Rmax))
+	plt.savefig("Spectra/Spectrum_{0}_r{1}_f{2}_R{3}-{4}.png".format(solid_name, rv, fmax, Rmin, Rmax))
 	plt.show()
-	
+
 
 
 def main():
@@ -323,9 +351,8 @@ def main():
 		lamdas[mineral] = lamda
 		kappas[mineral] = kappa
 		rvs[mineral] = rv
-		fmaxs[mineral] = fmax
-		
-	# Since some opacity files are missing at the moment, so some lamda and kappa values are None
+		fmaxs[mineral] = fmax		
+	# Since some opacity files are missing at the moment, some lamda and kappa values are None
 	
 	# Plotting the flux map and calculating the integrated flux for each solid
 	I = {key: None for key in top5_solids}
@@ -340,9 +367,9 @@ def main():
 			I[solid] = Plancks(T0, R_arr, R_in, lamdas[solid]) 
 			tau[solid] = tau_calc(surf_dens[solid], kappas[solid])
 			F_map += flux_map(solid, rvs[solid], fmaxs[solid], tau[solid], I[solid], lamdas[solid], R_arr)
-			intflux = calculate_spectra(tau[solid], I[solid], R_arr, lamdas[solid], Rmin, Rmax)
+			intflux = calculate_spectra(tau[solid], I[solid], R_arr, Rmin, Rmax)
+			plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax)
 			intflux_sum += intflux
-			plot_individual_spectra(solid, rvs[solid], fmaxs[solid], lamdas[solid], intflux)
 
 		except:
 			
@@ -367,40 +394,44 @@ def main():
 	
 	ax.set_title(r"Overall Flux Map for r=0.1 microns")
 	fig.colorbar(img)
-	plt.savefig("NonMinus300/overall_fluxmap.png", bbox_inches = 'tight')
+	plt.savefig("Flux_Maps_trimmed/overall_fluxmap.png", bbox_inches = 'tight')
 	plt.show()
 
 	# Plotting the overall spectrum
 	fig = plt.figure()
-	lamda_array = np.linspace(lmin, lmax, lsize)
-	plt.plot(lamda_array, intflux_sum)
+	plt.plot(lamdas['Mg2SiO4'], intflux_sum)
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
-	plt.ylabel('Flux')
+	plt.ylabel('Flux [Jy]')
 	plt.title(r'Overall Spectrum r=0.1 $\mu$m R={0}-{1} AU'.format(Rmin, Rmax))
-	plt.savefig("NonMinus300/Overall_spectrum_r0.1_R{0}-{1}.png".format(Rmin, Rmax))
+	plt.savefig("Spectra/Overall_spectrum_r0.1_R{0}-{1}.png".format(Rmin, Rmax))
 	plt.show()
 	
 	# Plotting the overall spectrum considering multiple radii together
-	Rmax_list = [0.25, 0.5, 0.8, 1.0, 1.28]
+	Rmin_list = [0.03, 0.5, 0.75]
+	Rmax_list = [0.035, 1.0, 1.28]
+	# colors = ['blue', 'black', 'red', 'darkorange', 'gold', 'darkorchid', 'aqua', 'cadetblue', 'cornflowerblue', 'chartreuse', 'limegreen', 'darkgreen']
+	colors = ['blue', 'darkorchid', 'aqua']
 	intflux_sum_mr = np.zeros(lsize)
 	fig = plt.figure()
 	
-	for Rupper in Rmax_list:		
+	for i in range(len(Rmax_list)):		
 		for solid in top5_solids:		
 			try: 			
-				intflux_sum_mr += calculate_spectra(tau[solid], I[solid], R_arr, lamdas[solid], Rmin, Rupper)
+				intflux_sum_mr += calculate_spectra(tau[solid], I[solid], R_arr, Rmin_list[i], Rmax_list[i])
 	
 			except:			
 				TypeError
 			
-		plt.plot(lamda_array, intflux_sum_mr, label="Rmax = {0} AU".format(Rupper))
+		plt.plot(lamdas['Mg2SiO4'], intflux_sum_mr, color = colors[i], label=r"($R_{{min}}$, $R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[i], Rmax_list[i]))
+		intflux_sum_mr = np.zeros(lsize)
 			
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
-	plt.ylabel('Flux')
-	plt.title(r'Overall spectrum for multiple radii')
+	plt.ylabel('Flux [Jy]')
+	plt.title(r'Overall spectrum for multiple radii - Zoomed x2')
 	plt.legend()	
-	plt.savefig("NonMinus300/Overall_spectrum_multiple_radii.png")
+	plt.savefig("Spectra/Overall_spectrum_multiple_radii_limits_zoomed2.png")
 	plt.show()
+
 
 if __name__ == "__main__":
     main()

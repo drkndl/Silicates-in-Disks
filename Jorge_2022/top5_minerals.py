@@ -105,9 +105,6 @@ def topabunds_by_radii(top_solids, solid_names, top_abunds, abunds_dict):
 	
 	for solid in topabunds_radii.keys():		
 		topabunds_radii[solid] = abunds_dict[solid]
-	
-	print(topabunds_radii['CaMgSi2O6'])
-	print(len(topabunds_radii))
 		    
 	return top5_solids, topabunds_radii
 
