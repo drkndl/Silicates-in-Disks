@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from jorge_diskprop import inner_radius, r_from_T
+from diskprop import inner_radius, r_from_T
 
 
 def final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST):
@@ -109,71 +109,3 @@ def topabunds_by_radii(top_solids, solid_names, top_abunds, abunds_dict):
 	return top5_solids, topabunds_radii
 
 
-
-def main():
-    
-    file   = 'Sun/sun_Static_Conc.dat'          # Simulation output file
-    data   = open(file)
-    dummy  = data.readline()                    # Ignoring first line
-    dimens = data.readline()                
-    dimens = np.array(dimens.split())
-    NELEM  = int(dimens[0])                 # Total number of elements used
-    NMOLE  = int(dimens[1])                 # Number of molecules created
-    NDUST  = int(dimens[2])                 # Number of condensates created
-    NPOINT = int(dimens[3])                 # Number of points in simulation
-    header = data.readline()                # Saves parameter names such as molecule names
-    data.close()
-
-    dat = np.loadtxt(file,skiprows=3)
-    keyword = np.array(header.split())      # Array of parameter names such as molecule names
-
-    bar   = 1.E+6                    # 1 bar in dyn/cm^2 
-    Tg    = dat[:,0]                 # T [K]
-    nHtot = dat[:,1]                 # n<H> [cm^-3]
-    lognH = np.log10(nHtot)          
-    press = dat[:,2]                 # p [dyn/cm^2]
-    Tmin  = np.min(Tg)               # Minimum gas temperature
-    Tmax  = np.max(Tg)               # Maximum gas temperature
-
-    # Converting temperatures to corresponding radii
-    T0 = 1500               # Sublimation temperature (K)
-    Qr = 1                  # Ratio of absorption efficiencies (assumed to be black body)
-    R_sun = 0.00465047      # Sun's radius (AU)
-    T_sun = 5780            # Effective temperature of the sun (K)
-
-    R_in = inner_radius(Qr, T0, R_sun, T_sun)
-    R_arr = r_from_T(R_in, Tg, T0)
-
-    top = 5                 # Top X condensates whose abundance is the highest
-
-    # All 52 condensates for Sun from Fig C.1 Jorge et al. 2022:
-    minerals = (['SZrSiO4', 'SV2O3', 'SCaTiSiO5', 'SCr2O3', 'SCaMgSi2O6', 'SMg2SiO4','SMgSiO3','SMg3Si2O9H4', 'SMgCr2O4', 'SMnTiO3', 'SNi', 'SFe', 'SZrO2', 'SFeS', 'SCa3Al2Si3O12', 'SNaAlSiO4', 'SCaAl2Si2O8', 'SMgAl2O4', 'SFeTiO3', 'SMnS', 'SNaAlSi3O8', 'SW', 'SCaTiO3', 'SMn3Al2Si3O12', 'SKAlSi3O8', 'SNi3S2', 'SNaCl', 'SVO', 'SFeAl2O4', 'SAlO2H', 'SFe2SiO4', 'SCa5P3O12F', 'SCa2MgSi2O7', 'SCa5P3O13H', 'SKMg3AlSi3O12H2', 'SNaMg3AlSi3O12H2', 'SLi2SiO3', 'SWO3', 'SLiCl', 'SMg3Si4O12H2', 'SMnAl2SiO7H2', 'SFeAl2SiO7H2', 'SFe3O4', 'SCa3Fe2Si3O12', 'STi3O5', 'STi4O7', 'SSiO', 'SKFe3AlSi3O12H2', 'SCr', 'SMg3Si2O9H4', 'SCaAl2Si2O10H4', 'SH2O', 'SFe3Si2O9H4'])
-
-    # Fe based condensation sequences from Fig 4. Jorge et al. 2022:
-    # minerals = ['SFe', 'SFeS', 'SMnS', 'SFe2SiO4', 'SFeAl2O4', 'SFeTiO3', 'SFeAl2SiO7H2', 'SKFe3AlSi3O12H2', 'SFe3O4', 'SFe3Si2O9H4', 'SNi3S2', 'SCa3Fe2Si3O12']
-    
-    abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
-    print(abunds_dict['CaMgSi2O6'], len(abunds_dict['CaMgSi2O6']))
-    
-    top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr, solid_names)
-    top5_solids, topabunds_radii = topabunds_by_radii(top_solids, solid_names, top_abunds, abunds_dict)
-
-    print("\n TOP", top, "HIGHEST ABUNDANCES AT EACH RADIAL BIN : \n", top_abunds)
-    print("\n CORRESPONDING TOP", top, "SPECIES AT EACH RADIAL BIN: \n", top_solids)
-    
-    # Write down abundances and corresponding solids element by element in a file in a human readable format 
-    filename = 'Sun/sun_most_abundant_readable.dat'
-    with open(filename, 'w') as f:
-        
-        f.write('{0:47} {1:47} {2:47} {3:47} {4:47} Radius \n'.format(str(1), str(2), str(3), str(4), str(5)))                  # Adding headers with some formatting to help readability
-        for radius in range(len(top_abunds)):
-            for element in range(len(top_abunds[radius])):
-                f.write('{0:20} : {1:20} '.format(str(top_solids[radius][element]), str(top_abunds[radius][element])))          # Adding the top 5 most abundant solids and their corresponding abundances
-                if (element+1) % top == 0:
-                    f.write(str(R_arr[radius]) + '\n')                                                                          # If all 5 solids are written, then add the radius in the last column and move to the next line
-                else:
-                    f.write('\t ')
-                    
-
-if __name__ == "__main__":
-    main()
