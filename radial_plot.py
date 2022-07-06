@@ -85,7 +85,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, folder, NELEM, N
 	ax2.set_xticklabels(T_ticks.value)
 	ax2.set_xlabel(r"$T \mathrm{[K]}$", fontsize=10)
 	
-	leg = plt.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize=9, fancybox=True, handlelength=0.5, prop={'size':csize}, ncol=3)       # Legend properties
+	leg = plt.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize=9, fancybox=True, handlelength=0.5, prop={'size':csize}, ncol=2)       # Legend properties
 	for color, text in zip(colors, leg.get_texts()):
 		text.set_color(color)
 		text.set_size(10)

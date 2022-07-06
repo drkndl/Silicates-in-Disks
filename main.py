@@ -30,7 +30,7 @@ G = 6.6725E-8           					# Gravitational constant (cm3 g^-1 s^-2)
 
 def main():
 	
-	file   = 'Sun/sun_Static_Conc.dat'      # Simulation output file
+	file   = 'HotStar/HS_Static_Conc.dat'      # Simulation output file
 	data   = open(file)
 	dummy  = data.readline()                # Ignoring first line
 	dimens = data.readline()                
@@ -55,13 +55,14 @@ def main():
 	# Converting temperatures to corresponding radii
 	T0 = 1500.0 * u.K                          	# Dust sublimation temperature (K)
 	Qr = 1                                  	# Ratio of absorption efficiencies (assumed to be black body)
-	R_star = const.R_sun.to(u.AU)               # Star's radius (AU)
-	T_star = 5780 * u.K                         # Effective temperature of the star (K)
-	Sigma0 = 1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
-	M_star = 1.99E33         					# Solar mass (g)
+	R_star = 2*const.R_sun.to(u.AU)             # Star's radius (AU)
+	T_star = 8000 * u.K                         # Effective temperature of the star (K)
+	Sigma0 = 2*1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
+	M_star = 8*1.99E33         					# Solar mass (g)
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
 	R_arr = r_from_T(R_in, Tg, T0)                # 1D array of radii obtained from the power law disk model (AU)
+	print(R_arr)
 	
 	top = 5                                 	  			# Top X condensates whose abundance is the highest	
 	lmin = 0.0 * u.micron 						  			# Lower limit of wavelength (microns)
@@ -75,7 +76,7 @@ def main():
 	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
 	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
 	B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)
-	folder = 'Temp/'                                        # Folder where all the results go
+	folder = 'HotStar/'                                     # Folder where all the results go
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
@@ -181,8 +182,9 @@ def main():
 	plt.show()
 	
 	# Plotting the overall spectrum considering multiple radii together
-	Rmin_list = [0.035, 0.035, 0.1, 0.1, 0.5, 0.75] * u.AU
-	Rmax_list = [0.05, 0.1, 0.25, 0.5, 1.0, 1.277] * u.AU
+	# print(np.round(R_arr, 3))	
+	Rmin_list = [0.132, 0.501, 1.003, 2.009, 3.508] * u.AU
+	Rmax_list = [0.501, 1.003, 2.009, 3.508, 4.893] * u.AU
 	intflux_sum_mr = np.zeros(lsize) * u.Jy
 	fig = plt.figure()
 	
@@ -190,7 +192,7 @@ def main():
 		for solid in top5_solids:		 			
 			intflux_sum_mr += calculate_spectra(tau[solid], I[solid], R_arr, Rmin_list[i], Rmax_list[i])
 			
-		plt.plot(lamdas['Mg2SiO4'], intflux_sum_mr, label=r"($R_{{min}}$, $R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[i].value, Rmax_list[i].value))
+		plt.plot(lamdas['Mg2SiO4'], intflux_sum_mr, label=r"($R_{{min}}$,$R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[i].value, Rmax_list[i].value))
 		intflux_sum_mr = np.zeros(lsize) * u.Jy
 			
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
@@ -222,7 +224,7 @@ def main():
 		for bl in range(len(B)):			
 			inter_flux[bl] = hankel_transform(F_map_sum, R_arr, lamdas['Mg2SiO4'], wl, B[bl], wl_array = False)
 		plt.plot(B, inter_flux, label=r"{0} $\mu$m".format(wl.value))	
-		inter_flux = np.zeros(len(B)) * u.Jy		
+		inter_flux = np.zeros(len(B)) * u.Jy	
 	
 	plt.xlabel(r'Baseline B (m)')
 	plt.ylabel('Correlated flux (Jy)')
@@ -230,6 +232,8 @@ def main():
 	plt.legend()
 	plt.savefig(folder + "Correlated_flux_mulWL_rv0.1.png")
 	plt.show()
+	
+	# Plotting the flux map against the baselines
 
 
 if __name__ == "__main__":

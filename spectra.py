@@ -277,7 +277,6 @@ def flux_map(tau, I):
 
 def plot_fluxmap(solid_name, rv, fmax, F_map, lamda, R_arr, folder):
 	
-	# F_map = F_map.to(u.Jy)
 	fig, ax = plt.subplots(1,1)
 	img = ax.imshow(F_map, cmap='plasma', interpolation='none')
 	
@@ -295,7 +294,7 @@ def plot_fluxmap(solid_name, rv, fmax, F_map, lamda, R_arr, folder):
 	ax.set_ylabel('R (AU)')
 	
 	ax.set_title(r"Flux Map for {0}, r = {1}, $f_{{max}}$ = {2}".format(latex_name(solid_name), rv, fmax))
-	fig.colorbar(img) #, label="Flux (Jy)")
+	fig.colorbar(img)
 	plt.savefig(folder + "Fluxmap_{0}_r{1}_fmax{2}.png".format(solid_name, rv, fmax), bbox_inches = 'tight')
 	plt.show()
 
