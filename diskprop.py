@@ -56,7 +56,7 @@ def r_from_T(R_in, T_arr, T0, q):
     return R_arr
 
 
-def surface_density(Sigma0, r):
+def surface_density(Sigma0, r, e):
 
     """
     Calculates the surface density Sigma (in g/cm^2)
@@ -68,7 +68,7 @@ def surface_density(Sigma0, r):
     Returns the surface density in g/cm^2 (float)
     """
 
-    Sigma = Sigma0 * (r)**(-3/2)
+    Sigma = Sigma0 * (r)**(e)
     return Sigma
 
 
@@ -92,7 +92,7 @@ def density(Sigma, H, mp):
     """
 
     rho = 0.5 * np.pi * Sigma / H
-    nH = rho / mp
+    nH = rho / mp                # From Planet_forming_disk_model.ipynb
     return rho, nH
 
 
@@ -113,7 +113,8 @@ def main():
     Tmax = 1500             # Maximum temperature in GGChem input (K)
     Tmin = 100              # Minimum temperature in GGChem input (K)
     Qr = 1                  # Ratio of absorption efficiencies (assumed to be black body)
-    q = -0.373
+    q = -0.6
+    e = -0.1
     R_star = 2*0.00465047   # Star's radius (AU)
     R_sun = 0.00465047      # Sun's radius (AU)
     T_star = 8000           # Effective temperature of the star (K)
@@ -126,7 +127,7 @@ def main():
     mu = 2.3                # Mean molecular weight
     Rc = 8.314E7            # Ideal gas constant (erg K^-1 mol^-1)
     N0 = 6.022E23           # Avogadro's constant (/mol)
-    Folder = "HotStar_q0.373/"
+    Folder = "Temp/"
     
     r_arr = np.linspace(0.05, 2.5, 100)      # AU
 
@@ -134,14 +135,14 @@ def main():
     print(R_in)
     T_arr = midplaneT_profile(R_in, T0, r_arr, q)
 
-    Sigma = surface_density(Sigma0, r_arr)
+    Sigma = surface_density(Sigma0, r_arr, e)
     H = scale_height(G, M_star, r_arr, kb, T_arr, mp, mu)
     
     rho, nH = density(Sigma, H, mp)
-    print("Number density nH: ", nH)
+    # print("Number density nH: ", nH)
     
     P = pressure(rho, Rc, T_arr, mu, N0, mp)
-    print("Pressure: ", P)
+    # print("Pressure: ", P)
 
     # Plotting the temperature vs radius profile of the disk
     R_label = np.round(R_star/R_sun, 1)

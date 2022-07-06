@@ -30,7 +30,7 @@ G = 6.6725E-8           					# Gravitational constant (cm3 g^-1 s^-2)
 
 def main():
 	
-	file   = 'HotStar_q0.373/HS0.373_Static_Conc.dat'      # Simulation output file
+	file   = 'HotStar/HS_Static_Conc.dat'      # Simulation output file
 	data   = open(file)
 	dummy  = data.readline()                # Ignoring first line
 	dimens = data.readline()                
@@ -59,7 +59,8 @@ def main():
 	T_star = 8000 * u.K                         # Effective temperature of the star (K)
 	Sigma0 = 2*1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
 	M_star = 8*1.99E33         					# Solar mass (g)
-	q = -0.373
+	q = -0.75
+	e = -0.6
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
 	R_arr = r_from_T(R_in, Tg, T0, q)                # 1D array of radii obtained from the power law disk model (AU)
@@ -76,12 +77,12 @@ def main():
 	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
 	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
 	B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)
-	folder = 'HotStar_q0.373/'                                     # Folder where all the results go
+	folder = 'Temp2/'                                # Folder where all the results go
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
 	# Plotting the abunances as a function of radius and temperature
-	# R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
+	R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
 	
 	# Finding the most abundant condensates
 	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
@@ -102,7 +103,7 @@ def main():
 					f.write('\t ')
 	
 	# Removing the solids without opfiles from top5_solids
-	not_there = ['SiO', 'Mg3Si4O12H2', 'Fe3Si2O9H4', 'Ni', 'NaAlSi3O8', 'NaMg3AlSi3O12H2', 'CaAl2Si2O8', 'H2O', 'Ca2MgSi2O7']
+	not_there = ['SiO', 'Mg3Si4O12H2', 'Fe3Si2O9H4', 'Ni', 'NaAlSi3O8', 'NaMg3AlSi3O12H2', 'CaAl2Si2O8', 'H2O', 'Ca2MgSi2O7', 'NH3', 'Al2O3', 'Ca2Al2SiO7', 'Ca3Al2Si3O12', 'CaAl2Si2O8', 'ZrO2', 'Ti3O5', 'W', 'VO', 'CaTiO3', 'NaAlSiO4']
 	top5_solids = np.setdiff1d(top5_solids, not_there)
 	
 	# Calculating the surface density
@@ -125,7 +126,7 @@ def main():
 	
 	for opfile, density in opfile_dens.items():
 		mineral, rv, fmax, lamda, kappa = get_l_and_k(opfile, density, gs, lmin, lmax, lsize)
-		# Qcurve_plotter(lamda, kappa, mineral, rv, fmax, folder)
+		Qcurve_plotter(lamda, kappa, mineral, rv, fmax, folder)
 		lamdas[mineral] = lamda
 		kappas[mineral] = kappa
 		rvs[mineral] = rv
@@ -139,15 +140,16 @@ def main():
 	
 	for solid in top5_solids:
 			
+			print(solid)
 			I[solid] = Plancks(T0, R_arr, R_in, lamdas[solid]) 
 			tau[solid] = tau_calc(surf_dens[solid], kappas[solid])
 			
 			F_map = flux_map(tau[solid], I[solid])
-			# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder)
+			plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder)
 			F_map_sum += F_map
 			
 			intflux = calculate_spectra(tau[solid], I[solid], R_arr, Rmin, Rmax)
-			# plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
+			plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
 			intflux_sum += intflux
 			
 	

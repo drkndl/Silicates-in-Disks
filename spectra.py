@@ -69,7 +69,7 @@ def surface_density(solids, molwt, top_abunds, nHtot):
 	for solid in surf_dens.keys():
 		n_solid = nHtot * 10**top_abunds[solid]
 		surf_dens[solid] = molwt[solid] * n_solid
-		surf_dens[solid] = 1 * u.cm * surf_dens[solid]    # Assuming a column height of 1 cm
+		surf_dens[solid] = (3 * u.AU).to(u.cm) * surf_dens[solid]    # Assuming a column height of 3 AU (Bitsch et al. 2015)
 		
 	return surf_dens
 
@@ -319,13 +319,15 @@ def calculate_spectra(tau, I, R_arr, Rmin, Rmax):
 	rad_arr = rad_arr.T 
 	I = I.T
 	
-	delr = (rad_arr[Rmin_id+1: Rmax_id+1, :] - rad_arr[Rmin_id: Rmax_id, :])	
-	f1 = rad_arr[Rmin_id: Rmax_id, :] * tau[Rmin_id: Rmax_id, :] * I[Rmin_id: Rmax_id, :] * 2 * np.pi * delr * 0.5
-	f2 = rad_arr[Rmin_id+1: Rmax_id+1, :] * tau[Rmin_id+1: Rmax_id+1, :] * I[Rmin_id+1: Rmax_id+1, :] * 2 * np.pi * delr * 0.5
+	summ = np.trapz(2 * np.pi * rad_arr * tau * I, x = rad_arr, axis = 0)
+	
+	# ~ delr = (rad_arr[Rmin_id+1: Rmax_id+1, :] - rad_arr[Rmin_id: Rmax_id, :])	
+	# ~ f1 = rad_arr[Rmin_id: Rmax_id, :] * tau[Rmin_id: Rmax_id, :] * I[Rmin_id: Rmax_id, :] * 2 * np.pi * delr * 0.5
+	# ~ f2 = rad_arr[Rmin_id+1: Rmax_id+1, :] * tau[Rmin_id+1: Rmax_id+1, :] * I[Rmin_id+1: Rmax_id+1, :] * 2 * np.pi * delr * 0.5
 	# f1, f2 shape: (NPOINT - 1, lsize)
 	
-	temp = (f1 + f2)
-	summ = temp.sum(axis=0)       # summ shape: (lsize, 1)
+	# ~ temp = (f1 + f2)
+	# ~ summ = temp.sum(axis=0)       # summ shape: (lsize, 1)
 	summ = summ.to(u.Jy, equivalencies = u.dimensionless_angles())
 
 	# Inefficient for-loop method

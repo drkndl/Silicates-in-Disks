@@ -1,0 +1,13 @@
+T0 = 1500               # Sublimation temperature (K)
+Tmax = 1500             # Maximum temperature in GGChem input (K)
+Tmin = 100              # Minimum temperature in GGChem input (K)
+Qr = 1                  # Ratio of absorption efficiencies (assumed to be black body)
+R_star = 2*0.00465047   # Star's radius (AU)
+R_sun = 0.00465047      # Sun's radius (AU)
+T_star = 8000           # Effective temperature of the star (K)
+Sigma0 = 2*1700         # Surface density with MMSN (g/cm^2)
+G = 6.6725E-8           # Gravitational constant (cm3 g^-1 s^-2)
+M_star = 8*1.99E33      # Star mass (g)
+M_sun = 1.99E33         # Solar mass (g)
+q = -0.6
+e = -0.1               # Sigma0 * (r/AU)**e
