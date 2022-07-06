@@ -22,7 +22,7 @@ def inner_radius(Qr, T0, R_star, T_star):
     return R_in
 
 
-def midplaneT_profile(R_in, T0, r_arr):
+def midplaneT_profile(R_in, T0, r_arr, q):
 
     """
     Calculates an array of midplane temperatures T (in K) in a disk to plots its radial dependence based on the given array of radii
@@ -35,11 +35,11 @@ def midplaneT_profile(R_in, T0, r_arr):
     Returns a 1D array of temperature in K calculated using the power law relationship
     """
 
-    T_arr = T0 * (r_arr/R_in)**(-3/4)
+    T_arr = T0 * (r_arr/R_in)**(q)
     return T_arr
 
 
-def r_from_T(R_in, T_arr, T0):
+def r_from_T(R_in, T_arr, T0, q):
 
     """
     Essentially the inverse of midplaneT_profile. Calculates an array of radii of the disk R_arr (in AU) for a given array of temperature based on the power-law relationship
@@ -52,7 +52,7 @@ def r_from_T(R_in, T_arr, T0):
     Returns a 1D array of radii in AU 
     """
 
-    R_arr = R_in * (T_arr/T0)**(-4/3)
+    R_arr = R_in * (T_arr/T0)**(1/q)
     return R_arr
 
 
@@ -113,6 +113,7 @@ def main():
     Tmax = 1500             # Maximum temperature in GGChem input (K)
     Tmin = 100              # Minimum temperature in GGChem input (K)
     Qr = 1                  # Ratio of absorption efficiencies (assumed to be black body)
+    q = -0.373
     R_star = 2*0.00465047   # Star's radius (AU)
     R_sun = 0.00465047      # Sun's radius (AU)
     T_star = 8000           # Effective temperature of the star (K)
@@ -125,12 +126,13 @@ def main():
     mu = 2.3                # Mean molecular weight
     Rc = 8.314E7            # Ideal gas constant (erg K^-1 mol^-1)
     N0 = 6.022E23           # Avogadro's constant (/mol)
+    Folder = "HotStar_q0.373/"
     
     r_arr = np.linspace(0.05, 2.5, 100)      # AU
 
     R_in = inner_radius(Qr, T0, R_star, T_star)
     print(R_in)
-    T_arr = midplaneT_profile(R_in, T0, r_arr)
+    T_arr = midplaneT_profile(R_in, T0, r_arr, q)
 
     Sigma = surface_density(Sigma0, r_arr)
     H = scale_height(G, M_star, r_arr, kb, T_arr, mp, mu)
@@ -148,7 +150,7 @@ def main():
     plt.xlabel("Radius R [AU]")
     plt.ylabel("Midplane Temperature T [K]")
     plt.title(r"$T_{{mid}}$ vs R, $R_{{star}}$ = {0}$R_\odot$, $T_{{star}}$ = {1} K, $M_{{star}}$ = {2}$M_\odot$, $\Sigma_0$ = {3} $g/cm^2$".format(R_label, T_star, M_label, Sigma0), fontsize=10)
-    plt.savefig("HotStar/Tmid_vs_R.png")
+    plt.savefig(Folder + "Tmid_vs_R.png")
     plt.show()
 
     # Plotting the radial profile of pressure and density 
@@ -158,11 +160,11 @@ def main():
     plt.ylabel("Properties")
     plt.title(r"Radial dependence of $\rho$, P")
     plt.legend()
-    plt.savefig("HotStar/Pandrho_vs_R.png")
+    plt.savefig(Folder + "Pandrho_vs_R.png")
     plt.show()
 
     # Write the disk property values required for GGchem to a file
-    with open('HotStar/disk_props.dat', 'w') as f:
+    with open(Folder + 'disk_props.dat', 'w') as f:
         f.write('Prop \t Max \t Min \n')
         f.write('P' + '\t' + str(P.max()) + '\t' + str(P.min()) + '\n')
         f.write('nH' + '\t' + str(nH.max()) + '\t' + str(nH.min()) + '\n')

@@ -1,8 +1,6 @@
 # Code to find the top N most abundant minerals at each radius packet. Does not plot right now
 
 import numpy as np
-import matplotlib.pyplot as plt
-from diskprop import inner_radius, r_from_T
 
 
 def final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST):

@@ -30,7 +30,7 @@ G = 6.6725E-8           					# Gravitational constant (cm3 g^-1 s^-2)
 
 def main():
 	
-	file   = 'HotStar/HS_Static_Conc.dat'      # Simulation output file
+	file   = 'HotStar_q0.373/HS0.373_Static_Conc.dat'      # Simulation output file
 	data   = open(file)
 	dummy  = data.readline()                # Ignoring first line
 	dimens = data.readline()                
@@ -59,10 +59,10 @@ def main():
 	T_star = 8000 * u.K                         # Effective temperature of the star (K)
 	Sigma0 = 2*1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
 	M_star = 8*1.99E33         					# Solar mass (g)
+	q = -0.373
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
-	R_arr = r_from_T(R_in, Tg, T0)                # 1D array of radii obtained from the power law disk model (AU)
-	print(R_arr)
+	R_arr = r_from_T(R_in, Tg, T0, q)                # 1D array of radii obtained from the power law disk model (AU)
 	
 	top = 5                                 	  			# Top X condensates whose abundance is the highest	
 	lmin = 0.0 * u.micron 						  			# Lower limit of wavelength (microns)
@@ -76,12 +76,12 @@ def main():
 	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
 	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
 	B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)
-	folder = 'HotStar/'                                     # Folder where all the results go
+	folder = 'HotStar_q0.373/'                                     # Folder where all the results go
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
 	# Plotting the abunances as a function of radius and temperature
-	# R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, folder, NELEM, NMOLE, NDUST)
+	# R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
 	
 	# Finding the most abundant condensates
 	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
@@ -102,7 +102,7 @@ def main():
 					f.write('\t ')
 	
 	# Removing the solids without opfiles from top5_solids
-	not_there = ['SiO', 'Mg3Si4O12H2', 'Fe3Si2O9H4', 'Ni', 'NaAlSi3O8', 'NaMg3AlSi3O12H2', 'CaAl2Si2O8', 'H2O']
+	not_there = ['SiO', 'Mg3Si4O12H2', 'Fe3Si2O9H4', 'Ni', 'NaAlSi3O8', 'NaMg3AlSi3O12H2', 'CaAl2Si2O8', 'H2O', 'Ca2MgSi2O7']
 	top5_solids = np.setdiff1d(top5_solids, not_there)
 	
 	# Calculating the surface density
@@ -182,25 +182,26 @@ def main():
 	plt.show()
 	
 	# Plotting the overall spectrum considering multiple radii together
-	# print(np.round(R_arr, 3))	
-	Rmin_list = [0.132, 0.501, 1.003, 2.009, 3.508] * u.AU
-	Rmax_list = [0.501, 1.003, 2.009, 3.508, 4.893] * u.AU
-	intflux_sum_mr = np.zeros(lsize) * u.Jy
-	fig = plt.figure()
+	print(np.round(R_arr, 3))	
 	
-	for i in range(len(Rmax_list)):		
-		for solid in top5_solids:		 			
-			intflux_sum_mr += calculate_spectra(tau[solid], I[solid], R_arr, Rmin_list[i], Rmax_list[i])
+	# ~ Rmin_list = [0.132, 0.5, 1.003, 2.05, 4.003, 8.18] * u.AU
+	# ~ Rmax_list = [0.5, 1.003, 2.05, 4.003, 8.18, 12.068] * u.AU
+	# ~ intflux_sum_mr = np.zeros(lsize) * u.Jy
+	# ~ fig = plt.figure()
+	
+	# ~ for i in range(len(Rmax_list)):		
+		# ~ for solid in top5_solids:		 			
+			# ~ intflux_sum_mr += calculate_spectra(tau[solid], I[solid], R_arr, Rmin_list[i], Rmax_list[i])
 			
-		plt.plot(lamdas['Mg2SiO4'], intflux_sum_mr, label=r"($R_{{min}}$,$R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[i].value, Rmax_list[i].value))
-		intflux_sum_mr = np.zeros(lsize) * u.Jy
+		# ~ plt.plot(lamdas['Mg2SiO4'], intflux_sum_mr, label=r"($R_{{min}}$,$R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[i].value, Rmax_list[i].value))
+		# ~ intflux_sum_mr = np.zeros(lsize) * u.Jy
 			
-	plt.xlabel(r'$\lambda$ ($\mu$m)')
-	plt.ylabel('Flux (Jy)')
-	plt.title(r'Overall spectrum for multiple radii')
-	plt.legend()	
-	plt.savefig(folder + "Overall_spectrum_multiple_radii_limits.png")
-	plt.show()
+	# ~ plt.xlabel(r'$\lambda$ ($\mu$m)')
+	# ~ plt.ylabel('Flux (Jy)')
+	# ~ plt.title(r'Overall spectrum for multiple radii')
+	# ~ plt.legend()	
+	# ~ plt.savefig(folder + "Overall_spectrum_multiple_radii_limits.png")
+	# ~ plt.show()
 	
 	# Plotting the correlated flux density for multiple baselines against wavelengths
 	fig = plt.figure()

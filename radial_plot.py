@@ -6,14 +6,13 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, ScalarFormatter, LogLocator
 from matplotlib.backends.backend_pdf import PdfPages
 from astropy import units as u
-from diskprop import inner_radius, r_from_T, midplaneT_profile
-from pyvalem.formula import Formula
+from diskprop import midplaneT_profile
 from fancy_name import latex_name
 # plt.rcParams['axes.linewidth'] = 1.5
 # plt.rcParams["figure.figsize"] = (14, 7)
 
 
-def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, folder, NELEM, NMOLE, NDUST):
+def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST):
 	
 	# Some stylistic choices
 	colo = ['blue', 'black', 'red', 'darkorange', 'gold', 'darkorchid', 'aqua', 'cadetblue', 'cornflowerblue', 'chartreuse', 'limegreen', 'darkgreen', 'chocolate', 'darkgoldenrod', 'darkkhaki', 'pink', 'moccasin', 'darkolivegreen', 'darkmagenta', 'aquamarine', 'coral', 'burlywood', 'silver', 'darkorange', 'crimson', 'darkcyan']
@@ -78,7 +77,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, folder, NELEM, N
 	# Adding the temperature axis on top
 	x_ticks = np.linspace(Rmin, Rmax, 7) 
 	print(x_ticks)
-	T_ticks = midplaneT_profile(R_in, T0, x_ticks).astype(int)
+	T_ticks = midplaneT_profile(R_in, T0, x_ticks, q).astype(int)
 	print(T_ticks)
 	ax2.set_xlim(ax.get_xlim())
 	ax2.set_xticks(x_ticks.value)
