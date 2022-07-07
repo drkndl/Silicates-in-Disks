@@ -10,3 +10,4 @@ G = 6.6725E-8           # Gravitational constant (cm3 g^-1 s^-2)
 M_star = 8*1.99E33      # Star mass (g)
 M_sun = 1.99E33         # Solar mass (g)
 q = -0.373
+e = -1.5

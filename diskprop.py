@@ -114,7 +114,7 @@ def main():
     Tmin = 100              # Minimum temperature in GGChem input (K)
     Qr = 1                  # Ratio of absorption efficiencies (assumed to be black body)
     q = -0.6
-    e = -0.1
+    e = -1.5
     R_star = 2*0.00465047   # Star's radius (AU)
     R_sun = 0.00465047      # Sun's radius (AU)
     T_star = 8000           # Effective temperature of the star (K)

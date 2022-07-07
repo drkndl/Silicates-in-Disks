@@ -60,10 +60,12 @@ def main():
 	Sigma0 = 2*1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
 	M_star = 8*1.99E33         					# Solar mass (g)
 	q = -0.75
-	e = -0.6
+	e = -1.5
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
 	R_arr = r_from_T(R_in, Tg, T0, q)                # 1D array of radii obtained from the power law disk model (AU)
+	H = 0.03 * R_in                              # Do we really know the dust Juhasz
+	# H = 1 * u.cm
 	
 	top = 5                                 	  			# Top X condensates whose abundance is the highest	
 	lmin = 0.0 * u.micron 						  			# Lower limit of wavelength (microns)
@@ -77,12 +79,12 @@ def main():
 	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
 	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
 	B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)
-	folder = 'Temp2/'                                # Folder where all the results go
+	folder = 'Sigma_formula/'                                # Folder where all the results go
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
 	# Plotting the abunances as a function of radius and temperature
-	R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
+	# R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
 	
 	# Finding the most abundant condensates
 	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
@@ -108,7 +110,7 @@ def main():
 	
 	# Calculating the surface density
 	molwt = molecular_weight(top5_solids)
-	surf_dens = surface_density(top5_solids, molwt, topabunds_radii, nHtot)
+	surf_dens = surface_density(top5_solids, molwt, topabunds_radii, nHtot, H)
 	
 	# Creating a dictionary of Qcurve input files and the corresponding material densities in g/cm^3
 	opfile_dens = {'Qcurve_inputs/Q_CaMgSi2O6_rv0.1_fmaxxxx.dat' : 3.278, 'Qcurve_inputs/Q_MgSiO3_Jaeger_DHS_fmax1.0_rv0.1.dat' : 3.2, 'Qcurve_inputs/Q_Mg2SiO4_Sogawa_DHS_fmax1.0_rv0.1.dat' : 3.27, 'Qcurve_inputs/qval_Fe3O4_rv0.1_fmax0.7.dat' : 5.17, 'Qcurve_inputs/qval_Fe2SiO4_rv0.1_fmax1.0.dat' : 4.392, 'Qcurve_inputs/qval_Fe_met_rv0.1_fmax0.7.dat' : 7.874, 'Qcurve_inputs/qval_FeS_rv0.1_fmax0.7.dat' : 4.84, 'Qcurve_inputs/qval_Mg3Si2O9H4_rv0.1_fmax0.7.dat' : 2.6, 'Qcurve_inputs/qval_MgAl2O4_rv0.1_fmax0.7.dat' : 3.64}
@@ -141,14 +143,14 @@ def main():
 	for solid in top5_solids:
 			
 			print(solid)
-			I[solid] = Plancks(T0, R_arr, R_in, lamdas[solid]) 
+			I[solid] = Plancks(T0, R_arr, R_in, lamdas[solid], q, solid, folder) 
 			tau[solid] = tau_calc(surf_dens[solid], kappas[solid])
 			
 			F_map = flux_map(tau[solid], I[solid])
 			plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder)
 			F_map_sum += F_map
 			
-			intflux = calculate_spectra(tau[solid], I[solid], R_arr, Rmin, Rmax)
+			intflux = calculate_spectra(tau[solid], F_map, I[solid], R_arr, Rmin, Rmax)
 			plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
 			intflux_sum += intflux
 			
@@ -233,7 +235,7 @@ def main():
 	plt.ylabel('Correlated flux (Jy)')
 	plt.title(r'Correlated flux for multiple wavelengths, rv = 0.1 $\mu$m')
 	plt.legend()
-	plt.savefig(folder + "Correlated_flux_mulWL_rv0.1.png")
+	plt.savefig(folder + "Correlated_flux_multWL_rv0.1.png")
 	plt.show()
 	
 	# Plotting the flux map against the baselines

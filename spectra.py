@@ -45,7 +45,7 @@ def molecular_weight(solids):
 
 
 
-def surface_density(solids, molwt, top_abunds, nHtot):
+def surface_density(solids, molwt, top_abunds, nHtot, H):
 	
 	"""
 	Calculates the surface density of the given solids. Note that the calculated "surface" densities are actually (g/cm^3), but we assume column height to be 1 cm, so the surface density can be g/cm^2
@@ -69,7 +69,8 @@ def surface_density(solids, molwt, top_abunds, nHtot):
 	for solid in surf_dens.keys():
 		n_solid = nHtot * 10**top_abunds[solid]
 		surf_dens[solid] = molwt[solid] * n_solid
-		surf_dens[solid] = (3 * u.AU).to(u.cm) * surf_dens[solid]    # Assuming a column height of 3 AU (Bitsch et al. 2015)
+		surf_dens[solid] = H.to(u.cm) * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)    # Assuming a column height of H AU
+		# surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
 		
 	return surf_dens
 
@@ -204,7 +205,7 @@ def Qcurve_plotter(lamda, kappa, mineral, rv, fmax, folder):
 
 
 
-def Plancks(T0, R_arr, R_in, lamda):
+def Plancks(T0, R_arr, R_in, lamda, q, solid, folder):
 	
 	"""
 	Calculates the spectral radiance (spectral emissive power per unit area, per unit solid angle, per unit frequency for particular radiation frequencies) of the solid using Planck's law for a range of radii (converted from temperatures based on the disk model) and a range of wavelengths in erg/(s Hz sr cm^2) 
@@ -229,10 +230,21 @@ def Plancks(T0, R_arr, R_in, lamda):
 	
 	# Planck's function in terms of frequency
 	v = c/lamda_cm
-	T = T0 * (R_arr/R_in)**(-3/4)
+	T = T0 * (R_arr/R_in)**(q)
 	bb = BlackBody(temperature=T, scale=1.0)
 	I = bb(v)
-
+	
+	# Self-coding it (same answer as the astropy model)
+	# I = (2 * h * v**3 / c**2) * (1 / (np.exp(h * v / (k * T)) - 1))
+	# I = I / (u.Hz * u.s * u.sr)
+	
+	plt.plot(lamda, I)
+	plt.title("{0} Spectral radiance vs Wavelength".format(solid))
+	plt.ylabel("Spectral radiance ({0})".format(I.unit))
+	plt.xlabel(r"$\lambda$ ($\mu$m)")
+	plt.savefig(folder + "Bv_vs_wl_{0}_rv0.1.png".format(solid))
+	plt.show()
+	
 	return I
 
 
@@ -257,6 +269,10 @@ def tau_calc(sigma, kappa):
     sigma = sigma.T
 
     tau = sigma * kappa
+    
+    plt.imshow(tau)
+    plt.colorbar()
+    plt.show()
     
     return tau
     
@@ -300,7 +316,7 @@ def plot_fluxmap(solid_name, rv, fmax, F_map, lamda, R_arr, folder):
 
     
     
-def calculate_spectra(tau, I, R_arr, Rmin, Rmax):
+def calculate_spectra(tau, F_map, I, R_arr, Rmin, Rmax):
 	
 	"""
 	Calculates the integrated flux for the range of wavelength by integrating over radius
@@ -319,15 +335,19 @@ def calculate_spectra(tau, I, R_arr, Rmin, Rmax):
 	rad_arr = rad_arr.T 
 	I = I.T
 	
-	summ = np.trapz(2 * np.pi * rad_arr * tau * I, x = rad_arr, axis = 0)
+	# summ = np.trapz(2 * np.pi * rad_arr * tau * I, x = rad_arr, axis = 0)
 	
-	# ~ delr = (rad_arr[Rmin_id+1: Rmax_id+1, :] - rad_arr[Rmin_id: Rmax_id, :])	
-	# ~ f1 = rad_arr[Rmin_id: Rmax_id, :] * tau[Rmin_id: Rmax_id, :] * I[Rmin_id: Rmax_id, :] * 2 * np.pi * delr * 0.5
-	# ~ f2 = rad_arr[Rmin_id+1: Rmax_id+1, :] * tau[Rmin_id+1: Rmax_id+1, :] * I[Rmin_id+1: Rmax_id+1, :] * 2 * np.pi * delr * 0.5
+	delr = (rad_arr[Rmin_id+1: Rmax_id+1, :] - rad_arr[Rmin_id: Rmax_id, :])	
+	# f1 = rad_arr[Rmin_id: Rmax_id, :] * tau[Rmin_id: Rmax_id, :] * I[Rmin_id: Rmax_id, :] * 2 * np.pi * delr * 0.5
+	# f2 = rad_arr[Rmin_id+1: Rmax_id+1, :] * tau[Rmin_id+1: Rmax_id+1, :] * I[Rmin_id+1: Rmax_id+1, :] * 2 * np.pi * delr * 0.5
+	
+	# Using same formula as Hankel transform one
+	f1 = rad_arr[Rmin_id: Rmax_id, :] * F_map[Rmin_id: Rmax_id, :] * 2 * np.pi * delr * 0.5
+	f2 = rad_arr[Rmin_id+1: Rmax_id+1, :] * F_map[Rmin_id+1: Rmax_id+1, :]  * 2 * np.pi * delr * 0.5
 	# f1, f2 shape: (NPOINT - 1, lsize)
 	
-	# ~ temp = (f1 + f2)
-	# ~ summ = temp.sum(axis=0)       # summ shape: (lsize, 1)
+	temp = (f1 + f2)
+	summ = temp.sum(axis=0)       # summ shape: (lsize, 1)
 	summ = summ.to(u.Jy, equivalencies = u.dimensionless_angles())
 
 	# Inefficient for-loop method
