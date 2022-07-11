@@ -77,6 +77,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM
 	# Adding the temperature axis on top
 	x_ticks = np.linspace(Rmin, Rmax, 7) 
 	print(x_ticks)
+	print(q)
 	T_ticks = midplaneT_profile(R_in, T0, x_ticks, q).astype(int)
 	print(T_ticks)
 	ax2.set_xlim(ax.get_xlim())

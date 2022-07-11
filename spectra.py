@@ -266,7 +266,8 @@ def tau_calc(sigma, kappa, solid, folder):
     sigma = sigma[np.newaxis]
     sigma = sigma.T
 
-    tau = sigma * kappa * 10**-8     # Assuming the dust scale height is 8 times lesser than the gas scale height. Why? Because I'm desperate.
+    # tau = sigma * kappa * 10**-8     # Assuming the dust scale height is 8 times lesser than the gas scale height. Why? Because I'm desperate.
+    tau = sigma * kappa
     
     # Plotting the optical depths
     plt.imshow(tau)
@@ -317,7 +318,7 @@ def plot_fluxmap(solid_name, rv, fmax, F_map, lamda, R_arr, folder):
 
     
     
-def calculate_spectra(tau, F_map, I, R_arr, Rmin, Rmax):
+def calculate_spectra(tau, F_map, I, R_arr, Rmin, Rmax, last_id):
 	
 	"""
 	Calculates the integrated flux for the range of wavelength by integrating over radius
@@ -328,7 +329,8 @@ def calculate_spectra(tau, F_map, I, R_arr, Rmin, Rmax):
 	# Finding the indices of Rmin and Rmax by taking the first instance of where they are in the rounded R_arr 
 	R_rounded = np.round(R_arr, 3)	
 	Rmin_id = np.where(R_rounded == Rmin)[0][0]
-	Rmax_id = np.where(R_rounded == Rmax)[0][0]
+	# Rmax_id = np.where(R_rounded == Rmax)[0][0]
+	Rmax_id = last_id 
 	
 	# Transposing the matrices for element-wise matrix multiplication
 	rad_arr = r_to_rad(R_arr) 						# Converting radius (AU) to arcseconds to radians
@@ -336,19 +338,19 @@ def calculate_spectra(tau, F_map, I, R_arr, Rmin, Rmax):
 	rad_arr = rad_arr.T 
 	I = I.T
 	
-	# summ = np.trapz(2 * np.pi * rad_arr * tau * I, x = rad_arr, axis = 0)
+	summ = np.trapz(2 * np.pi * rad_arr * tau * I, x = rad_arr, axis = 0)
 	
-	delr = (rad_arr[Rmin_id+1: Rmax_id+1, :] - rad_arr[Rmin_id: Rmax_id, :])	
+	# delr = (rad_arr[Rmin_id+1: Rmax_id+1, :] - rad_arr[Rmin_id: Rmax_id, :])	
 	# f1 = rad_arr[Rmin_id: Rmax_id, :] * tau[Rmin_id: Rmax_id, :] * I[Rmin_id: Rmax_id, :] * 2 * np.pi * delr * 0.5
 	# f2 = rad_arr[Rmin_id+1: Rmax_id+1, :] * tau[Rmin_id+1: Rmax_id+1, :] * I[Rmin_id+1: Rmax_id+1, :] * 2 * np.pi * delr * 0.5
 	
 	# Using same formula as Hankel transform one
-	f1 = rad_arr[Rmin_id: Rmax_id, :] * F_map[Rmin_id: Rmax_id, :] * 2 * np.pi * delr * 0.5
-	f2 = rad_arr[Rmin_id+1: Rmax_id+1, :] * F_map[Rmin_id+1: Rmax_id+1, :]  * 2 * np.pi * delr * 0.5
+	# f1 = rad_arr[Rmin_id: Rmax_id, :] * F_map[Rmin_id: Rmax_id, :] * 2 * np.pi * delr * 0.5
+	# f2 = rad_arr[Rmin_id+1: Rmax_id+1, :] * F_map[Rmin_id+1: Rmax_id+1, :]  * 2 * np.pi * delr * 0.5
 	# f1, f2 shape: (NPOINT - 1, lsize)
 	
-	temp = (f1 + f2)
-	summ = temp.sum(axis=0)       # summ shape: (lsize, 1)
+	# temp = (f1 + f2)
+	# summ = temp.sum(axis=0)       # summ shape: (lsize, 1)
 	summ = summ.to(u.Jy, equivalencies = u.dimensionless_angles())
 
 	# Inefficient for-loop method

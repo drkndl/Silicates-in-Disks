@@ -30,7 +30,7 @@ G = const.G.cgs           					# Gravitational constant (cm^3 g^-1 s^-2)
 
 def main():
 	
-	file   = 'HotStar_q0.1/HSq0.1_Static_Conc.dat'      # Simulation output file
+	file   = 'HotStar_q0.25/HSq0.25_Static_Conc.dat'      # Simulation output file
 	data   = open(file)
 	dummy  = data.readline()                # Ignoring first line
 	dimens = data.readline()                
@@ -59,12 +59,14 @@ def main():
 	T_star = 8000 * u.K                         # Effective temperature of the star (K)
 	Sigma0 = 2 * 1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
 	M_star = 8 * 1.99E33 * u.g         					# Solar mass (g)
-	q = -0.1
+	q = -0.25
 	e = -1.5
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
 	R_arr = r_from_T(R_in, Tg, T0, q)                # 1D array of radii obtained from the power law disk model (AU)
 	H = scale_height(M_star, R_arr, Tg)
+	
+	# print(np.round(R_arr, 3))
 	
 	top = 5                                 	  			# Top X condensates whose abundance is the highest	
 	lmin = 0.0 * u.micron 						  			# Lower limit of wavelength (microns)
@@ -72,22 +74,29 @@ def main():
 	lsize = 450 								  			# Number of wavelength (and kappa) points 
 	Rmin = np.round(np.min(R_arr), 3) 						# Minimum radius for spectrum plotting (AU) ENSURE IT IS ONLY 2 DECIMAL PLACES LONG
 	Rmax = np.round(np.max(R_arr), 3)						# Maximum radius for spectrum plotting (AU) ENSURE IT IS ONLY 2 DECIMAL PLACES LONG
+	##################################################### TRYING SOMETHING HERE ######################################################
+	Rmax = 10.163 * u.AU
+	last_id = np.where(np.round(R_arr, 3) == Rmax)[0][0]
+	R_arr_new = R_arr[:last_id]
+	NPOINT = len(R_arr_new)
+	##################################################################################################################################
 	dist_pc = 100 * u.pc  			            			# Assuming a distance to the Sun-like star in parsec
 	gs = 0.1E-4 * u.cm                            			# Grain radius (cm)
 	wl = 5.5 * u.micron                           			# Observing wavelength (microns)
 	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
 	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
 	B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)
-	folder = 'HotStar_q0.1/'                                # Folder where all the results go
+	folder = 'HotStar_q0.25_till10AU/'                               # Folder where all the results go
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
 	# Plotting the abunances as a function of radius and temperature
-	R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
+	R_plot(minerals, dat, keyword, R_arr_new, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
+	# printffff
 	
 	# Finding the most abundant condensates
-	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
-	top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr, solid_names)
+	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat[:last_id], NELEM, NMOLE, NDUST) ###################### ALSO DAT ##########################################
+	top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr_new, solid_names) ####################### R_ARR_NEW ################################
 	top5_solids, topabunds_radii = topabunds_by_radii(top_solids, solid_names, top_abunds, abunds_dict)
 	
 	# Write down abundances and corresponding solids element by element in a file in a human readable format 
@@ -109,7 +118,7 @@ def main():
 	
 	# Calculating the surface density
 	molwt = molecular_weight(top5_solids)
-	surf_dens = surface_density(top5_solids, molwt, topabunds_radii, nHtot, H)
+	surf_dens = surface_density(top5_solids, molwt, topabunds_radii, nHtot[:last_id], H) ########################################### ALSO NHTOT ##############################################
 	
 	# Creating a dictionary of Qcurve input files and the corresponding material densities in g/cm^3
 	opfile_dens = {'Qcurve_inputs/Q_CaMgSi2O6_rv0.1_fmaxxxx.dat' : 3.278, 'Qcurve_inputs/Q_MgSiO3_Jaeger_DHS_fmax1.0_rv0.1.dat' : 3.2, 'Qcurve_inputs/Q_Mg2SiO4_Sogawa_DHS_fmax1.0_rv0.1.dat' : 3.27, 'Qcurve_inputs/qval_Fe3O4_rv0.1_fmax0.7.dat' : 5.17, 'Qcurve_inputs/qval_Fe2SiO4_rv0.1_fmax1.0.dat' : 4.392, 'Qcurve_inputs/qval_Fe_met_rv0.1_fmax0.7.dat' : 7.874, 'Qcurve_inputs/qval_FeS_rv0.1_fmax0.7.dat' : 4.84, 'Qcurve_inputs/qval_Mg3Si2O9H4_rv0.1_fmax0.7.dat' : 2.6, 'Qcurve_inputs/qval_MgAl2O4_rv0.1_fmax0.7.dat' : 3.64}
@@ -141,14 +150,14 @@ def main():
 	
 	for solid in top5_solids:
 			
-			I[solid] = Plancks(T0, R_arr, R_in, lamdas[solid], q, solid, folder) 
+			I[solid] = Plancks(T0, R_arr_new, R_in, lamdas[solid], q, solid, folder) ####################### R_ARR_NEW ################################
 			tau[solid] = tau_calc(surf_dens[solid], kappas[solid], solid, folder)
 								
 			F_map = flux_map(tau[solid], I[solid])
-			plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder)
+			plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr_new, folder) ####################### R_ARR_NEW ################################
 			F_map_sum += F_map
 			
-			intflux = calculate_spectra(tau[solid], F_map, I[solid], R_arr, Rmin, Rmax)
+			intflux = calculate_spectra(tau[solid], F_map, I[solid], R_arr_new, Rmin, Rmax, last_id)  ####################### R_ARR_NEW ################################
 			plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
 			intflux_sum += intflux
 			
@@ -163,9 +172,9 @@ def main():
 	ax.set_xticklabels(x_axis_labels.value)
 	ax.set_xlabel(r'$\lambda$ ($\mu$m)')
 	
-	y_axis_locations = np.linspace(0, len(R_arr)-1, 8).astype(int)
+	y_axis_locations = np.linspace(0, len(R_arr_new)-1, 8).astype(int) ####################### R_ARR_NEW ################################
 	ax.set_yticks(y_axis_locations)
-	y_axis_labels = np.round(R_arr[y_axis_locations], 3)
+	y_axis_labels = np.round(R_arr_new[y_axis_locations], 3) ####################### R_ARR_NEW ################################
 	ax.set_yticklabels(y_axis_labels.value)
 	ax.set_ylabel('R (AU)')
 	
@@ -184,7 +193,7 @@ def main():
 	plt.show()
 	
 	# Plotting the overall spectrum considering multiple radii together
-	print(np.round(R_arr, 3))	
+	# print(np.round(R_arr, 3))	
 	
 	# ~ Rmin_list = [0.132, 0.5, 1.003, 2.05, 4.003, 8.18] * u.AU
 	# ~ Rmax_list = [0.5, 1.003, 2.05, 4.003, 8.18, 12.068] * u.AU
@@ -210,7 +219,7 @@ def main():
 	
 	for Bl in B_small:
 		
-		corr_flux_absB = hankel_transform(F_map_sum, R_arr, lamdas['Mg2SiO4'], wl, Bl, wl_array = True)
+		corr_flux_absB = hankel_transform(F_map_sum, R_arr_new, lamdas['Mg2SiO4'], wl, Bl, wl_array = True) ####################### R_ARR_NEW ################################
 		plt.plot(lamdas['Mg2SiO4'], corr_flux_absB, label = 'B = {0} m'.format(Bl.value))
 	
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
@@ -225,7 +234,7 @@ def main():
 	
 	for wl in wl_list:
 		for bl in range(len(B)):			
-			inter_flux[bl] = hankel_transform(F_map_sum, R_arr, lamdas['Mg2SiO4'], wl, B[bl], wl_array = False)
+			inter_flux[bl] = hankel_transform(F_map_sum, R_arr_new, lamdas['Mg2SiO4'], wl, B[bl], wl_array = False) ####################### R_ARR_NEW ################################
 		plt.plot(B, inter_flux, label=r"{0} $\mu$m".format(wl.value))	
 		inter_flux = np.zeros(len(B)) * u.Jy	
 	

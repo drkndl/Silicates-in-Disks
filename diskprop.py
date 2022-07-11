@@ -128,11 +128,11 @@ def main():
 	T_star = 8000 * u.K                         # Effective temperature of the star (K)
 	Sigma0 = 2 * 1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
 	M_star = 8 * 1.99E33 * u.g         					# Solar mass (g)
-	q = -0.1
+	q = -0.25
 	e = -1.5
 	R_sun = 0.00465047      # Sun's radius (AU)
 	M_sun = 1.99E33         # Solar mass (g)
-	Folder = "HotStar_q0.1/"
+	Folder = "HotStar_q0.25/"
 	
 	r_arr = np.linspace(0.05, 2.5, 100) * u.AU      # AU
 	
