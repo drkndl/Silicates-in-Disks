@@ -80,7 +80,7 @@ def main():
 	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
 	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
 	B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)
-	folder = 'Sigma_formula_10minus8/'                                # Folder where all the results go
+	folder = 'Amorphous_500K/'                                # Folder where all the results go
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
