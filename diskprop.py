@@ -128,11 +128,11 @@ def main():
 	T_star = 8000 * u.K                         # Effective temperature of the star (K)
 	Sigma0 = 2 * 1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
 	M_star = 8 * 1.99E33 * u.g         					# Solar mass (g)
-	q = -0.75
+	q = -0.1
 	e = -1.5
 	R_sun = 0.00465047      # Sun's radius (AU)
 	M_sun = 1.99E33         # Solar mass (g)
-	Folder = "Super_Temp/"
+	Folder = "HotStar_q0.1/"
 	
 	r_arr = np.linspace(0.05, 2.5, 100) * u.AU      # AU
 	
@@ -154,7 +154,7 @@ def main():
 	plt.plot(r_arr, T_arr)
 	plt.xlabel("Radius R [AU]")
 	plt.ylabel("Midplane Temperature T [K]")
-	plt.title(r"$T_{{mid}}$ vs R, $R_{{star}}$ = {0}$R_\odot$, $T_{{star}}$ = {1} K, $M_{{star}}$ = {2}$M_\odot$, $\Sigma_0$ = {3} $g/cm^2$".format(R_label, T_star, M_label, Sigma0), fontsize=10)
+	plt.title(r"$T_{{mid}}$ vs R, $R_{{star}}$ = {0}$R_\odot$, $T_{{star}}$ = {1} K, $M_{{star}}$ = {2}$M_\odot$, $\Sigma_0$ = {3} $g/cm^2$".format(R_label.value, T_star.value, M_label.value, Sigma0.value), fontsize=10)
 	plt.savefig(Folder + "Tmid_vs_R.png")
 	plt.show()
 	

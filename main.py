@@ -30,7 +30,7 @@ G = const.G.cgs           					# Gravitational constant (cm^3 g^-1 s^-2)
 
 def main():
 	
-	file   = 'HotStar/HS_Static_Conc.dat'      # Simulation output file
+	file   = 'HotStar_q0.1/HSq0.1_Static_Conc.dat'      # Simulation output file
 	data   = open(file)
 	dummy  = data.readline()                # Ignoring first line
 	dimens = data.readline()                
@@ -59,14 +59,12 @@ def main():
 	T_star = 8000 * u.K                         # Effective temperature of the star (K)
 	Sigma0 = 2 * 1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
 	M_star = 8 * 1.99E33 * u.g         					# Solar mass (g)
-	q = -0.75
+	q = -0.1
 	e = -1.5
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
 	R_arr = r_from_T(R_in, Tg, T0, q)                # 1D array of radii obtained from the power law disk model (AU)
 	H = scale_height(M_star, R_arr, Tg)
-	# H = 0.03 * R_in                              # Do we really know the dust Juhasz
-	# H = 1 * u.cm
 	
 	top = 5                                 	  			# Top X condensates whose abundance is the highest	
 	lmin = 0.0 * u.micron 						  			# Lower limit of wavelength (microns)
@@ -80,7 +78,7 @@ def main():
 	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
 	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
 	B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)
-	folder = 'Amorphous_500K/'                                # Folder where all the results go
+	folder = 'HotStar_q0.1/'                                # Folder where all the results go
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
@@ -144,7 +142,7 @@ def main():
 	for solid in top5_solids:
 			
 			I[solid] = Plancks(T0, R_arr, R_in, lamdas[solid], q, solid, folder) 
-			tau[solid] = tau_calc(surf_dens[solid], kappas[solid], solid)
+			tau[solid] = tau_calc(surf_dens[solid], kappas[solid], solid, folder)
 								
 			F_map = flux_map(tau[solid], I[solid])
 			plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder)

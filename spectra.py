@@ -18,7 +18,6 @@ Na = const.N_A.cgs                    		# Avogadro's number in /mol
 h = const.h.cgs                   			# Planck's constant in cm^2 g s-1
 c = const.c.cgs              				# Speed of light in cm/s              
 k = const.k_B.cgs                   		# Boltzmann constant in cm^2 g s^-2 K^-1
-bar = 1.E+6                      			# 1 bar in dyn/cm^2
 AU = const.au.cgs                			# 1 astronomical unit in cm
 dist_pc = 100 * u.pc  			            # Assuming a distance to the Sun-like star in parsec
       
@@ -65,14 +64,15 @@ def surface_density(solids, molwt, top_abunds, nHtot, H):
 	# ~ nHtot = nHtot[np.newaxis]
 	# ~ nHtot = nHtot.T
 	
+	H = 1 * u.cm
 	surf_dens = {key: None for key in solids}
 	
 	for solid in surf_dens.keys():
 		n_solid = nHtot * 10**top_abunds[solid]
 		surf_dens[solid] = molwt[solid] * n_solid
-		surf_dens[solid] = H * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)    # Assuming a column height of H AU
+		# surf_dens[solid] = H * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)    # Assuming a column height of H AU
 		# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)
-		# surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
+		surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
 		
 	return surf_dens
 
@@ -236,10 +236,6 @@ def Plancks(T0, R_arr, R_in, lamda, q, solid, folder):
 	bb = BlackBody(temperature=T, scale=1.0)
 	I = bb(v)
 	
-	# Self-coding it (same answer as the astropy model)
-	# I = (2 * h * v**3 / c**2) * (1 / (np.exp(h * v / (k * T)) - 1))
-	# I = I / (u.Hz * u.s * u.sr)
-	
 	plt.plot(lamda, I)
 	plt.title("{0} Spectral radiance vs Wavelength".format(solid))
 	plt.ylabel("Spectral radiance ({0})".format(I.unit))
@@ -251,7 +247,7 @@ def Plancks(T0, R_arr, R_in, lamda, q, solid, folder):
 
 
 
-def tau_calc(sigma, kappa, solid):
+def tau_calc(sigma, kappa, solid, folder):
     
     """
     Calculates the optical depth tau for a solid (unitless)
@@ -276,7 +272,7 @@ def tau_calc(sigma, kappa, solid):
     plt.imshow(tau)
     plt.colorbar()
     plt.title("Optical depth - {0}".format(solid))
-    plt.savefig("OptDepth_{0}.png".format(solid))
+    plt.savefig(folder + "OptDepth_{0}.png".format(solid))
     plt.show()
     
     return tau
