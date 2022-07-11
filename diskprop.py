@@ -2,6 +2,19 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from astropy import units as u
+from astropy.constants import astropyconst20 as const
+
+# Some constants in CGS
+Na = const.N_A.cgs                    		# Avogadro's number in /mol
+h = const.h.cgs                   			# Planck's constant in cm^2 g s-1
+c = const.c.cgs              				# Speed of light in cm/s              
+k = const.k_B.cgs                   		# Boltzmann constant in cm^2 g s^-2 K^-1
+AU = const.au.cgs                			# 1 astronomical unit in cm
+mp = const.m_p.cgs         					# Mass of proton (g)
+mu = 2.3                					# Mean molecular weight
+Rc = const.R.cgs           					# Ideal gas constant (erg K^-1 mol^-1)
+G = const.G.cgs           					# Gravitational constant (cm^3 g^-1 s^-2)
 
 
 def inner_radius(Qr, T0, R_star, T_star):
@@ -68,24 +81,25 @@ def surface_density(Sigma0, r, e):
     Returns the surface density in g/cm^2 (float)
     """
 
-    Sigma = Sigma0 * (r)**(e)
+    Sigma = Sigma0 * (r / (1 * u.AU))**(e)
     return Sigma
 
 
-def scale_height(G, M_star, r, kb, T, mp, mu):
+def scale_height(M_star, r, T):
 
     """
     Calculates the scale height H (in cm)
     """
 
-    AU = 1.496E13                             # Astronomical unit (cm)
-    omega = np.sqrt( G*M_star / (r*AU)**3 )   # Keplerian angular frequency (/s)
-    cs = np.sqrt( kb*T / (mp*mu) )            # Isothermal sound speed (cm/s)
+    omega = np.sqrt( G*M_star / (r.to(u.cm))**3 )   	# Keplerian angular frequency (/s)
+    cs = np.sqrt( k*T / (mp*mu) )            			# Isothermal sound speed (cm/s)
+    cs = cs.to(u.cm/u.s)
     H = cs / omega
+ 
     return H
 
 
-def density(Sigma, H, mp):
+def density(Sigma, H):
     
     """
     Calculates the mass density (g/cm^3) and number density (/cm^3) of the gas
@@ -96,80 +110,70 @@ def density(Sigma, H, mp):
     return rho, nH
 
 
-def pressure(rho, Rc, T, mu, N0, mp):
+def pressure(rho, T):
     
     """
     Calculates the gas pressure P (in bar)
     """
-
-    bar = 10**-6                # Bar (dyne/cm^2)
-    P = rho*Rc*T / (mu*N0*mp)
-    return P*bar
+    
+    P = rho * Rc * T / (mu * Na * mp)
+    return P.to(u.bar)
 
 
 def main():
-
-    T0 = 1500               # Sublimation temperature (K)
-    Tmax = 1500             # Maximum temperature in GGChem input (K)
-    Tmin = 100              # Minimum temperature in GGChem input (K)
-    Qr = 1                  # Ratio of absorption efficiencies (assumed to be black body)
-    q = -0.6
-    e = -1.5
-    R_star = 2*0.00465047   # Star's radius (AU)
-    R_sun = 0.00465047      # Sun's radius (AU)
-    T_star = 8000           # Effective temperature of the star (K)
-    Sigma0 = 2*1700         # Surface density with MMSN (g/cm^2)
-    G = 6.6725E-8           # Gravitational constant (cm3 g^-1 s^-2)
-    M_star = 8*1.99E33      # Star mass (g)
-    M_sun = 1.99E33         # Solar mass (g)
-    kb = 1.3806E-16 	    # Boltzmann constant (erg k^-1)
-    mp = 1.6733E-24         # Mass of proton (g)
-    mu = 2.3                # Mean molecular weight
-    Rc = 8.314E7            # Ideal gas constant (erg K^-1 mol^-1)
-    N0 = 6.022E23           # Avogadro's constant (/mol)
-    Folder = "Temp/"
-    
-    r_arr = np.linspace(0.05, 2.5, 100)      # AU
-
-    R_in = inner_radius(Qr, T0, R_star, T_star)
-    print(R_in)
-    T_arr = midplaneT_profile(R_in, T0, r_arr, q)
-
-    Sigma = surface_density(Sigma0, r_arr, e)
-    H = scale_height(G, M_star, r_arr, kb, T_arr, mp, mu)
-    
-    rho, nH = density(Sigma, H, mp)
-    # print("Number density nH: ", nH)
-    
-    P = pressure(rho, Rc, T_arr, mu, N0, mp)
-    # print("Pressure: ", P)
-
-    # Plotting the temperature vs radius profile of the disk
-    R_label = np.round(R_star/R_sun, 1)
-    M_label = np.round(M_star/M_sun, 1)
-    plt.plot(r_arr, T_arr)
-    plt.xlabel("Radius R [AU]")
-    plt.ylabel("Midplane Temperature T [K]")
-    plt.title(r"$T_{{mid}}$ vs R, $R_{{star}}$ = {0}$R_\odot$, $T_{{star}}$ = {1} K, $M_{{star}}$ = {2}$M_\odot$, $\Sigma_0$ = {3} $g/cm^2$".format(R_label, T_star, M_label, Sigma0), fontsize=10)
-    plt.savefig(Folder + "Tmid_vs_R.png")
-    plt.show()
-
-    # Plotting the radial profile of pressure and density 
-    plt.semilogy(r_arr, rho, label = r"Density $\rho$ [$gm/cm^3$]")
-    plt.semilogy(r_arr, P, label = "Pressure [bar]")
-    plt.xlabel("Radius R [AU]")
-    plt.ylabel("Properties")
-    plt.title(r"Radial dependence of $\rho$, P")
-    plt.legend()
-    plt.savefig(Folder + "Pandrho_vs_R.png")
-    plt.show()
-
-    # Write the disk property values required for GGchem to a file
-    with open(Folder + 'disk_props.dat', 'w') as f:
-        f.write('Prop \t Max \t Min \n')
-        f.write('P' + '\t' + str(P.max()) + '\t' + str(P.min()) + '\n')
-        f.write('nH' + '\t' + str(nH.max()) + '\t' + str(nH.min()) + '\n')
-
+	
+	T0 = 1500.0 * u.K                          	# Dust sublimation temperature (K)
+	Qr = 1                                  	# Ratio of absorption efficiencies (assumed to be black body)
+	R_star = 2 * const.R_sun.to(u.AU)             # Star's radius (AU)
+	T_star = 8000 * u.K                         # Effective temperature of the star (K)
+	Sigma0 = 2 * 1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
+	M_star = 8 * 1.99E33 * u.g         					# Solar mass (g)
+	q = -0.75
+	e = -1.5
+	R_sun = 0.00465047      # Sun's radius (AU)
+	M_sun = 1.99E33         # Solar mass (g)
+	Folder = "Super_Temp/"
+	
+	r_arr = np.linspace(0.05, 2.5, 100) * u.AU      # AU
+	
+	R_in = inner_radius(Qr, T0, R_star, T_star)
+	T_arr = midplaneT_profile(R_in, T0, r_arr, q)	
+	
+	Sigma = surface_density(Sigma0, r_arr, e)
+	H = scale_height(M_star, r_arr, T_arr)
+	
+	rho, nH = density(Sigma, H)
+	# print("Number density nH: ", nH)
+	
+	P = pressure(rho, T_arr)
+	# print("Pressure: ", P)
+	
+	# Plotting the temperature vs radius profile of the disk
+	R_label = np.round(R_star/R_sun, 1)
+	M_label = np.round(M_star/M_sun, 1)
+	plt.plot(r_arr, T_arr)
+	plt.xlabel("Radius R [AU]")
+	plt.ylabel("Midplane Temperature T [K]")
+	plt.title(r"$T_{{mid}}$ vs R, $R_{{star}}$ = {0}$R_\odot$, $T_{{star}}$ = {1} K, $M_{{star}}$ = {2}$M_\odot$, $\Sigma_0$ = {3} $g/cm^2$".format(R_label, T_star, M_label, Sigma0), fontsize=10)
+	plt.savefig(Folder + "Tmid_vs_R.png")
+	plt.show()
+	
+	# Plotting the radial profile of pressure and density 
+	plt.semilogy(r_arr, rho, label = r"Density $\rho$ [$gm/cm^3$]")
+	plt.semilogy(r_arr, P, label = "Pressure [bar]")
+	plt.xlabel("Radius R [AU]")
+	plt.ylabel("Properties")
+	plt.title(r"Radial dependence of $\rho$, P")
+	plt.legend()
+	plt.savefig(Folder + "Pandrho_vs_R.png")
+	plt.show()
+	
+	# Write the disk property values required for GGchem to a file
+	with open(Folder + 'disk_props.dat', 'w') as f:
+		f.write('Prop \t Max \t Min \n')
+		f.write('P' + '\t' + str(P.max()) + '\t' + str(P.min()) + '\n')
+		f.write('nH' + '\t' + str(nH.max()) + '\t' + str(nH.min()) + '\n')
+	
 
 if __name__ == "__main__":
     main()

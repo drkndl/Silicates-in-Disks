@@ -7,7 +7,7 @@ from astropy.modeling.models import BlackBody
 from fancy_name import latex_name
 from all_solids import get_all_solids
 from molmass import Formula
-from diskprop import inner_radius, r_from_T
+from diskprop import inner_radius, r_from_T, scale_height
 from clean_plots import T_plot
 from radial_plot import R_plot
 from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
@@ -21,12 +21,12 @@ Na = const.N_A.cgs                    		# Avogadro's number in /mol
 h = const.h.cgs                   			# Planck's constant in cm^2 g s-1
 c = const.c.cgs              				# Speed of light in cm/s              
 k = const.k_B.cgs                   		# Boltzmann constant in cm^2 g s^-2 K^-1
-bar = 1.E+6                      			# 1 bar in dyn/cm^2
 AU = const.au.cgs                			# 1 astronomical unit in cm
-mp = 1.6733E-24         					# Mass of proton (g)
+mp = const.m_p.cgs         					# Mass of proton (g)
 mu = 2.3                					# Mean molecular weight
-Rc = 8.314E7            					# Ideal gas constant (erg K^-1 mol^-1)
-G = 6.6725E-8           					# Gravitational constant (cm3 g^-1 s^-2)
+Rc = const.R.cgs           					# Ideal gas constant (erg K^-1 mol^-1)
+G = const.G.cgs           					# Gravitational constant (cm^3 g^-1 s^-2)
+
 
 def main():
 	
@@ -55,16 +55,17 @@ def main():
 	# Converting temperatures to corresponding radii
 	T0 = 1500.0 * u.K                          	# Dust sublimation temperature (K)
 	Qr = 1                                  	# Ratio of absorption efficiencies (assumed to be black body)
-	R_star = 2*const.R_sun.to(u.AU)             # Star's radius (AU)
+	R_star = 2 * const.R_sun.to(u.AU)             # Star's radius (AU)
 	T_star = 8000 * u.K                         # Effective temperature of the star (K)
-	Sigma0 = 2*1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
-	M_star = 8*1.99E33         					# Solar mass (g)
+	Sigma0 = 2 * 1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
+	M_star = 8 * 1.99E33 * u.g         					# Solar mass (g)
 	q = -0.75
 	e = -1.5
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
 	R_arr = r_from_T(R_in, Tg, T0, q)                # 1D array of radii obtained from the power law disk model (AU)
-	H = 0.03 * R_in                              # Do we really know the dust Juhasz
+	H = scale_height(M_star, R_arr, Tg)
+	# H = 0.03 * R_in                              # Do we really know the dust Juhasz
 	# H = 1 * u.cm
 	
 	top = 5                                 	  			# Top X condensates whose abundance is the highest	
@@ -79,12 +80,12 @@ def main():
 	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
 	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
 	B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)
-	folder = 'Sigma_formula/'                                # Folder where all the results go
+	folder = 'Sigma_formula_10minus8/'                                # Folder where all the results go
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
 	# Plotting the abunances as a function of radius and temperature
-	# R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
+	R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
 	
 	# Finding the most abundant condensates
 	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST)
@@ -142,10 +143,9 @@ def main():
 	
 	for solid in top5_solids:
 			
-			print(solid)
 			I[solid] = Plancks(T0, R_arr, R_in, lamdas[solid], q, solid, folder) 
-			tau[solid] = tau_calc(surf_dens[solid], kappas[solid])
-			
+			tau[solid] = tau_calc(surf_dens[solid], kappas[solid], solid)
+								
 			F_map = flux_map(tau[solid], I[solid])
 			plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder)
 			F_map_sum += F_map

@@ -6,6 +6,7 @@ from astropy.constants import astropyconst20 as const
 from astropy.modeling.models import BlackBody
 from fancy_name import latex_name
 from molmass import Formula
+from diskprop import midplaneT_profile
 from scipy.interpolate import UnivariateSpline
 from scipy.special import j0
 plt.rcParams['axes.titlesize'] = 10
@@ -69,7 +70,8 @@ def surface_density(solids, molwt, top_abunds, nHtot, H):
 	for solid in surf_dens.keys():
 		n_solid = nHtot * 10**top_abunds[solid]
 		surf_dens[solid] = molwt[solid] * n_solid
-		surf_dens[solid] = H.to(u.cm) * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)    # Assuming a column height of H AU
+		surf_dens[solid] = H * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)    # Assuming a column height of H AU
+		# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)
 		# surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
 		
 	return surf_dens
@@ -230,7 +232,7 @@ def Plancks(T0, R_arr, R_in, lamda, q, solid, folder):
 	
 	# Planck's function in terms of frequency
 	v = c/lamda_cm
-	T = T0 * (R_arr/R_in)**(q)
+	T = midplaneT_profile(R_in, T0, R_arr, q)
 	bb = BlackBody(temperature=T, scale=1.0)
 	I = bb(v)
 	
@@ -249,7 +251,7 @@ def Plancks(T0, R_arr, R_in, lamda, q, solid, folder):
 
 
 
-def tau_calc(sigma, kappa):
+def tau_calc(sigma, kappa, solid):
     
     """
     Calculates the optical depth tau for a solid (unitless)
@@ -268,10 +270,13 @@ def tau_calc(sigma, kappa):
     sigma = sigma[np.newaxis]
     sigma = sigma.T
 
-    tau = sigma * kappa
+    tau = sigma * kappa * 10**-8     # Assuming the dust scale height is 8 times lesser than the gas scale height. Why? Because I'm desperate.
     
+    # Plotting the optical depths
     plt.imshow(tau)
     plt.colorbar()
+    plt.title("Optical depth - {0}".format(solid))
+    plt.savefig("OptDepth_{0}.png".format(solid))
     plt.show()
     
     return tau
