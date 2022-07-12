@@ -25,6 +25,8 @@ Determining the radial dependence of silicates in protoplanetary disks as a part
 
 5. `HotStar*` contains the input files, star and disk property files, GGchem output file and output plots such as Q-curves, flux maps, spectra and correlated fluxes for a Herbig Ae type star with varying q and p values to determine the optimal parameters to obtain a well-resolved disk. 
 
+4. `Amorphous_500K` contains the output plots for a HotStar where the opacity values lesser than 500K are taken from the amorphous Olivine and Pyroxene opacities.
+
 6. `Gas_scale_height*` contains the output plots assuming the gas scale height formula used to calculate the surface density. This results in very high optical depths of the order $10^8$. Therefore, some plots are created by multiplying the optical depths with $10^{-6}$ and $10^{-8}$ just to experience what it's like to have the right plots. But of course, all the plots in these folders are wrong. The other folders assume a gas scale height of 1cm. 
 
 7. `Qcurve_inputs` contains the opacity files for several condensates, used to extract the wavelength values and $\kappa_{abs}$.
