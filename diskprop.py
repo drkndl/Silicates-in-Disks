@@ -123,20 +123,21 @@ def pressure(rho, T):
 def main():
 	
 	T0 = 1500.0 * u.K                          	# Dust sublimation temperature (K)
-	Qr = 1                                  	# Ratio of absorption efficiencies (assumed to be black body)
+	Qr = 3                                  	# Ratio of absorption efficiencies 
 	R_star = 2 * const.R_sun.to(u.AU)             # Star's radius (AU)
 	T_star = 8000 * u.K                         # Effective temperature of the star (K)
-	Sigma0 = 2 * 1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
+	Sigma0 = 1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
 	M_star = 8 * 1.99E33 * u.g         					# Solar mass (g)
-	q = -0.25
-	e = -1.5
+	q = -0.5
+	e = -1.0
 	R_sun = 0.00465047      # Sun's radius (AU)
 	M_sun = 1.99E33         # Solar mass (g)
-	Folder = "HotStar_q0.25/"
+	Folder = "HotStar_q0.5_p1_Qr3/"
 	
 	r_arr = np.linspace(0.05, 2.5, 100) * u.AU      # AU
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)
+	print(R_in)
 	T_arr = midplaneT_profile(R_in, T0, r_arr, q)	
 	
 	Sigma = surface_density(Sigma0, r_arr, e)
