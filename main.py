@@ -11,7 +11,7 @@ from diskprop import inner_radius, r_from_T, scale_height
 from clean_plots import T_plot
 from radial_plot import R_plot
 from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
-from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Qcurve_plotter, Plancks, tau_calc, flux_map, plot_fluxmap, calculate_spectra, plot_spectra, hankel_transform
+from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Qcurve_plotter, Plancks, tau_calc, tau_calc_amorphous, flux_map, plot_fluxmap, calculate_spectra, plot_spectra, hankel_transform
 from scipy.interpolate import UnivariateSpline
 from scipy.special import j0
 
@@ -87,13 +87,12 @@ def main():
 	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
 	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
 	B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)
-	folder = 'HotStar_q0.5_p1_Qr3/'                               # Folder where all the results go
+	folder = 'Amorphous_500K/'                               # Folder where all the results go
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
 	# Plotting the abunances as a function of radius and temperature
 	R_plot(minerals, dat, keyword, R_arr_new, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
-	# printffff
 	
 	# Finding the most abundant condensates
 	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat[:last_id], NELEM, NMOLE, NDUST) ###################### DAT ##########################################
@@ -125,6 +124,8 @@ def main():
 	opfile_dens = {'Qcurve_inputs/Q_CaMgSi2O6_rv0.1_fmaxxxx.dat' : 3.278, 'Qcurve_inputs/Q_MgSiO3_Jaeger_DHS_fmax1.0_rv0.1.dat' : 3.2, 'Qcurve_inputs/Q_Mg2SiO4_Sogawa_DHS_fmax1.0_rv0.1.dat' : 3.27, 'Qcurve_inputs/qval_Fe3O4_rv0.1_fmax0.7.dat' : 5.17, 'Qcurve_inputs/qval_Fe2SiO4_rv0.1_fmax1.0.dat' : 4.392, 'Qcurve_inputs/qval_Fe_met_rv0.1_fmax0.7.dat' : 7.874, 'Qcurve_inputs/qval_FeS_rv0.1_fmax0.7.dat' : 4.84, 'Qcurve_inputs/qval_Mg3Si2O9H4_rv0.1_fmax0.7.dat' : 2.6, 'Qcurve_inputs/qval_MgAl2O4_rv0.1_fmax0.7.dat' : 3.64}
 	# , 'Qcurve_inputs/Q_H2O_rv0.1_fmax0.7.dat' : 0.92}
 	
+	opamorph_dens = {'Qcurve_inputs/Q_MgOlivine_Jae_DHS_fmax0.7_rv0.1.dat': 3.27, 'Qcurve_inputs/Q_MgPyroxene_Dor_DHS_fmax0.7_rv0.1.dat': 3.2}
+	
 	# Adding units to the material densities using astropy
 	for key, value in opfile_dens.items():
 		opfile_dens[key] = value * u.g / u.cm**3
@@ -143,6 +144,20 @@ def main():
 		rvs[mineral] = rv
 		fmaxs[mineral] = fmax		
 	
+	# Getting amorphous solid data
+	lamdas_a = {'MgOlivine': None, 'MgPyroxene': None}
+	kappas_a = {'MgOlivine': None, 'MgPyroxene': None}
+	rvs_a = {'MgOlivine': None, 'MgPyroxene': None}
+	fmaxs_a = {'MgOlivine': None, 'MgPyroxene': None}
+	
+	for opamorph, density in opamorph_dens.items():
+		mineral, rv, fmax, lamda, kappa_amorph = get_l_and_k(opamorph, density, gs, lmin, lmax, lsize)
+		Qcurve_plotter(lamda, kappa_amorph, mineral, rv, fmax, folder)
+		lamdas_a[mineral] = lamda
+		kappas_a[mineral] = kappa_amorph
+		rvs_a[mineral] = rv
+		fmaxs_a[mineral] = fmax		
+	
 	# Plotting the flux map and calculating the integrated flux for each solid
 	I = {key: None for key in top5_solids}
 	tau = {key: None for key in top5_solids}
@@ -151,18 +166,47 @@ def main():
 	
 	for solid in top5_solids:
 			
-			I[solid] = Plancks(T0, R_arr_new, R_in, lamdas[solid], q, solid, folder) ####################### R_ARR_NEW ################################
-			tau[solid] = tau_calc(surf_dens[solid], kappas[solid], solid, folder)
-								
-			F_map = flux_map(tau[solid], I[solid])
-			plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr_new, folder) ####################### R_ARR_NEW ################################
-			F_map_sum += F_map
+			if solid == "Mg2SiO4":
+				
+				solid_a = 'MgOlivine'
+				I[solid] = Plancks(T0, R_arr_new, R_in, lamdas[solid], q, solid, folder) ####################### R_ARR_NEW ################################
+				tau[solid] = tau_calc_amorphous(surf_dens[solid], kappas[solid], Tg, kappas_a[solid_a], solid, folder)
+				
+				F_map = flux_map(tau[solid], I[solid])
+				plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr_new, folder) ####################### R_ARR_NEW ################################
+				F_map_sum += F_map
+				
+				intflux = calculate_spectra(tau[solid], F_map, I[solid], R_arr_new, Rmin, Rmax, last_id)  ####################### R_ARR_NEW ################################
+				plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
+				intflux_sum += intflux
+				
+			elif solid == "MgSiO3":
+				
+				solid_a = "MgPyroxene"
+				I[solid] = Plancks(T0, R_arr_new, R_in, lamdas[solid], q, solid, folder) ####################### R_ARR_NEW ################################
+				tau[solid] = tau_calc_amorphous(surf_dens[solid], kappas[solid], Tg, kappas_a[solid_a], solid, folder)
+				
+				F_map = flux_map(tau[solid], I[solid])
+				plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr_new, folder) ####################### R_ARR_NEW ################################
+				F_map_sum += F_map
+				
+				intflux = calculate_spectra(tau[solid], F_map, I[solid], R_arr_new, Rmin, Rmax, last_id)  ####################### R_ARR_NEW ################################
+				plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
+				intflux_sum += intflux
+				
+			else:
+				
+				I[solid] = Plancks(T0, R_arr_new, R_in, lamdas[solid], q, solid, folder) ####################### R_ARR_NEW ################################
+				tau[solid] = tau_calc(surf_dens[solid], kappas[solid], solid, folder)
+									
+				F_map = flux_map(tau[solid], I[solid])
+				plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr_new, folder) ####################### R_ARR_NEW ################################
+				F_map_sum += F_map
+				
+				intflux = calculate_spectra(tau[solid], F_map, I[solid], R_arr_new, Rmin, Rmax, last_id)  ####################### R_ARR_NEW ################################
+				plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
+				intflux_sum += intflux
 			
-			intflux = calculate_spectra(tau[solid], F_map, I[solid], R_arr_new, Rmin, Rmax, last_id)  ####################### R_ARR_NEW ################################
-			plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
-			intflux_sum += intflux
-			
-	
 	# Plotting the overall flux map
 	fig, ax = plt.subplots(1,1)
 	img = ax.imshow(F_map_sum, cmap='plasma', interpolation='none')

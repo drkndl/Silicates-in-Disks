@@ -110,7 +110,7 @@ def slice_lQ(lamda, Q, lmin, lmax, lsize):
 	elif len(lamda) < lsize:
 		
 		# If there are less than lsize points of lamda, lsize points are created through interpolation and lamda is reassigned accordingly
-		old_indices = np.arange(0,len(lamda))
+		old_indices = np.arange(0, len(lamda))
 		new_indices = np.linspace(0, len(lamda)-1, lsize)
 		
 		spl1 = UnivariateSpline(old_indices, lamda, k=3, s=0)
@@ -198,10 +198,17 @@ def Qcurve_plotter(lamda, kappa, mineral, rv, fmax, folder):
 	fmax         : Maximum emptiness fraction of the solid grains according to the DHS theory (float)
 	"""
 	
+	if mineral == 'MgOlivine':
+		fancy = 'MgOlivine'
+	elif mineral == 'MgPyroxene':
+		fancy = 'MgPyroxene'
+	else:
+		fancy = latex_name(mineral)		
+		
 	plt.plot(lamda, kappa)
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel(r'$\kappa_{abs}$ ($cm^2/g$)')
-	plt.title(r"Q-curve for {0}, r = {1}, $f_{{max}}$ = {2}".format(latex_name(mineral), rv, fmax))
+	plt.title(r"Q-curve for {0}, r = {1}, $f_{{max}}$ = {2}".format(fancy, rv, fmax))
 	plt.savefig(folder + "Qcurve_{0}_r{1}_f{2}.png".format(mineral, rv, fmax), bbox_inches = 'tight')
 	plt.show()
 
@@ -277,6 +284,43 @@ def tau_calc(sigma, kappa, solid, folder):
     plt.show()
     
     return tau
+    
+    
+
+def tau_calc_amorphous(sigma, kappa, Tg, kappa_am, solid, folder):
+	
+	"""
+	Calculates the optical depth tau for a solid (unitless)
+	
+	Parameters:
+	
+	sigma         : 1D array of the surface density (shape: (NPOINT,)) of the solid in g/cm^2 (float)
+	kappa         : 1D array of the opacities (shape: (lsize,)) of the solid in cm^2/g (float)
+	
+	Returns:
+	
+	tau           : 2D array of the optical depths (shape: NPOINT, lsize)) of the solid (float). The quantity is unitless.
+	"""
+	
+	tau = np.zeros((len(sigma), len(kappa)))
+	l500_ind = np.where(Tg < (500 * u.K))[0][0]     # Taking the first index where the temperature goes below 500K. Due to the power law, we can assume every index after this also has T < 500K
+	
+	# Transposing 1D row array (shape: (NPOINT,)) into 2D column array (shape: (NPOINT, 1)) for matrix multiplication
+	sigma = sigma[np.newaxis]
+	sigma = sigma.T
+	
+	# tau = sigma * kappa * 10**-8     # Assuming the dust scale height is 8 times lesser than the gas scale height. Why? Because I'm desperate.
+	tau[:l500_ind, :] = sigma[:l500_ind, :] * kappa
+	tau[l500_ind:, :] = sigma[l500_ind:, :] * kappa_am
+	
+	# Plotting the optical depths
+	plt.imshow(tau)
+	plt.colorbar()
+	plt.title("Optical depth - {0}".format(solid))
+	plt.savefig(folder + "OptDepth_{0}.png".format(solid))
+	plt.show()
+	
+	return tau
     
     
 
