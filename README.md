@@ -37,15 +37,17 @@ The scripts are as follows:
 
    * `clean_plots.py` plots the abundance curves for all the indicated condensates with (relatively) clean formatting as a function of temperature.
     
-   * `diskprop.py` calculates the parameters such as pressure, density, number density for a planet forming disk model as indicated in Jorge et al. (2022). Change the star parameters in this file to obtain the input properties for the GGchem simulation.
+   * `diskprop.py` calculates parameters such as temperature, pressure, density, number density for a planet forming disk model as indicated in Jorge et al. (2022) and plots the radial distribution of these parameters. Change the star parameters in this file to obtain the input properties for the GGchem simulation.
    
    * `fancy_name.py` is a small script to create LaTeX friendly names of the condensate formulae.
    
-   * `main.py` is where it all comes together.
+   * `main.py` is where it all comes together: the output file is loaded, quantities initialized, properties calculated and overall plots created.
+   
+   * `no_thoughts_just_plots.py` contains plotting functions for individual Qcurves, spectral densities, optical depth maps, flux maps and spectra.
     
    * `radial_plot.py` plots the chemical abundances as a function of radius as well as the temperature (on the top axis).
    
-   * `spectra.py` calculates the opacities, flux maps, correlated fluxes, spectra and plots the corresponding properties.
+   * `spectra.py` calculates the opacities, flux maps, correlated fluxes, spectra and other dependent quantities.
    
    * `top5_minerals.py` finds the top 5 most abundant condensates at the various radius points.
    
