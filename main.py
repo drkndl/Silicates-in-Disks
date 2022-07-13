@@ -85,7 +85,7 @@ def main():
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
 	# Plotting the abunances as a function of radius and temperature
-	# R_plot(minerals, dat, keyword, R_arr_new, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
+	R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
 	
 	# Finding the most abundant condensates
 	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST) 
@@ -169,7 +169,7 @@ def main():
 				# plot_tau(tau[solid], solid, folder)
 				
 				F_map = flux_map(tau[solid], I[solid])
-				# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
+				plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
 				F_map_sum += F_map
 				
 				intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax)  
@@ -186,7 +186,7 @@ def main():
 				# plot_tau(tau[solid], solid, folder)
 				
 				F_map = flux_map(tau[solid], I[solid])
-				# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
+				plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
 				F_map_sum += F_map
 				
 				intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax)  
@@ -202,7 +202,7 @@ def main():
 				# plot_tau(tau[solid], solid, folder)
 				
 				F_map = flux_map(tau[solid], I[solid])
-				# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
+				plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
 				F_map_sum += F_map
 				
 				intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax)  
@@ -226,7 +226,7 @@ def main():
 	ax.set_ylabel('R (AU)')
 	
 	ax.set_title(r"Overall Flux Map for r=0.1 microns")
-	fig.colorbar(img)
+	fig.colorbar(img, label=r'{0}'.format(F_map_sum.unit))
 	plt.savefig(folder + "overall_fluxmap.png", bbox_inches = 'tight')
 	plt.show()
 	

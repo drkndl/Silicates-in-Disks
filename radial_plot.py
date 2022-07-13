@@ -15,14 +15,14 @@ from fancy_name import latex_name
 def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST):
 	
 	# Some stylistic choices
-	colo = ['blue', 'black', 'red', 'darkorange', 'gold', 'darkorchid', 'aqua', 'cadetblue', 'cornflowerblue', 'chartreuse', 'limegreen', 'darkgreen', 'chocolate', 'darkgoldenrod', 'darkkhaki', 'pink', 'moccasin', 'darkolivegreen', 'darkmagenta', 'aquamarine', 'coral', 'burlywood', 'silver', 'darkorange', 'crimson', 'darkcyan']
+	colo = ['blue', 'black', 'red', 'darkorange', 'gold', 'darkorchid', 'aqua', 'cadetblue', 'cornflowerblue', 'chartreuse', 'limegreen', 'darkgreen', 'chocolate', 'darkgoldenrod', 'darkolivegreen', 'darkmagenta', 'crimson', 'darkcyan', 'springgreen', 'darkslateblue', 'hotpink']
 	#, 'bisque', 'indigo', 'peru', 'sienna', 'orangered', 'lightskyblue', 'navy', 'paleturquoise', 'deepskyblue', 'springgreen', 'plum', 'darkslateblue', 'mediumslateblue', 'goldenrod', 'gray', 'royalblue', 'cornflowerblue', 'lightcoral', 'rosybrown', 'saddlebrown', 'lime', 'forestgreen', 'lavender', 'hotpink', 'deeppink', 'gainsboro', 'peachpuff', 'beige']
 	Ncolor = len(colo)
 	colo = colo*10
 	styl = ['solid']*Ncolor + ['dotted']*Ncolor + ['dashed']*Ncolor + ['dashdot']*Ncolor + ['(0, (1, 10))']*Ncolor*7
 	widt = [2]*Ncolor*10
 	
-	ymin  = -12.0                # Minimum exponent on y-axis
+	ymin  = -7.0                # Minimum exponent on y-axis
 	ymax = -3.0                  # Maximum exponent on y-axis
 	csize = 5
 	
@@ -37,7 +37,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM
 		solid = keyword[i]
 		if keyword[i] in minerals:
 			
-			print(' i = ',i, ' solid name = ',solid)
+			# print(' i = ',i, ' solid name = ',solid)
 			solids.append(solid[1:])                        # Saves the name of the current solid without the S at the beginning
 			smean.append(np.mean(dat[points,i]))            # Calculates the mean of the above solid data (excluding the maximum and minimum temperatures)
 	
@@ -51,6 +51,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM
 	colors = []
 	count = 0
 	
+	print("Solids plotted: \n")
 	for isolid in reversed(indices):                        # Going through the given solids in descending order of average log 10 nsolid/n<H>
 		
 		solid = solids[isolid]
@@ -58,7 +59,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM
 		if (np.size(ind) == 0): continue
 		ind = ind[0]
 		yy = dat[:,ind]                                       # Saves the log10 nsolid/n<H> of the current solid
-	  
+		
 		if (np.max(yy[points])>ymin):
 			print(solid)
 			plt.plot(R_arr[points], yy[points], c = colo[count], ls = styl[count], lw = widt[count], label = latex_name(solid))
