@@ -7,7 +7,7 @@ def get_all_solids(keyword, dat, NELEM, NMOLE, NDUST):
 		
 		if keyword[i].startswith('S') and not keyword[i].endswith('[l]'):
 			
-			print(' i = ',i, ' solid name = ', keyword[i])
+			# print(' i = ',i, ' solid name = ', keyword[i])
 			minerals.append(keyword[i])                        # Saves the name of the current solid
 	
 	return minerals

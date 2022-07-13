@@ -165,11 +165,11 @@ def main():
 				tau[solid] = tau_calc_amorphous(surf_dens[solid], kappas[solid], Tg, kappas_a[solid_a], solid, folder)
 				
 				F_map = flux_map(tau[solid], I[solid])
-				plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
+				# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
 				F_map_sum += F_map
 				
 				intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax)  
-				plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
+				# plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
 				intflux_sum += intflux
 				
 			elif solid == "MgSiO3":
@@ -179,25 +179,24 @@ def main():
 				tau[solid] = tau_calc_amorphous(surf_dens[solid], kappas[solid], Tg, kappas_a[solid_a], solid, folder)
 				
 				F_map = flux_map(tau[solid], I[solid])
-				plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
+				# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
 				F_map_sum += F_map
 				
 				intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax)  
-				plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
+				# plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
 				intflux_sum += intflux
 				
 			else:
 				
 				I[solid] = Plancks(lamdas[solid], Tg, solid, folder) 
 				tau[solid] = tau_calc(surf_dens[solid], kappas[solid], solid, folder)
-				print(surf_dens[solid].shape)
 				
 				F_map = flux_map(tau[solid], I[solid])
-				plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
+				# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
 				F_map_sum += F_map
 				
 				intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax)  
-				plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
+				# plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
 				intflux_sum += intflux
 			
 	# Plotting the overall flux map
@@ -230,27 +229,25 @@ def main():
 	plt.savefig(folder + "Overall_spectrum_r0.1_R{0}-{1}.png".format(Rmin.value, Rmax.value))
 	plt.show()
 	
-	# Plotting the overall spectrum considering multiple radii together
-	# print(np.round(R_arr, 3))	
+	# Plotting the overall spectrum considering multiple radii limits
+	R_list = np.round(R_arr[np.linspace(0, len(R_arr)-1, 7).astype(int)], 3)
+	Rmin_list = R_list[:-1]
+	Rmax_list = R_list[1:]
+	intflux_sum_mr = np.zeros(lsize) * u.Jy
+	fig = plt.figure()
 	
-	# ~ Rmin_list = [0.132, 0.5, 1.003, 2.05, 4.003, 8.18] * u.AU
-	# ~ Rmax_list = [0.5, 1.003, 2.05, 4.003, 8.18, 12.068] * u.AU
-	# ~ intflux_sum_mr = np.zeros(lsize) * u.Jy
-	# ~ fig = plt.figure()
-	
-	# ~ for i in range(len(Rmax_list)):		
-		# ~ for solid in top5_solids:		 			
-			# ~ intflux_sum_mr += calculate_spectra(tau[solid], I[solid], R_arr, Rmin_list[i], Rmax_list[i])
+	for i in range(len(Rmax_list)):		
+		for solid in top5_solids:		 			
+			intflux_sum_mr += calculate_spectra(F_map_sum, R_arr, Rmin_list[i], Rmax_list[i])			
+		plt.plot(lamdas['Mg2SiO4'], intflux_sum_mr, label=r"($R_{{min}}$,$R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[i].value, Rmax_list[i].value))
+		intflux_sum_mr = np.zeros(lsize) * u.Jy
 			
-		# ~ plt.plot(lamdas['Mg2SiO4'], intflux_sum_mr, label=r"($R_{{min}}$,$R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[i].value, Rmax_list[i].value))
-		# ~ intflux_sum_mr = np.zeros(lsize) * u.Jy
-			
-	# ~ plt.xlabel(r'$\lambda$ ($\mu$m)')
-	# ~ plt.ylabel('Flux (Jy)')
-	# ~ plt.title(r'Overall spectrum for multiple radii')
-	# ~ plt.legend()	
-	# ~ plt.savefig(folder + "Overall_spectrum_multiple_radii_limits.png")
-	# ~ plt.show()
+	plt.xlabel(r'$\lambda$ ($\mu$m)')
+	plt.ylabel('Flux (Jy)')
+	plt.title(r'Overall spectrum for multiple radii')
+	plt.legend()	
+	plt.savefig(folder + "Overall_spectrum_multiple_radii_limits.png")
+	plt.show()
 	
 	# Plotting the correlated flux density for multiple baselines against wavelengths
 	fig = plt.figure()

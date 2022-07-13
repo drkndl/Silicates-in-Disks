@@ -418,10 +418,10 @@ def calculate_spectra(F_map, R_arr, Rmin, Rmax):
 	
 	Parameters:
 	
-	F_map 		 : 2D array (shape: (NPOINT, lsize)) of the flux map for the solid in erg/(s Hz sr cm^2) i.e. CGS units (float)
+	F_map 		 : 2D array (shape: (NPOINT, lsize)) of the flux map for a single solid in erg/(s Hz sr cm^2) i.e. CGS units (float)
 	R_arr        : 1D array of radii in AU obtained from the temperature array in GGchem output based on the power law model (float)
 	Rmin 		 : Minimum radius limit over which the flux map is integrated (float)
-	Rmin 		 : Maximum radius limit over which the flux map is integrated (float)
+	Rmax 		 : Maximum radius limit over which the flux map is integrated (float)
 	
 	Returns: 
 	
@@ -433,12 +433,15 @@ def calculate_spectra(F_map, R_arr, Rmin, Rmax):
 	Rmin_id = np.where(R_rounded == Rmin)[0][0]
 	Rmax_id = np.where(R_rounded == Rmax)[0][0] 
 	
+	# Obtaining only that part of the arrays that lie between Rmin and Rmax (both included)
+	rad_arr = r_to_rad(R_arr[Rmin_id: Rmax_id+1]) 						# Converting radius (AU) to arcseconds to radians
+	F_map_req = F_map[Rmin_id: Rmax_id+1, :]
+	
 	# Transposing the matrices for element-wise matrix multiplication
-	rad_arr = r_to_rad(R_arr) 						# Converting radius (AU) to arcseconds to radians
 	rad_arr = rad_arr[np.newaxis]
 	rad_arr = rad_arr.T 
 	
-	summ = np.trapz(2 * np.pi * rad_arr * F_map, x = rad_arr, axis = 0)
+	summ = np.trapz(2 * np.pi * rad_arr * F_map_req, x = rad_arr, axis = 0)
 	
 	# delr = (rad_arr[Rmin_id+1: Rmax_id+1, :] - rad_arr[Rmin_id: Rmax_id, :])	
 	# f1 = rad_arr[Rmin_id: Rmax_id, :] * tau[Rmin_id: Rmax_id, :] * I[Rmin_id: Rmax_id, :] * 2 * np.pi * delr * 0.5
@@ -453,22 +456,26 @@ def calculate_spectra(F_map, R_arr, Rmin, Rmax):
 	# summ = temp.sum(axis=0)       # summ shape: (lsize, 1)
 	summ = summ.to(u.Jy, equivalencies = u.dimensionless_angles())
 
-	# Inefficient for-loop method
-	# ~ summ = 0
-	# ~ for r1 in range(Rmin_id, Rmax_id-1):
-		# ~ for r2 in range(r1+1, Rmax_id):
-	
-			# ~ # Numerical integration using the trapezoidal rule
-			# ~ delr = R_arr[r2] - R_arr[r1]
-			# ~ fr1 = f(tau[r1, :], I[:, r1], R_arr[r1], delr)
-			# ~ fr2 = f(tau[r2, :], I[:, r2], R_arr[r2], delr)
-			# ~ summ += (fr1 + fr2)
-	
 	return summ
 	
 	
 	
 def plot_spectra(lamda, summ, solid_name, rv, fmax, Rmin, Rmax, folder):
+	
+	"""
+	Plots the spectrum for a solid based on the integrated flux calculated in calculate_spectra()
+	
+	Parameters:
+	
+	lamda         : 1D array of wavelengths (shape: (lsize,)) of the solid in microns (float)
+	summ   		  : 1D array (shape: (lsize,)) of the integrated flux in Jy (float)
+	solid_name 	  : Name of the solid for which the spectral density is plotted (string)
+	rv            : Grain radius of the solid in microns, used for plot name (float)
+	fmax          : Maximum emptiness fraction of the solid grains according to the DHS theory (float)
+	Rmin 		  : Minimum radius limit over which the flux map is integrated (float)
+	Rmax 		  : Maximum radius limit over which the flux map is integrated (float)
+	folder        : Path where the output plots are saved (string)
+	"""
 	
 	fig = plt.figure()
 	plt.plot(lamda, summ)
@@ -483,24 +490,31 @@ def plot_spectra(lamda, summ, solid_name, rv, fmax, Rmin, Rmax, folder):
 def hankel_transform(F_map, R_arr, lamda, wl, B, wl_array):
 	
 	"""
-	Performs Fourier transform in cylindrical coordinates to get the interferometric flux map (i.e. correlated flux density)
-	I (lsize, NPOINT)
+	Calculates the absolute correlated flux density (in Jy) using the combined flux map of all the solids. This involves finding the Fourier transform in cylindrical coordinates using the Bessel function of the first kind zeroth order (j0). It is assumed that the correlated fluxes (shape: (lsize,)) are to be plotted against the wavelengths. If, however, it is to be plotted against the baselines, then the correlated flux density (a single float value) corresponding to a specific wavelength (wl) is extracted and returned from the array (shape: (lsize,)). This can be specified with wl_array.
+	
+	Parameters: 
+	
+	F_map 		  : 2D array (shape: (NPOINT, lsize)) of the combined flux map for all solids in erg/(s Hz sr cm^2) i.e. CGS units (float)
+	R_arr         : 1D array of radii in AU obtained from the temperature array in GGchem output based on the power law model (float)
+	lamda         : 1D array of wavelengths (shape: (lsize,)) of the solid in microns (float)
+	wl 			  : A single wavelength (in micron) where the correlated flux is required if the fluxes are plot against baseline (float). It is used only if wl_array = False
+	B 			  : The interferometric baseline value in m (float)
+	wl_array 	  : If True, the returned correlated fluxes is an array of shape (lsize,) to be plotted against the wavelengths. If False, the correlated flux for a single wavelength value is returned to be plot against the baselines (Boolean)
+	
+	Returns:
+	
+	inter_flux_abs: The absolute correlated flux density in Jy. If wl_array = True, a float array of shape (lsize,) is returned, else a single float value is returned
 	"""
 	
-	rad_arr = r_to_rad(R_arr) 						# Converting radius (AU) to arcseconds to radians	
+	rad_arr = r_to_rad(R_arr) 						 											# Converting radius (AU) to arcseconds to radians	
 	rad_arr = rad_arr[np.newaxis]
-	rad_arr = rad_arr.T 							# Shape: (NPOINT, 1)
+	rad_arr = rad_arr.T 																		# Shape: (NPOINT, 1)
 	rad_arr = rad_arr.to('', equivalencies=u.dimensionless_angles()) 
 	
-	# Considering F_map only at the given wavelength because I am out of ideas
-	# lamda_rounded = np.round(lamda, 1)	
-	# wl_id = np.where(lamda_rounded == wl)[0][0]
-	# F_map = F_map[:, wl_id]
-	
-	# One more idea, summing up the wavelength axis
-	# F_map = np.sum(F_map, axis=1)
-	
+	# Finding the Bessel function of the first kind, zeroth order
 	bessel = j0(2.0 * np.pi * rad_arr * B / (lamda.to(u.m)))           							# Shape: (NPOINT, lsize)
+	
+	# Calculating the absolute interferometric flux
 	inter_flux = 2.0 * np.pi * np.trapz(rad_arr * bessel * F_map, x = rad_arr, axis = 0)   		# Shape: (lsize,)
 	inter_flux_abs = np.abs(inter_flux) * u.rad**2
 	inter_flux_abs = inter_flux_abs.to(u.Jy, equivalencies = u.dimensionless_angles())
@@ -511,10 +525,10 @@ def hankel_transform(F_map, R_arr, lamda, wl, B, wl_array):
 		
 	else:
 		
-		# Finding the index where the array of wavelengths matches the given wavelength
+		# Finding the index where the array of wavelengths matches the given wavelength wl
 		lamda_rounded = np.round(lamda, 1)	
 		wl_id = np.where(lamda_rounded == wl)[0][0]
 		
-		inter_flux_abs = inter_flux_abs[wl_id]                                             # Single float value
+		inter_flux_abs = inter_flux_abs[wl_id]                                             		# Single float value
 		
 		return inter_flux_abs

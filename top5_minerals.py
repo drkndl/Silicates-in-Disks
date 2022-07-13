@@ -26,7 +26,7 @@ def final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST):
 		solid = keyword[i]
 		if keyword[i] in minerals:
 			
-			print(' i = ',i, ' solid name = ', solid)
+			# print(' i = ',i, ' solid name = ', solid)
 			solid_names.append(solid[1:])            
 			ind = np.where(keyword == 'n' + solid[1:])[0]           # Finds the index where nsolid data for the current solid is available
 			if (np.size(ind) == 0): continue
