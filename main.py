@@ -11,7 +11,8 @@ from diskprop import inner_radius, r_from_T, scale_height
 from clean_plots import T_plot
 from radial_plot import R_plot
 from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
-from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Qcurve_plotter, Plancks, tau_calc, tau_calc_amorphous, flux_map, plot_fluxmap, calculate_spectra, plot_spectra, hankel_transform
+from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
+from no_thoughts_just_plots import Qcurve_plotter, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
 from scipy.interpolate import UnivariateSpline
 from scipy.special import j0
 
@@ -161,8 +162,11 @@ def main():
 			if solid == "Mg2SiO4":
 				
 				solid_a = 'MgOlivine'
-				I[solid] = Plancks(lamdas[solid], Tg, solid, folder) 
-				tau[solid] = tau_calc_amorphous(surf_dens[solid], kappas[solid], Tg, kappas_a[solid_a], solid, folder)
+				I[solid] = Plancks(lamdas[solid], Tg) 
+				# plot_Bv(lamdas[solid], I[solid], solid, folder)
+				
+				tau[solid] = tau_calc_amorphous(surf_dens[solid], kappas[solid], Tg, kappas_a[solid_a])
+				# plot_tau(tau[solid], solid, folder)
 				
 				F_map = flux_map(tau[solid], I[solid])
 				# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
@@ -175,8 +179,11 @@ def main():
 			elif solid == "MgSiO3":
 				
 				solid_a = "MgPyroxene"
-				I[solid] = Plancks(lamdas[solid], Tg, solid, folder) 
-				tau[solid] = tau_calc_amorphous(surf_dens[solid], kappas[solid], Tg, kappas_a[solid_a], solid, folder)
+				I[solid] = Plancks(lamdas[solid], Tg) 
+				# plot_Bv(lamdas[solid], I[solid], solid, folder)
+				
+				tau[solid] = tau_calc_amorphous(surf_dens[solid], kappas[solid], Tg, kappas_a[solid_a])
+				# plot_tau(tau[solid], solid, folder)
 				
 				F_map = flux_map(tau[solid], I[solid])
 				# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
@@ -188,8 +195,11 @@ def main():
 				
 			else:
 				
-				I[solid] = Plancks(lamdas[solid], Tg, solid, folder) 
-				tau[solid] = tau_calc(surf_dens[solid], kappas[solid], solid, folder)
+				I[solid] = Plancks(lamdas[solid], Tg) 
+				# plot_Bv(lamdas[solid], I[solid], solid, folder)
+				
+				tau[solid] = tau_calc(surf_dens[solid], kappas[solid])
+				# plot_tau(tau[solid], solid, folder)
 				
 				F_map = flux_map(tau[solid], I[solid])
 				# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
