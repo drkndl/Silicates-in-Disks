@@ -22,13 +22,16 @@ def inner_radius(Qr, T0, R_star, T_star):
     """
     Calculates the inner disk radius R_in (in AU) from the power law planet forming disk model
 
-    Parameters:-
-    Qr:           Ratio of absorption efficiencies (assumed to be black body)
+    Parameters:
+    
+    Qr:           Ratio of absorption efficiencies (float)
     T0:           Dust sublimation temperature in K (float)
     R_star:       Radius of the star in AU (float)
     T_star:       Effective temperature of the star in K (float)
 
-    Returns the inner radius of the planet forming disk inside which dust grains cannot condense out from the gas (R_in) in AU
+    Returns:
+    
+    R_in: 		  The inner radius of the planet forming disk inside which dust grains cannot condense out from the gas (R_in) in AU (float)
     """
 
     R_in = 0.5 * np.sqrt(Qr) * (T_star/T0)**2 * R_star
@@ -40,12 +43,16 @@ def midplaneT_profile(R_in, T0, r_arr, q):
     """
     Calculates an array of midplane temperatures T (in K) in a disk to plots its radial dependence based on the given array of radii
 
-    Parameters:-
+    Parameters:
+    
     R_in:        The inner radius of the protodisk inside of which the gas cannot condense into dust grains in AU (float)
     T0:          Dust sublimation temperature in K (float)
-    r_arr:       A 1D array of radii
+    r_arr:       A 1D array of radii in AU (shape: (100,)) (float)
+    q: 			 Temperature gradient exponent (float)
 
-    Returns a 1D array of temperature in K calculated using the power law relationship
+    Returns:
+    
+    T_arr: 		 A 1D array of temperature in K calculated using the power law relationship (shape: (100,)) (float)
     """
 
     T_arr = T0 * (r_arr/R_in)**(q)
@@ -57,38 +64,55 @@ def r_from_T(R_in, T_arr, T0, q):
     """
     Essentially the inverse of midplaneT_profile. Calculates an array of radii of the disk R_arr (in AU) for a given array of temperature based on the power-law relationship
 
-    Parameters:-
+    Parameters:
+    
     R_in:        The inner radius of the protodisk inside of which the gas cannot condense into dust grains in AU (float)
-    T_arr:       1D array of disk temperatures in K
+    T_arr:       1D array of disk temperatures in K (shape: (NPOINT,)) (float) where NPOINT is the number of points in the GGchem simulation
     T0:          Dust sublimation temperature in K (float)
 
-    Returns a 1D array of radii in AU 
+    Returns:
+    
+    R_arr: 		 A 1D array of radii in AU (shape: (NPOINT,)) (float)
     """
 
     R_arr = R_in * (T_arr/T0)**(1/q)
     return R_arr
 
 
-def surface_density(Sigma0, r, e):
+def surface_density(Sigma0, r, p):
 
     """
     Calculates the surface density Sigma (in g/cm^2)
 
-    Parameters:-
+    Parameters:
+    
     Sigma0:       Surface density with MMSN in g/cm^2 (float)
-    r:            1D array of radii
+    r:            1D array of radii in AU (shape: (100,))
+    p: 			  Surface density gradient exponent (float)
 
-    Returns the surface density in g/cm^2 (float)
+    Returns:
+    
+    Sigma: 		  1D array of surface density in g/cm^2 (shape: (100,)) (float)
     """
 
-    Sigma = Sigma0 * (r / (1 * u.AU))**(e)
+    Sigma = Sigma0 * (r / (1 * u.AU))**(p)
     return Sigma
 
 
 def scale_height(M_star, r, T):
 
     """
-    Calculates the scale height H (in cm)
+    Calculates the pressure scale height H (in cm) by calculating the isothermal speed of sound and the Keplerian angular frequency
+    
+    Parameters:
+    
+    M_star: 		Mass of the star in g (float)
+    r: 				1D array of radii in AU (shape varies) (float)
+    T: 				1D array of temperature at each radial point in K calculated using the power law relationship (shape varies) (float)
+    
+    Returns:
+    
+    H: 				1D array of pressure scale height in cm calculated at each radial point (float)
     """
 
     omega = np.sqrt( G*M_star / (r.to(u.cm))**3 )   	# Keplerian angular frequency (/s)
@@ -103,10 +127,20 @@ def density(Sigma, H):
     
     """
     Calculates the mass density (g/cm^3) and number density (/cm^3) of the gas
+    
+    Parameters:
+    
+    Sigma: 		  1D array of surface density in g/cm^2 (shape: (100,)) (float)
+    H: 			  1D array of pressure scale height in cm calculated at each radial point (float)
+    
+    Returns:
+    
+    rho: 		  1D array of mass density in g/cm^3 of the gas (float)
+    nH: 		  1D array of the number density in /cm^3 of the gas (float)
     """
 
     rho = 0.5 * np.pi * Sigma / H
-    nH = rho / mp                # From Planet_forming_disk_model.ipynb
+    nH = 0.7 * rho / mp                # 0.7 factor assumes the disk is made of 70% Hydrogen (from Planet_forming_disk_model.ipynb by Merijn)
     return rho, nH
 
 
@@ -114,6 +148,12 @@ def pressure(rho, T):
     
     """
     Calculates the gas pressure P (in bar)
+    
+    Parameters:
+    
+    Returns:
+    
+    
     """
     
     P = rho * Rc * T / (mu * Na * mp)
@@ -137,7 +177,6 @@ def main():
 	r_arr = np.linspace(0.05, 2.5, 100) * u.AU      # AU
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)
-	print(R_in)
 	T_arr = midplaneT_profile(R_in, T0, r_arr, q)	
 	
 	Sigma = surface_density(Sigma0, r_arr, e)
@@ -171,6 +210,7 @@ def main():
 	
 	# Write the disk property values required for GGchem to a file
 	with open(Folder + 'disk_props.dat', 'w') as f:
+		f.write('R_in' + '\t' + str(R_in))
 		f.write('Prop \t Max \t Min \n')
 		f.write('P' + '\t' + str(P.max()) + '\t' + str(P.min()) + '\n')
 		f.write('nH' + '\t' + str(nH.max()) + '\t' + str(nH.min()) + '\n')
