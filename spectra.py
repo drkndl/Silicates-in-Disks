@@ -26,13 +26,15 @@ dist_pc = 100 * u.pc  			            # Assuming a distance to the Sun-like star 
 def molecular_weight(solids):
     
     """
-    Calculates the molecular weight of the given solids in g/mol
+    Calculates the molecular weight of the given solids in g
 
     Parameters:
 
     solids       : A 1D list of the names (strings) of the top 5 most abundant solids at all radii 
 
-    Returns a dictionary of the molecular weights (in g/mol) for each of the given solids where the keys are the solid names and the values are the molecular weights (float)
+    Returns:
+    
+    molwt 		 : A dictionary of the molecular weights (in g) for each of the given solids where the keys are the solid names and the values are the molecular weights (float)
     """
     
     molwt = {key: None for key in solids}
@@ -48,30 +50,27 @@ def molecular_weight(solids):
 def surface_density(solids, molwt, top_abunds, nHtot, H):
 	
 	"""
-	Calculates the surface density of the given solids. Note that the calculated "surface" densities are actually (g/cm^3), but we assume column height to be 1 cm, so the surface density can be g/cm^2
+	Calculates the surface density of the given solids. Note that the calculated "surface" densities are actually (g/cm^3), but we assume column height to be 1 cm, so the surface density can be g/cm^2. The surface densities can also be calculated by assuming a column height of H AU, but this does not give accurate results at the moment
 	
 	Parameters:
 	
 	solids        : A 1D list of the names (strings) of the top 5 most abundant solids at all radii
-	molwt         : A dictionary of the molecular weights (in g/mol) for each of the given solids where the keys are the solid names and the values are the molecular weights (float)
+	molwt         : A dictionary of the molecular weights (in g) for each of the given solids where the keys are the solid names and the values are the molecular weights (float)
 	top_abunds    : A dictionary of the abundances (in log10(nsolid/nH)) for each of the given solids where the keys are the solid names and the values are the array (shape: (NPOINT,)) of abundances (float)
 	nHtot         : A 1D array (shape: (NPOINT,)) of total Hydrogen nuclei particle density (/cm^3) at each radius point (float)
+	H 			  : 1 1D array (shape: (NPOINT,)) of pressure scale heights at each radius point in AU (float)
 	
-	Returns a dictionary of surface density values in g/cm^2 for each solid at every radius where the keys are the solid names and the values are the array (shape: (NPOINT,)) of surface densities (float)
+	Returns:
+	
+	surf_dens 	  : A dictionary of surface density values in g/cm^2 for each solid at every radius where the keys are the solid names and the values are the array (shape: (NPOINT,)) of surface densities (float)
 	"""
 	
-	# Transposing 1D row array (shape: (1, NPOINT)) into 2D column array (shape: (NPOINT, 1)) for matrix multiplication
-	# ~ nHtot = nHtot[np.newaxis]
-	# ~ nHtot = nHtot.T
-	
-	H = 1 * u.cm
 	surf_dens = {key: None for key in solids}
 	
 	for solid in surf_dens.keys():
 		n_solid = nHtot * 10**top_abunds[solid]
 		surf_dens[solid] = molwt[solid] * n_solid
-		# surf_dens[solid] = H * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)    # Assuming a column height of H AU
-		# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)
+		# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
 		surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
 		
 	return surf_dens
@@ -80,10 +79,19 @@ def surface_density(solids, molwt, top_abunds, nHtot, H):
 def r_to_rad(R_arr):
 	
 	"""
-	Converting radius to arcseconds to radians
+	Converts radius to arcseconds to radians. This is required since, for spectra, we integrate over the solid angle instead of the radius
+	(R_arr / dist_pc) * (pc / AU) converts radii to arseconds. This value is divided by 3600 to obtain the angle in degrees. This is then multiplied by π/180 to represent the angle in radians.
+	
+	Parameters:
+	
+	R_arr        : 1D array of radii in AU obtained from the temperature array in GGchem output based on the power law model (float)
+	
+	Returns:
+	
+	rad_arr      : 1D array of angles in radians (float)
 	"""
 	
-	rad_arr = R_arr/dist_pc * (1 * u.pc)/(1 * u.AU)/ 3600.0 * np.pi / 180.0 * u.rad
+	rad_arr = R_arr/dist_pc * (1 * u.pc)/(1 * u.AU) / 3600.0 * np.pi / 180.0 * u.rad
 	return rad_arr
 	
 	
@@ -91,7 +99,20 @@ def r_to_rad(R_arr):
 def slice_lQ(lamda, Q, lmin, lmax, lsize):
 	
 	"""
-	Slices the arrays to the given limits lmin, lmax and of the given size lsize
+	Slices the wavelength array to the given limits lmin, lmax and of the given size lsize and also obtains the coresponding Q/Kappa values. This is done because the given opacity curves have different types of wavelength sampling, so to ensure uniformity while performing array operations, all the opacities are to be taken between the same wavelengths (lmin, lmax) and be of the same size: lsize.
+	
+	Parameters:
+	
+	lamda        : 1D array of wavelengths for the solid in microns (size varies with the solid)
+	Q  			 : 1D array of the absorption efficiencies of the solid (size varies with the solid)
+	lmin         : Lower limit of wavelength in microns (float)
+	lmax         : Upper limit of wavelength in microns (float)
+	lsize        : Number of wavelength (and Q/kappa) points (int)
+	
+	Returns:
+	
+	lamda        : 1D array of wavelengths (shape: (lsize,)) of the solid from lmin to lmax in microns (float) 
+	Q 			 : 1D array of absorption efficiencies (or kappas) (shape: (lsize,)) of the solid (if kappa, unit = (cm^2/g), otherwise, unitless) (float)
 	"""
 	
 	# Taking only the indices where the wavelength is between lmin to lmax microns
@@ -198,6 +219,7 @@ def Qcurve_plotter(lamda, kappa, mineral, rv, fmax, folder):
 	fmax         : Maximum emptiness fraction of the solid grains according to the DHS theory (float)
 	"""
 	
+	# Defining the names of the mineral for plot formatting. If the materials are amorphous (i.e. olivine or pyroxene), latex_name will not work and therefore their names in the plots are specifically defined
 	if mineral == 'MgOlivine':
 		fancy = 'MgOlivine'
 	elif mineral == 'MgPyroxene':
@@ -214,21 +236,21 @@ def Qcurve_plotter(lamda, kappa, mineral, rv, fmax, folder):
 
 
 
-def Plancks(T0, R_arr, R_in, lamda, q, solid, folder):
+def Plancks(lamda, Tg, solid, folder):
 	
 	"""
 	Calculates the spectral radiance (spectral emissive power per unit area, per unit solid angle, per unit frequency for particular radiation frequencies) of the solid using Planck's law for a range of radii (converted from temperatures based on the disk model) and a range of wavelengths in erg/(s Hz sr cm^2) 
 	
 	Parameters:
 	
-	T0           : Dust sublimation temperature in K (float)
-	R_arr        : 1D array of radii in AU obtained from the temperature array in GGchem output based on the power law model (float)
-	R_in         : Inner radius of the planet forming disk inside which dust grains cannot condense out from the gas in AU (float)
 	lamda        : 1D array of wavelengths (shape: (lsize,)) of the solid in microns (float)
+	Tg  		 : 1D array of gas temperatures (shape: (NPOINT,)) in K (float)
+	solid 		 : Name of the solid for which the spectral density is plotted (string)
+	folder       : Path where the output plots are saved (string)
 	
 	Returns:
 	
-	I            : 2D array (shape: (lsize, NPOINT)) of spectral radiance of the solid in erg/(s Hz sr cm^2) i.e. CGS units 
+	I            : 2D array (shape: (lsize, NPOINT)) of spectral radiance of the solid in erg/(s Hz sr cm^2) i.e. CGS units (float)
 	"""
 		
 	# Transposing 1D row array (shape: (lsize,)) into 2D column array (shape: (lsize, 1)) for matrix multiplication
@@ -239,8 +261,7 @@ def Plancks(T0, R_arr, R_in, lamda, q, solid, folder):
 	
 	# Planck's function in terms of frequency
 	v = c/lamda_cm
-	T = midplaneT_profile(R_in, T0, R_arr, q)
-	bb = BlackBody(temperature=T, scale=1.0)
+	bb = BlackBody(temperature = Tg, scale = 1.0)
 	I = bb(v)
 	
 	plt.plot(lamda, I)
@@ -263,17 +284,18 @@ def tau_calc(sigma, kappa, solid, folder):
     
     sigma         : 1D array of the surface density (shape: (NPOINT,)) of the solid in g/cm^2 (float)
     kappa         : 1D array of the opacities (shape: (lsize,)) of the solid in cm^2/g (float)
+    solid 		  : Name of the solid for which the optical depths are plotted (string)
+	folder        : Path where the output plots are saved (string)
     
     Returns:
     
-    tau           : 2D array of the optical depths (shape: NPOINT, lsize)) of the solid (float). The quantity is unitless.
+    tau           : 2D array of the optical depths (shape: (NPOINT, lsize)) of the solid (float). The quantity is unitless.
     """
 
     # Transposing 1D row array (shape: (NPOINT,)) into 2D column array (shape: (NPOINT, 1)) for matrix multiplication
     sigma = sigma[np.newaxis]
     sigma = sigma.T
 
-    # tau = sigma * kappa * 10**-8     # Assuming the dust scale height is 8 times lesser than the gas scale height. Why? Because I'm desperate.
     tau = sigma * kappa
     
     # Plotting the optical depths
@@ -290,16 +312,20 @@ def tau_calc(sigma, kappa, solid, folder):
 def tau_calc_amorphous(sigma, kappa, Tg, kappa_am, solid, folder):
 	
 	"""
-	Calculates the optical depth tau for a solid (unitless)
+	Calculates the optical depths tau for a solid (unitless) by considering the amorphous opacities for temperatures below 500K
 	
 	Parameters:
 	
 	sigma         : 1D array of the surface density (shape: (NPOINT,)) of the solid in g/cm^2 (float)
 	kappa         : 1D array of the opacities (shape: (lsize,)) of the solid in cm^2/g (float)
+	Tg  		  : 1D array of gas temperatures (shape: (NPOINT,)) in K (float)
+	kappa_am      : 1D array of the amorphous opacities (shape: (lsize,)) of the solid in cm^2/g (float)
+	solid 		  : Name of the solid for which the spectral density is plotted (string)
+	folder        : Path where the output plots are saved (string)
 	
 	Returns:
 	
-	tau           : 2D array of the optical depths (shape: NPOINT, lsize)) of the solid (float). The quantity is unitless.
+	tau           : 2D array of the optical depths (shape: (NPOINT, lsize)) of the solid (float). The quantity is unitless.
 	"""
 	
 	tau = np.zeros((len(sigma), len(kappa)))
@@ -309,7 +335,7 @@ def tau_calc_amorphous(sigma, kappa, Tg, kappa_am, solid, folder):
 	sigma = sigma[np.newaxis]
 	sigma = sigma.T
 	
-	# tau = sigma * kappa * 10**-8     # Assuming the dust scale height is 8 times lesser than the gas scale height. Why? Because I'm desperate.
+	# Considering the crystalline kappas for temperatures at 500K and above, and amorphous kappas for temperatures below 500K
 	tau[:l500_ind, :] = sigma[:l500_ind, :] * kappa
 	tau[l500_ind:, :] = sigma[l500_ind:, :] * kappa_am
 	
@@ -327,7 +353,16 @@ def tau_calc_amorphous(sigma, kappa, Tg, kappa_am, solid, folder):
 def flux_map(tau, I):
 
     """
-    Calculates the flux map for a solid (r, lambda)
+    Calculates the flux map for a solid in erg/(s Hz sr cm^2)
+    
+    Parameters:
+    
+    tau          : 2D array of the optical depths (shape: (NPOINT, lsize)) of the solid (float). The quantity is unitless.
+    I 			 : 2D array (shape: (lsize, NPOINT)) of spectral radiance of the solid in erg/(s Hz sr cm^2) i.e. CGS units (float)
+    
+    Returns:
+    
+	F_map 		 : 2D array (shape: (NPOINT, lsize)) of the flux map for the solid in erg/(s Hz sr cm^2) i.e. CGS units (float)
     """
 	
     I = I.T                                             # Transposing I from (lambda, r) to (r, lambda) for element-wise matrix multiplication
@@ -338,6 +373,20 @@ def flux_map(tau, I):
 
 
 def plot_fluxmap(solid_name, rv, fmax, F_map, lamda, R_arr, folder):
+	
+	"""
+	Plots the flux map for a solid as a colormap
+	
+	Parameters:
+	
+	solid_name 	  : Name of the solid for which the spectral density is plotted (string)
+	rv            : Grain radius of the solid in microns, used for plot name (float)
+	fmax          : Maximum emptiness fraction of the solid grains according to the DHS theory (float)
+	F_map         : 2D array (shape: (NPOINT, lsize)) of the flux map for the solid in erg/(s Hz sr cm^2) i.e. CGS units (float)
+	lamda         : 1D array of wavelengths (shape: (lsize,)) of the solid in microns (float)
+	R_arr         : 1D array of radii in AU obtained from the temperature array in GGchem output based on the power law model (float)
+	folder        : Path where the output plots are saved (string)
+	"""
 	
 	fig, ax = plt.subplots(1,1)
 	img = ax.imshow(F_map, cmap='plasma', interpolation='none')
@@ -356,33 +405,40 @@ def plot_fluxmap(solid_name, rv, fmax, F_map, lamda, R_arr, folder):
 	ax.set_ylabel('R (AU)')
 	
 	ax.set_title(r"Flux Map for {0}, r = {1}, $f_{{max}}$ = {2}".format(latex_name(solid_name), rv, fmax))
-	fig.colorbar(img)
+	fig.colorbar(img, label=r'{0}'.format(F_map.unit))
 	plt.savefig(folder + "Fluxmap_{0}_r{1}_fmax{2}.png".format(solid_name, rv, fmax), bbox_inches = 'tight')
 	plt.show()
 
     
     
-def calculate_spectra(tau, F_map, I, R_arr, Rmin, Rmax, last_id):
+def calculate_spectra(F_map, R_arr, Rmin, Rmax):
 	
 	"""
-	Calculates the integrated flux for the range of wavelength by integrating over radius
+	Calculates the integrated flux for the range of wavelength by integrating over the radius limits given (Rmin, Rmax)
 	
-	Summ shape (lamda, 1)
+	Parameters:
+	
+	F_map 		 : 2D array (shape: (NPOINT, lsize)) of the flux map for the solid in erg/(s Hz sr cm^2) i.e. CGS units (float)
+	R_arr        : 1D array of radii in AU obtained from the temperature array in GGchem output based on the power law model (float)
+	Rmin 		 : Minimum radius limit over which the flux map is integrated (float)
+	Rmin 		 : Maximum radius limit over which the flux map is integrated (float)
+	
+	Returns: 
+	
+	summ   		 : 1D array (shape: (lsize,)) of the integrated flux in Jy (float)
 	"""
 	
 	# Finding the indices of Rmin and Rmax by taking the first instance of where they are in the rounded R_arr 
 	R_rounded = np.round(R_arr, 3)	
 	Rmin_id = np.where(R_rounded == Rmin)[0][0]
-	# Rmax_id = np.where(R_rounded == Rmax)[0][0]
-	Rmax_id = last_id 
+	Rmax_id = np.where(R_rounded == Rmax)[0][0] 
 	
 	# Transposing the matrices for element-wise matrix multiplication
 	rad_arr = r_to_rad(R_arr) 						# Converting radius (AU) to arcseconds to radians
 	rad_arr = rad_arr[np.newaxis]
 	rad_arr = rad_arr.T 
-	I = I.T
 	
-	summ = np.trapz(2 * np.pi * rad_arr * tau * I, x = rad_arr, axis = 0)
+	summ = np.trapz(2 * np.pi * rad_arr * F_map, x = rad_arr, axis = 0)
 	
 	# delr = (rad_arr[Rmin_id+1: Rmax_id+1, :] - rad_arr[Rmin_id: Rmax_id, :])	
 	# f1 = rad_arr[Rmin_id: Rmax_id, :] * tau[Rmin_id: Rmax_id, :] * I[Rmin_id: Rmax_id, :] * 2 * np.pi * delr * 0.5
