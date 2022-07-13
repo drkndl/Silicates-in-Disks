@@ -151,9 +151,12 @@ def pressure(rho, T):
     
     Parameters:
     
+    rho: 		  1D array of mass density in g/cm^3 of the gas (float)
+    T: 			  1D array of temperature at each radial point in K calculated using the power law relationship (shape varies) (float)
+    
     Returns:
     
-    
+    P: 			  1D array of gas pressure in bar (float)
     """
     
     P = rho * Rc * T / (mu * Na * mp)
@@ -164,17 +167,18 @@ def main():
 	
 	T0 = 1500.0 * u.K                          	# Dust sublimation temperature (K)
 	Qr = 3                                  	# Ratio of absorption efficiencies 
-	R_star = 2 * const.R_sun.to(u.AU)             # Star's radius (AU)
+	R_star = 2 * const.R_sun.to(u.AU)           # Star's radius (AU)
 	T_star = 8000 * u.K                         # Effective temperature of the star (K)
 	Sigma0 = 1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
-	M_star = 8 * 1.99E33 * u.g         					# Solar mass (g)
-	q = -0.5
-	e = -1.0
-	R_sun = 0.00465047      # Sun's radius (AU)
-	M_sun = 1.99E33         # Solar mass (g)
-	Folder = "HotStar_q0.5_p1_Qr3/"
+	M_star = 8 * 1.99E33 * u.g         			# Solar mass (g)
+	q = -0.5 									# Disk temperature gradient exponent
+	e = -1.0 									# Disk surface density gradient exponent
+	R_sun = 0.00465047      					# Sun's radius (AU)
+	M_sun = 1.99E33         					# Solar mass (g)
+	Folder = "HotStar_q0.5_p1_Qr3/"  			# Path where output files are saved
 	
-	r_arr = np.linspace(0.05, 2.5, 100) * u.AU      # AU
+	# Defining a radius array
+	r_arr = np.linspace(0.05, 2.5, 100) * u.AU     
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)
 	T_arr = midplaneT_profile(R_in, T0, r_arr, q)	

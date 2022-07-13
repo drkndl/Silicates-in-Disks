@@ -344,6 +344,7 @@ def calculate_spectra(F_map, R_arr, Rmin, Rmax):
 	rad_arr = rad_arr[np.newaxis]
 	rad_arr = rad_arr.T 
 	
+	# Calculating the integrated flux using the Trapezoidal numerical integration
 	summ = np.trapz(2 * np.pi * rad_arr * F_map_req, x = rad_arr, axis = 0)
 	
 	# delr = (rad_arr[Rmin_id+1: Rmax_id+1, :] - rad_arr[Rmin_id: Rmax_id, :])	
