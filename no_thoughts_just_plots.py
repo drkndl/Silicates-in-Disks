@@ -1,3 +1,5 @@
+# Contains plotting functions for Qcurves, optical depth maps, spectral densities, flux maps, spectra
+
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u

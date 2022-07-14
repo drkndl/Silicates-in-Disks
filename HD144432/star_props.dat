@@ -1,0 +1,10 @@
+T0 = 1500.0 * u.K                          	# Dust sublimation temperature (K)
+Qr = 3                                  	# Ratio of absorption efficiencies 
+L_star = 10**1.01 * const.L_sun.cgs         	# Stellar luminosity
+T_star = 7345.138 * u.K                         # Effective temperature of the star (K)
+R_star = star_radius(L_star, T_star).to(u.AU)   # Star's radius (AU)
+Sigma0 = 1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
+M_star = 1.8 * 1.99E33 * u.g         		# Solar mass (g)
+q = -0.5                                        # Disk temperature gradient exponent
+e = -1.0                                        # Disk surface density gradient exponent
+dist_pc = 145 pc

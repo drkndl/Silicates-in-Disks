@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, ScalarFormatter, LogLocator
 from matplotlib.backends.backend_pdf import PdfPages
 from astropy import units as u
-from diskprop import midplaneT_profile
+from diskprop import midplaneT_profile, r_from_T
 from fancy_name import latex_name
 # plt.rcParams['axes.linewidth'] = 1.5
 # plt.rcParams["figure.figsize"] = (14, 7)
@@ -23,7 +23,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM
 	widt = [2]*Ncolor*10
 	
 	ymin  = -7.0                # Minimum exponent on y-axis
-	ymax = -3.0                  # Maximum exponent on y-axis
+	ymax = -4.0                  # Maximum exponent on y-axis
 	csize = 5
 	
 	filename = folder + 'abundances_vs_R.pdf'
@@ -68,7 +68,8 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM
 	
 		
 	# Plot formatting
-	Rlimit = Rmax                                            # Radius limit for zoomed in plot (AU)
+	Tlimit = 200 * u.K 
+	Rlimit = r_from_T(R_in, Tlimit, T0, q)                                            # Radius limit for zoomed in plot (AU)
 	plt.title('Abundances of Condensates vs R', fontsize=12)
 	ax.set_xlabel(r'$R\ \mathrm{[AU]}$', fontsize=10)
 	ax.set_ylabel(r'$\mathrm{log}_{10}\ n_\mathrm{solid}/n_\mathrm{\langle H\rangle}$', fontsize=10)
@@ -76,7 +77,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM
 	ax.set_ylim(ymin, ymax)
 	
 	# Adding the temperature axis on top
-	x_ticks = np.linspace(Rmin, Rmax, 7) 
+	x_ticks = np.linspace(Rmin, Rlimit, 7) 
 	print(x_ticks)
 	T_ticks = midplaneT_profile(R_in, T0, x_ticks, q).astype(int)
 	print(T_ticks)

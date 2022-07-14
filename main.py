@@ -6,8 +6,8 @@ from astropy.constants import astropyconst20 as const
 from fancy_name import latex_name
 from all_solids import get_all_solids
 from molmass import Formula
-from diskprop import inner_radius, r_from_T, scale_height
-from clean_plots import T_plot
+from diskprop import inner_radius, r_from_T, scale_height, star_radius
+from T_plot import T_plot
 from radial_plot import R_plot
 from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
@@ -51,14 +51,16 @@ def main():
 	Tmax  = np.max(Tg)                      	  # Maximum gas temperature
 	
 	# Converting temperatures to corresponding radii
-	T0 = 1500.0 * u.K                          	  # Dust sublimation temperature (K)
-	Qr = 3                                  	  # Ratio of absorption efficiencies (assumed to be black body)
-	R_star = 2 * const.R_sun.to(u.AU)             # Star's radius (AU)
-	T_star = 8000 * u.K                           # Effective temperature of the star (K)
-	Sigma0 = 1700 * u.g / u.cm**2          		  # Surface density with MMSN (g/cm^2)
-	M_star = 8 * 1.99E33 * u.g         			  # Solar mass (g)
-	q = -0.5 									  # Disk temperature gradient exponent
-	e = -1.0 									  # Disk surface density gradient exponent
+	T0 = 1500.0 * u.K                          		# Dust sublimation temperature (K)
+	Qr = 3                                  		# Ratio of absorption efficiencies 
+	L_star = 10**1.01 * const.L_sun.cgs         	# Stellar luminosity
+	T_star = 7345.138 * u.K                         # Effective temperature of the star (K)
+	R_star = star_radius(L_star, T_star).to(u.AU)   # Star's radius (AU)
+	Sigma0 = 1700 * u.g / u.cm**2          			# Surface density with MMSN (g/cm^2)
+	M_star = 1.8 * 1.99E33 * u.g         			# Solar mass (g)
+	q = -0.5 										# Disk temperature gradient exponent
+	e = -1.0 										# Disk surface density gradient exponent
+	dist_pc = 145 * u.pc                          # Star distance in parsec
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
 	R_arr = r_from_T(R_in, Tg, T0, q)             # 1D array of radii obtained from the power law disk model (AU)
@@ -77,7 +79,7 @@ def main():
 	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
 	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
 	B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)
-	folder = 'Temp/'                               			# Folder where all the results go
+	folder = 'HD144432/'                               			# Folder where all the results go
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
@@ -169,7 +171,7 @@ def main():
 			# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
 			F_map_sum += F_map
 			
-			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax)  
+			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
 			# plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
 			intflux_sum += intflux
 			
@@ -186,7 +188,7 @@ def main():
 			# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
 			F_map_sum += F_map
 			
-			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax)  
+			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
 			# plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
 			intflux_sum += intflux
 			
@@ -202,7 +204,7 @@ def main():
 			# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
 			F_map_sum += F_map
 			
-			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax)  
+			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
 			# plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
 			intflux_sum += intflux
 			
@@ -245,7 +247,7 @@ def main():
 	
 	for i in range(len(Rmax_list)):		
 		for solid in top5_solids:		 			
-			intflux_sum_mr += calculate_spectra(F_map_sum, R_arr, Rmin_list[i], Rmax_list[i])			
+			intflux_sum_mr += calculate_spectra(F_map_sum, R_arr, Rmin_list[i], Rmax_list[i], dist_pc)			
 		plt.plot(lamdas['Mg2SiO4'], intflux_sum_mr, label=r"($R_{{min}}$,$R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[i].value, Rmax_list[i].value))
 		intflux_sum_mr = np.zeros(lsize) * u.Jy
 			
@@ -261,7 +263,7 @@ def main():
 	
 	for Bl in B_small:
 		
-		corr_flux_absB = hankel_transform(F_map_sum, R_arr, lamdas['Mg2SiO4'], wl, Bl, wl_array = True) 
+		corr_flux_absB = hankel_transform(F_map_sum, R_arr, lamdas['Mg2SiO4'], wl, Bl, dist_pc, wl_array = True) 
 		plt.plot(lamdas['Mg2SiO4'], corr_flux_absB, label = 'B = {0} m'.format(Bl.value))
 	
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
@@ -276,7 +278,7 @@ def main():
 	
 	for wl in wl_list:
 		for bl in range(len(B)):			
-			inter_flux[bl] = hankel_transform(F_map_sum, R_arr, lamdas['Mg2SiO4'], wl, B[bl], wl_array = False) 
+			inter_flux[bl] = hankel_transform(F_map_sum, R_arr, lamdas['Mg2SiO4'], wl, B[bl], dist_pc, wl_array = False) 
 		plt.plot(B, inter_flux, label=r"{0} $\mu$m".format(wl.value))	
 		inter_flux = np.zeros(len(B)) * u.Jy	
 	

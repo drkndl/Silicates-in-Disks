@@ -1,3 +1,5 @@
+# Calculates opacities, flux maps, spectra, correlated fluxes and all other related properties
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -19,7 +21,6 @@ h = const.h.cgs                   			# Planck's constant in cm^2 g s-1
 c = const.c.cgs              				# Speed of light in cm/s              
 k = const.k_B.cgs                   		# Boltzmann constant in cm^2 g s^-2 K^-1
 AU = const.au.cgs                			# 1 astronomical unit in cm
-dist_pc = 100 * u.pc  			            # Assuming a distance to the Sun-like star in parsec
       
  
       
@@ -76,7 +77,7 @@ def surface_density(solids, molwt, top_abunds, nHtot, H):
 	return surf_dens
 
 
-def r_to_rad(R_arr):
+def r_to_rad(R_arr, dist_pc):
 	
 	"""
 	Converts radius to arcseconds to radians. This is required since, for spectra, we integrate over the solid angle instead of the radius
@@ -314,7 +315,7 @@ def flux_map(tau, I):
 
     
     
-def calculate_spectra(F_map, R_arr, Rmin, Rmax):
+def calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc):
 	
 	"""
 	Calculates the integrated flux for the range of wavelength by integrating over the radius limits given (Rmin, Rmax)
@@ -337,7 +338,7 @@ def calculate_spectra(F_map, R_arr, Rmin, Rmax):
 	Rmax_id = np.where(R_rounded == Rmax)[0][0] 
 	
 	# Obtaining only that part of the arrays that lie between Rmin and Rmax (both included)
-	rad_arr = r_to_rad(R_arr[Rmin_id: Rmax_id+1]) 						# Converting radius (AU) to arcseconds to radians
+	rad_arr = r_to_rad(R_arr[Rmin_id: Rmax_id+1], dist_pc) 						# Converting radius (AU) to arcseconds to radians
 	F_map_req = F_map[Rmin_id: Rmax_id+1, :]
 	
 	# Transposing the matrices for element-wise matrix multiplication
@@ -364,7 +365,7 @@ def calculate_spectra(F_map, R_arr, Rmin, Rmax):
 
 
 
-def hankel_transform(F_map, R_arr, lamda, wl, B, wl_array):
+def hankel_transform(F_map, R_arr, lamda, wl, B, dist_pc, wl_array):
 	
 	"""
 	Calculates the absolute correlated flux density (in Jy) using the combined flux map of all the solids. This involves finding the Fourier transform in cylindrical coordinates using the Bessel function of the first kind zeroth order (j0). It is assumed that the correlated fluxes (shape: (lsize,)) are to be plotted against the wavelengths. If, however, it is to be plotted against the baselines, then the correlated flux density (a single float value) corresponding to a specific wavelength (wl) is extracted and returned from the array (shape: (lsize,)). This can be specified with wl_array.
@@ -383,7 +384,7 @@ def hankel_transform(F_map, R_arr, lamda, wl, B, wl_array):
 	inter_flux_abs: The absolute correlated flux density in Jy. If wl_array = True, a float array of shape (lsize,) is returned, else a single float value is returned
 	"""
 	
-	rad_arr = r_to_rad(R_arr) 						 											# Converting radius (AU) to arcseconds to radians	
+	rad_arr = r_to_rad(R_arr, dist_pc) 						 											# Converting radius (AU) to arcseconds to radians	
 	rad_arr = rad_arr[np.newaxis]
 	rad_arr = rad_arr.T 																		# Shape: (NPOINT, 1)
 	rad_arr = rad_arr.to('', equivalencies=u.dimensionless_angles()) 

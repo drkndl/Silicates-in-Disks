@@ -15,8 +15,20 @@ mp = const.m_p.cgs         					# Mass of proton (g)
 mu = 2.3                					# Mean molecular weight
 Rc = const.R.cgs           					# Ideal gas constant (erg K^-1 mol^-1)
 G = const.G.cgs           					# Gravitational constant (cm^3 g^-1 s^-2)
+sb = const.sigma_sb.cgs 					# Stefan-Boltzmann constant in CGS units
 
 
+def star_radius(L, T):
+	
+	"""
+	Finding the stellar radius from the luminosity formula
+	"""
+	
+	R = np.sqrt(L / (4 * np.pi * sb * T**4))
+	
+	return R
+	
+	
 def inner_radius(Qr, T0, R_star, T_star):
 
     """
@@ -165,17 +177,18 @@ def pressure(rho, T):
 
 def main():
 	
-	T0 = 1500.0 * u.K                          	# Dust sublimation temperature (K)
-	Qr = 3                                  	# Ratio of absorption efficiencies 
-	R_star = 2 * const.R_sun.to(u.AU)           # Star's radius (AU)
-	T_star = 8000 * u.K                         # Effective temperature of the star (K)
-	Sigma0 = 1700 * u.g / u.cm**2          		# Surface density with MMSN (g/cm^2)
-	M_star = 8 * 1.99E33 * u.g         			# Solar mass (g)
-	q = -0.5 									# Disk temperature gradient exponent
-	e = -1.0 									# Disk surface density gradient exponent
-	R_sun = 0.00465047      					# Sun's radius (AU)
-	M_sun = 1.99E33         					# Solar mass (g)
-	Folder = "HotStar_q0.5_p1_Qr3/"  			# Path where output files are saved
+	T0 = 1500.0 * u.K                          		# Dust sublimation temperature (K)
+	Qr = 3                                  		# Ratio of absorption efficiencies 
+	L_star = 10**1.01 * const.L_sun.cgs         	# Stellar luminosity
+	T_star = 7345.138 * u.K                         # Effective temperature of the star (K)
+	R_star = star_radius(L_star, T_star).to(u.AU)   # Star's radius (AU)
+	Sigma0 = 1700 * u.g / u.cm**2          			# Surface density with MMSN (g/cm^2)
+	M_star = 1.8 * 1.99E33 * u.g         			# Solar mass (g)
+	q = -0.5 										# Disk temperature gradient exponent
+	e = -1.0 										# Disk surface density gradient exponent
+	R_sun = 0.00465047      						# Sun's radius (AU)
+	M_sun = 1.99E33         						# Solar mass (g)
+	Folder = "HD144432/"  							# Path where output files are saved
 	
 	# Defining a radius array
 	r_arr = np.linspace(0.05, 2.5, 100) * u.AU     
@@ -214,7 +227,7 @@ def main():
 	
 	# Write the disk property values required for GGchem to a file
 	with open(Folder + 'disk_props.dat', 'w') as f:
-		f.write('R_in' + '\t' + str(R_in))
+		f.write('R_in' + '\t' + str(R_in) + '\n')
 		f.write('Prop \t Max \t Min \n')
 		f.write('P' + '\t' + str(P.max()) + '\t' + str(P.min()) + '\n')
 		f.write('nH' + '\t' + str(nH.max()) + '\t' + str(nH.min()) + '\n')
