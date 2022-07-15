@@ -8,6 +8,14 @@ import pandas as pd
 from fancy_name import latex_name
 
 
+def gimme_l(filename):
+	
+	Q_curve = pd.read_csv(filename, delimiter='\s+', skiprows = 23, names = ['wavelength', 'Kabs', 'Ksca', 'g_asymm'])
+	lamda = u.Quantity(Q_curve['wavelength'].to_numpy(), u.micron)
+	
+	return lamda
+	
+	
 def gimme_k(filename):
 	
 	"""
@@ -33,13 +41,13 @@ def gimme_k(filename):
 def main():
 	
 	folder = "Qcurve_Comparison/"
-	minerals = ['Fe2SiO4', 'Fe3O4', 'Fe', 'FeS', 'Mg2SiO4', 'MgSiO3', 'Ni', 'SiO2']
+	minerals = ['Fe2SiO4', 'Fe3O4', 'Fe', 'FeS', 'Mg2SiO4', 'MgSiO3', 'Ni', 'SiO']
 	paths = ['Qcurve_inputs_mult_GS/0.1_to_1.5/*.dat', 'Qcurve_inputs_mult_GS/0.1_to_10/*.dat', 'Qcurve_inputs_mult_GS/0.1_to_20/*.dat', 'Qcurve_inputs_mult_GS/0.1_to_100/*.dat']
 	gs_ranges = ['0.1_to_1.5', '0.1_to_10', '0.1_to_20', '0.1_to_100']
 	
 	# Defining a nested dictionary where each dictionary within is named after a mineral and each such dictionary consists of grain size ranges as keys with their wavelengths/opacities as values
-	ldict = {outer_k: {inner_k: None for inner_k in gs_ranges} for outer_k in minerals}
 	kdict = {outer_k: {inner_k: None for inner_k in gs_ranges} for outer_k in minerals}
+	lamda = gimme_l('Qcurve_inputs_mult_GS/0.1_to_1.5/Q_Fe2SiO4_rv0.1-1.5_fmax0.7.dat')
 	
 	for path in paths:	
 		
@@ -51,15 +59,15 @@ def main():
 			filename = opfile.split('/')[2]
 			mineral = filename.split('_')[1]
 			
-			ldict[mineral][size], kdict[mineral][size] = gimme_lk(opfile)
+			kdict[mineral][size] = gimme_k(opfile)
 	
 	# Plot the opacities for only the first 20 microns	
 	for mineral in minerals:
 		for size in gs_ranges:
 			
 			# Take the last index where the wavelength value is less than or equal to 20 microns
-			index = np.where(ldict[mineral][size] <= 20 * u.micron)[0][-1]
-			ldict_plot = ldict[mineral][size][:index+1]
+			index = np.where(lamda <= 20 * u.micron)[0][-1]
+			ldict_plot = lamda[:index+1]
 			kdict_plot = kdict[mineral][size][:index+1]
 			
 			# Plot the opacity curve of the mineral for a particular size range
