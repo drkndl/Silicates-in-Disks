@@ -375,7 +375,7 @@ def calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc):
 	summ = np.trapz(2 * np.pi * rad_arr * F_map_req, x = rad_arr, axis = 0)
 	summ = summ.to(u.Jy, equivalencies = u.dimensionless_angles())
 
-	return summ
+	return summ * 10**4
 
 
 
@@ -413,7 +413,7 @@ def hankel_transform(F_map, R_arr, lamda, wl, B, dist_pc, wl_array):
 	
 	if wl_array: 
 		
-		return inter_flux_abs
+		return inter_flux_abs * 10**4
 		
 	else:
 		
@@ -423,4 +423,4 @@ def hankel_transform(F_map, R_arr, lamda, wl, B, dist_pc, wl_array):
 		
 		inter_flux_abs = inter_flux_abs[wl_id]                                             		# Single float value
 		
-		return inter_flux_abs
+		return inter_flux_abs * 10**4

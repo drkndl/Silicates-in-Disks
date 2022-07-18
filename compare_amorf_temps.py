@@ -28,6 +28,7 @@ G = const.G.cgs           					# Gravitational constant (cm^3 g^-1 s^-2)
 def main():
 	
 	file   = 'HD144432/HD144432_Static_Conc.dat'      # Simulation output file
+	disk = 'HD144432'
 	data   = open(file)
 	dummy  = data.readline()                # Ignoring first line
 	dimens = data.readline()                
@@ -200,7 +201,7 @@ def main():
 		ax.set_yticklabels(y_axis_labels.value)
 		ax.set_ylabel('R (AU)')
 		
-		ax.set_title(r"Overall Flux Map for r=0.1 microns $T_{{am}}$ = {0}K".format(amor_temp.value))
+		ax.set_title(r"{0} Overall Flux Map for r=0.1 microns $T_{{am}}$ = {1}K".format(disk, amor_temp.value))
 		fig.colorbar(img, label=r'{0}'.format(F_map_sum.unit))
 		plt.savefig(folder + "overall_fluxmap_T{0}.png".format(amor_temp.value), bbox_inches = 'tight')
 		plt.show()
@@ -210,7 +211,7 @@ def main():
 		plt.plot(lamdas['Mg2SiO4'], intflux_sum)
 		plt.xlabel(r'$\lambda$ ($\mu$m)')
 		plt.ylabel('Flux (Jy)')
-		plt.title(r'Overall Spectrum r=0.1 $\mu$m R={0}-{1} AU $T_{{am}}$ = {2}K'.format(Rmin.value, Rmax.value, amor_temp.value))
+		plt.title(r'{0} Overall Spectrum r=0.1 $\mu$m R={1}-{2} AU $T_{{am}}$ = {3}K'.format(disk, Rmin.value, Rmax.value, amor_temp.value))
 		plt.savefig(folder + "Overall_spectrum_r0.1_R{0}-{1}_T{2}.png".format(Rmin.value, Rmax.value, amor_temp.value))
 		plt.show()
 		
@@ -218,18 +219,15 @@ def main():
 		R_list = np.round(R_arr[np.linspace(0, len(R_arr)-1, 7).astype(int)], 3)
 		Rmin_list = R_list[:-1]
 		Rmax_list = R_list[1:]
-		intflux_sum_mr = np.zeros(lsize) * u.Jy
 		fig = plt.figure()
 		
-		for i in range(len(Rmax_list)):		
-			for solid in top5_solids:		 			
-				intflux_sum_mr += calculate_spectra(F_map_sum, R_arr, Rmin_list[i], Rmax_list[i], dist_pc)			
+		for i in range(len(Rmax_list)):			 			
+			intflux_sum_mr = calculate_spectra(F_map_sum, R_arr, Rmin_list[i], Rmax_list[i], dist_pc)			
 			plt.plot(lamdas['Mg2SiO4'], intflux_sum_mr, label=r"($R_{{min}}$,$R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[i].value, Rmax_list[i].value))
-			intflux_sum_mr = np.zeros(lsize) * u.Jy
 				
 		plt.xlabel(r'$\lambda$ ($\mu$m)')
 		plt.ylabel('Flux (Jy)')
-		plt.title(r'Overall spectrum for multiple radii $T_{{am}}$ = {0}K'.format(amor_temp.value))
+		plt.title(r'{0} Overall spectrum for multiple radii $T_{{am}}$ = {1}K'.format(disk, amor_temp.value))
 		plt.legend()	
 		plt.savefig(folder + "Overall_spectrum_multiple_radii_limits_T{0}.png".format(amor_temp.value))
 		plt.show()
@@ -244,7 +242,7 @@ def main():
 		
 		plt.xlabel(r'$\lambda$ ($\mu$m)')
 		plt.ylabel('Correlated flux (Jy)')             
-		plt.title(r'Correlated flux for multiple baselines, rv = 0.1, $T_{{am}}$ = {0}K'.format(amor_temp.value))
+		plt.title(r'{0} Correlated flux for multiple baselines, rv = 0.1, $T_{{am}}$ = {1}K'.format(disk, amor_temp.value))
 		plt.legend()
 		plt.savefig(folder + 'Correlated_flux_multB_rv0.1_T{0}.png'.format(amor_temp.value))
 		plt.show()
@@ -260,7 +258,7 @@ def main():
 		
 		plt.xlabel(r'Baseline B (m)')
 		plt.ylabel('Correlated flux (Jy)')
-		plt.title(r'Correlated flux for multiple wavelengths, rv = 0.1, $T_{{am}}$ = {0}K'.format(amor_temp.value))
+		plt.title(r'{0} Correlated flux for multiple wavelengths, rv = 0.1, $T_{{am}}$ = {1}K'.format(disk, amor_temp.value))
 		plt.legend()
 		plt.savefig(folder + "Correlated_flux_multWL_rv0.1_T{0}.png".format(amor_temp.value))
 		plt.show()

@@ -170,7 +170,7 @@ def main():
 		last = np.where(lamda <= 13 * u.micron)[0][-1]
 		lamda_plot = lamda[first: last+1]
 		intflux_plot = intflux_sum[size][first: last+1]
-		plt.plot(lamda_plot, intflux_plot * 10**4, label = r'{0} $\mu$m'.format(size))
+		plt.plot(lamda_plot, intflux_plot, label = r'{0} $\mu$m'.format(size))
 		
 	# Plotting paper spectrum for the given disk
 	datfile = folder + 'van_Boekel_' + disk + '.dat'
@@ -195,7 +195,7 @@ def main():
 		for Bl in B_small:
 			
 			corr_flux_absB = hankel_transform(F_map_sum[size], R_arr, lamda, wl, Bl, dist_pc, wl_array = True) 
-			axes[i].plot(lamda[:ind+1], corr_flux_absB[:ind+1] * 10**4, label = r'B={0} m'.format(Bl.value))
+			axes[i].plot(lamda[:ind+1], corr_flux_absB[:ind+1], label = r'B={0} m'.format(Bl.value))
 			
 		axes[i].set_title("gs={0} $\mu$m".format(size)) 
 		axes[i].legend()
@@ -226,7 +226,7 @@ def main():
 		for wl in wl_list:
 			for bl in range(len(B)):			
 				inter_flux[size][bl] = hankel_transform(F_map_sum[size], R_arr, lamda, wl, B[bl], dist_pc, wl_array = False)
-			axes[i].plot(B, inter_flux[size] * 10**4, label=r"{0} $\mu$m".format(wl.value))	
+			axes[i].plot(B, inter_flux[size], label=r"{0} $\mu$m".format(wl.value))	
 		
 		axes[i].set_title("gs={0} $\mu$m".format(size)) 
 		axes[i].legend()
