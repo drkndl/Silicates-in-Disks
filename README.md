@@ -56,6 +56,8 @@ The scripts are as follows:
    * `main.py` is where it all comes together: the output file is loaded, quantities initialized, properties calculated and overall plots created.
    
    * `no_thoughts_just_plots.py` contains plotting functions for individual Qcurves, spectral densities, optical depth maps, flux maps and spectra.
+   
+   * `optool_check.py` checks whether the forsterite Qcurve obtained using optool (Dominik, C. et al (2021)) matches the forsterite Qcurve from Suto (2006) with a grain size of $0.1 \mu m$ and $f_{max} = 1.0$. At the moment, it doesn't really match.  
     
    * `radial_plot.py` plots the chemical abundances as a function of radius as well as the temperature (on the top axis).
    
