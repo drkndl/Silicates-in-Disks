@@ -25,26 +25,35 @@ AU = const.au.cgs                			# 1 astronomical unit in cm
  
       
 def molecular_weight(solids):
-    
-    """
-    Calculates the molecular weight of the given solids in g
-
-    Parameters:
-
-    solids       : A 1D list of the names (strings) of the top 5 most abundant solids at all radii 
-
-    Returns:
-    
-    molwt 		 : A dictionary of the molecular weights (in g) for each of the given solids where the keys are the solid names and the values are the molecular weights (float)
-    """
-    
-    molwt = {key: None for key in solids}
-
-    for solid in molwt.keys():
-        f = Formula(solid)
-        molwt[solid] = f.mass * u.g / u.mol / Na
-    
-    return molwt
+	
+	"""
+	Calculates the molecular weight of the given solids in g
+	
+	Parameters:
+	
+	solids       : A 1D list of the names (strings) of the top 5 most abundant solids at all radii 
+	
+	Returns:
+	
+	molwt 		 : A dictionary of the molecular weights (in g) for each of the given solids where the keys are the solid names and the values are the molecular weights (float)
+	"""
+	
+	molwt = {key: None for key in solids}
+	
+	for solid in molwt.keys():
+		
+		if solid == 'Olivine':
+			f = Formula('MgFeSiO4')
+			molwt[solid] = f.mass * u.g / u.mol / Na
+			
+		elif solid == 'Pyroxene':
+			molwt[solid] = 109.8495 * u.g / u.mol / Na
+		
+		else:
+			f = Formula(solid)
+			molwt[solid] = f.mass * u.g / u.mol / Na
+	
+	return molwt
 
 
 
@@ -69,10 +78,23 @@ def surface_density(solids, molwt, top_abunds, nHtot, H):
 	surf_dens = {key: None for key in solids}
 	
 	for solid in surf_dens.keys():
-		n_solid = nHtot * 10**top_abunds[solid]
-		surf_dens[solid] = molwt[solid] * n_solid
-		# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
-		surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
+		if solid == 'Olivine':
+			n_solid = nHtot * 10**top_abunds['Mg2SiO4']
+			surf_dens[solid] = molwt[solid] * n_solid
+			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
+			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
+			
+		elif solid == 'Pyroxene':
+			n_solid = nHtot * 10**top_abunds['MgSiO3']
+			surf_dens[solid] = molwt[solid] * n_solid
+			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
+			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
+		
+		else:
+			n_solid = nHtot * 10**top_abunds[solid]
+			surf_dens[solid] = molwt[solid] * n_solid
+			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
+			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
 		
 	return surf_dens
 
@@ -261,7 +283,7 @@ def tau_calc(sigma, kappa):
     
     
 
-def tau_calc_amorphous(sigma, kappa, Tg, kappa_am):
+def tau_calc_amorphous(sigma, sigma_am, kappa, kappa_am, Tg, amor_temp):
 	
 	"""
 	Calculates the optical depths tau for a solid (unitless) by considering the amorphous opacities for temperatures below 500K
@@ -269,9 +291,11 @@ def tau_calc_amorphous(sigma, kappa, Tg, kappa_am):
 	Parameters:
 	
 	sigma         : 1D array of the surface density (shape: (NPOINT,)) of the solid in g/cm^2 (float)
+	sigma_am 	  : 1D array of the amorphous surface density (shape: (NPOINT,)) of the solid in g/cm^2 (float)
 	kappa         : 1D array of the opacities (shape: (lsize,)) of the solid in cm^2/g (float)
-	Tg  		  : 1D array of gas temperatures (shape: (NPOINT,)) in K (float)
 	kappa_am      : 1D array of the amorphous opacities (shape: (lsize,)) of the solid in cm^2/g (float)
+	Tg  		  : 1D array of gas temperatures (shape: (NPOINT,)) in K (float)
+	amor_temp 	  : Temperature in K at and above which the grains are considered to be crystalline and below which the grains are amorphous (float)
 	
 	Returns:
 	
@@ -279,15 +303,17 @@ def tau_calc_amorphous(sigma, kappa, Tg, kappa_am):
 	"""
 	
 	tau = np.zeros((len(sigma), len(kappa)))
-	l500_ind = np.where(Tg < (500 * u.K))[0][0]     # Taking the first index where the temperature goes below 500K. Due to the power law, we can assume every index after this also has T < 500K
+	l_ind = np.where(Tg < (amor_temp))[0][0]     # Taking the first index where the temperature goes below 500K. Due to the power law, we can assume every index after this also has T < 500K
 	
 	# Transposing 1D row array (shape: (NPOINT,)) into 2D column array (shape: (NPOINT, 1)) for matrix multiplication
 	sigma = sigma[np.newaxis]
 	sigma = sigma.T
+	sigma_am = sigma_am[np.newaxis]
+	sigma_am = sigma_am.T
 	
-	# Considering the crystalline kappas for temperatures at 500K and above, and amorphous kappas for temperatures below 500K
-	tau[:l500_ind, :] = sigma[:l500_ind, :] * kappa
-	tau[l500_ind:, :] = sigma[l500_ind:, :] * kappa_am
+	# Considering the crystalline kappas for temperatures at amor_temp and above, and amorphous kappas for temperatures below amor_temp
+	tau[:l_ind, :] = sigma[:l_ind, :] * kappa
+	tau[l_ind:, :] = sigma_am[l_ind:, :] * kappa_am
 	
 	return tau
     

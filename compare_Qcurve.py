@@ -32,7 +32,6 @@ def gimme_k(filename):
 	"""
 	
 	Q_curve = pd.read_csv(filename, delimiter='\s+', skiprows = 23, names = ['wavelength', 'Kabs', 'Ksca', 'g_asymm'])
-	lamda = u.Quantity(Q_curve['wavelength'].to_numpy(), u.micron)
 	kappa = Q_curve['Kabs'].to_numpy() * u.cm**2 / u.g
 	
 	return kappa

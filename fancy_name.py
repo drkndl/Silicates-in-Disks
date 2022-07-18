@@ -17,10 +17,10 @@ def latex_name(solid):
 	>>> $CaMgSi_2O_6$
 	"""
 	
-	if solid == 'MgOlivine':
+	if solid == 'Olivine':
 		return solid
 	
-	elif solid == 'MgPyroxene':
+	elif solid == 'Pyroxene':
 		return solid
 	
 	f = Formula(solid)

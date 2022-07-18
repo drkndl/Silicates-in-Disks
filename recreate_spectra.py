@@ -16,7 +16,7 @@ from radial_plot import R_plot
 from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import Qcurve_plotter, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
-from Qcurve_compare import gimme_k, gimme_l
+from compare_Qcurve import gimme_k, gimme_l
 
 
 def get_paper_spectra(filename):
@@ -96,6 +96,8 @@ def main():
 	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
 	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
 	B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)
+	fmax = 0.7
+	amor_temp = 1000.0 * u.K
 	folder = 'HD144432/'                               			# Folder where all the results go
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
@@ -126,10 +128,8 @@ def main():
 	# Removing the solids without opfiles from top5_solids
 	# not_there = ['SiO', 'Mg3Si4O12H2', 'Fe3Si2O9H4', 'Ni', 'NaAlSi3O8', 'NaMg3AlSi3O12H2', 'CaAl2Si2O8', 'H2O', 'Ca2MgSi2O7', 'NH3', 'Al2O3', 'Ca2Al2SiO7', 'Ca3Al2Si3O12', 'CaAl2Si2O8', 'ZrO2', 'Ti3O5', 'W', 'VO', 'CaTiO3', 'NaAlSiO4']
 	# top5_solids = np.setdiff1d(top5_solids, not_there)
-	opcurves_available = ['Fe2SiO4', 'Fe3O4', 'Fe', 'FeS', 'Mg2SiO4', 'MgSiO3', 'Ni', 'SiO']
+	opcurves_available = ['Fe2SiO4', 'Fe3O4', 'Fe', 'FeS', 'Mg2SiO4', 'MgSiO3', 'Ni', 'SiO', 'Olivine', 'Pyroxene']
 	top5_solids = list(set(top5_solids).intersection(opcurves_available))
-	amorphous_solids = ['MgOlivine', 'MgPyroxene']
-	top5_solids = top5_solids + amorphous_solids
 	
 	# Calculating the surface density
 	molwt = molecular_weight(top5_solids)
@@ -149,10 +149,11 @@ def main():
 			filename = opfile.split('/')[2]
 			mineral = filename.split('_')[1]
 			kdict[mineral][size] = gimme_k(opfile)
+			# Qcurve_plotter(lamda, kdict[mineral][size], mineral, size, fmax, folder)
 			
 	# Calculating and plotting spectra
-	intflux_sum = np.zeros(len(lamda)) * u.Jy
 	F_map_sum = {key: np.zeros((NPOINT, len(lamda))) * u.erg / (u.s * u.Hz * u.sr * u.cm**2) for key in gs_ranges}
+	intflux_sum = {key: np.zeros(len(lamda)) * u.Jy for key in gs_ranges}
 	
 	for size in gs_ranges:
 		for mineral in top5_solids:
@@ -162,13 +163,13 @@ def main():
 			F_map = flux_map(tau, I)
 			F_map_sum[size] += F_map
 			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)
-			intflux_sum += intflux
+			intflux_sum[size] += intflux
 		
 		# Plot spectra between 8 to 13 microns as in the van Boekel paper
 		first = np.where(lamda >= 8 * u.micron)[0][0]
 		last = np.where(lamda <= 13 * u.micron)[0][-1]
 		lamda_plot = lamda[first: last+1]
-		intflux_plot = intflux_sum[first: last+1]
+		intflux_plot = intflux_sum[size][first: last+1]
 		plt.plot(lamda_plot, intflux_plot * 10**4, label = r'{0} $\mu$m'.format(size))
 		
 	# Plotting paper spectrum for the given disk
@@ -210,6 +211,7 @@ def main():
 	axs[0,1].get_xaxis().set_visible(False)
              
 	fig.suptitle(r'{0} correlated flux for multiple baselines and grain sizes'.format(disk))
+	fig.tight_layout()
 	plt.savefig(folder + 'Correlated_flux_multB_multgs.png')
 	plt.show()
 	
@@ -240,6 +242,7 @@ def main():
 	# ~ axs[0,1].get_xaxis().set_visible(False)
              
 	fig.suptitle(r'{0} correlated flux for multiple wavelengths and grain sizes'.format(disk))
+	fig.tight_layout()
 	plt.savefig(folder + 'Correlated_flux_multwl_multgs.png')
 	plt.show()
 				
