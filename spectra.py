@@ -200,7 +200,7 @@ def get_l_and_k(opfile, dens, gs, lmin, lmax, lsize):
 	lamda, Q = slice_lQ(lamda, Q, lmin, lmax, lsize)
 	
 	# Obtaining k_abs from Q_abs
-	kappa = 3 * Q / (4 * gs * dens)
+	kappa = 3 * Q / (4 * gs.to(u.cm) * dens)
 	
 	return mineral, rv, fmax, lamda, kappa
 
@@ -347,18 +347,6 @@ def calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc):
 	
 	# Calculating the integrated flux using the Trapezoidal numerical integration
 	summ = np.trapz(2 * np.pi * rad_arr * F_map_req, x = rad_arr, axis = 0)
-	
-	# delr = (rad_arr[Rmin_id+1: Rmax_id+1, :] - rad_arr[Rmin_id: Rmax_id, :])	
-	# f1 = rad_arr[Rmin_id: Rmax_id, :] * tau[Rmin_id: Rmax_id, :] * I[Rmin_id: Rmax_id, :] * 2 * np.pi * delr * 0.5
-	# f2 = rad_arr[Rmin_id+1: Rmax_id+1, :] * tau[Rmin_id+1: Rmax_id+1, :] * I[Rmin_id+1: Rmax_id+1, :] * 2 * np.pi * delr * 0.5
-	
-	# Using same formula as Hankel transform one
-	# f1 = rad_arr[Rmin_id: Rmax_id, :] * F_map[Rmin_id: Rmax_id, :] * 2 * np.pi * delr * 0.5
-	# f2 = rad_arr[Rmin_id+1: Rmax_id+1, :] * F_map[Rmin_id+1: Rmax_id+1, :]  * 2 * np.pi * delr * 0.5
-	# f1, f2 shape: (NPOINT - 1, lsize)
-	
-	# temp = (f1 + f2)
-	# summ = temp.sum(axis=0)       # summ shape: (lsize, 1)
 	summ = summ.to(u.Jy, equivalencies = u.dimensionless_angles())
 
 	return summ

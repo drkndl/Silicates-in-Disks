@@ -71,10 +71,9 @@ def main():
 	lmin = 0.0 * u.micron 						  			# Lower limit of wavelength (microns)
 	lmax = 20.0 * u.micron						  			# Upper limit of wavelength (microns)
 	lsize = 450 								  			# Number of wavelength (and kappa) points 
-	Rmin = np.round(np.min(R_arr), 3) 						# Minimum radius for spectrum plotting (AU) ENSURE IT IS ONLY 2 DECIMAL PLACES LONG
-	Rmax = np.round(np.max(R_arr), 3)						# Maximum radius for spectrum plotting (AU) ENSURE IT IS ONLY 2 DECIMAL PLACES LONG
-	dist_pc = 100 * u.pc  			            			# Assuming a distance to the Sun-like star in parsec
-	gs = 0.1E-4 * u.cm                            			# Grain radius (cm)
+	Rmin = np.round(np.min(R_arr), 3) 						# Minimum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
+	Rmax = np.round(np.max(R_arr), 3)						# Maximum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
+	gs = 0.1 * u.micron                           			# Grain radius (cm)
 	wl = 5.5 * u.micron                           			# Observing wavelength (microns)
 	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
 	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)

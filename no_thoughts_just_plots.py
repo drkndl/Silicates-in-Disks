@@ -19,20 +19,12 @@ def Qcurve_plotter(lamda, kappa, mineral, rv, fmax, folder):
 	mineral      : Name of the solid whose Qcurve is plotted, used for plot name (string)
 	rv           : Grain radius of the solid in microns, used for plot name (float)
 	fmax         : Maximum emptiness fraction of the solid grains according to the DHS theory (float)
-	"""
-	
-	# Defining the names of the mineral for plot formatting. If the materials are amorphous (i.e. olivine or pyroxene), latex_name will not work and therefore their names in the plots are specifically defined
-	if mineral == 'MgOlivine':
-		fancy = 'MgOlivine'
-	elif mineral == 'MgPyroxene':
-		fancy = 'MgPyroxene'
-	else:
-		fancy = latex_name(mineral)		
+	"""		
 		
 	plt.plot(lamda, kappa)
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel(r'$\kappa_{abs}$ ($cm^2/g$)')
-	plt.title(r"Q-curve for {0}, r = {1}, $f_{{max}}$ = {2}".format(fancy, rv, fmax))
+	plt.title(r"Q-curve for {0}, r = {1}, $f_{{max}}$ = {2}".format(latex_name(mineral), rv, fmax))
 	plt.savefig(folder + "Qcurve_{0}_r{1}_f{2}.png".format(mineral, rv, fmax), bbox_inches = 'tight')
 	plt.show()
 	

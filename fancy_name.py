@@ -9,13 +9,19 @@ def latex_name(solid):
 	
 	Parameters:
 	
-	solids         : The formula of the condensate (string)
+	solid         : The formula of the condensate (string)
 	
 	Example:
 	
 	>>> latex_name('CaMgSi2O6')
 	>>> $CaMgSi_2O_6$
 	"""
+	
+	if solid == 'MgOlivine':
+		return solid
+	
+	elif solid == 'MgPyroxene':
+		return solid
 	
 	f = Formula(solid)
 	fancy = "$" + f.latex + "$"

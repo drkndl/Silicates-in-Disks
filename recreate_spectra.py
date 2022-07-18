@@ -21,46 +21,25 @@ from Qcurve_compare import gimme_k, gimme_l
 
 def get_paper_spectra(filename):
 	
+	"""
+	Data points from the spectra in van Boekel (2005) are obtained using the WebPlotDigitizer software. The output of the software is a csv file with 2 columns: wavelength (microns) and flux (Jy). This function obtains the column data from the file. 
+	
+	Parameters:
+	
+	filename 	  : CSV file with data from spectra data from van Boekel (2005) with 2 columns: wavelength (microns) and flux (Jy)
+	
+	Returns:
+	
+	wl 			  : 1D array of wavelengths from the spectra images in van Boekel (2005) (microns)
+	flux 		  : 1D array of flux from the spectra images in van Boekel (2005) (Jy)
+	"""
+	
 	spectrum = pd.read_csv(filename, delimiter=',', names = ['wavelength', 'flux'])
 	wl = u.Quantity(spectrum['wavelength'].to_numpy(), u.micron)
 	flux = spectrum['flux'].to_numpy() * u.Jy
 	
 	return wl, flux
-	
-	
-def hankel_transform_fast(F_map, R_arr, wl, B_arr, dist_pc):
-	
-	"""
-	Calculates the absolute correlated flux density (in Jy) using the combined flux map of all the solids. This involves finding the Fourier transform in cylindrical coordinates using the Bessel function of the first kind zeroth order (j0). It is assumed that the correlated fluxes (shape: (lsize,)) are to be plotted against the wavelengths. If, however, it is to be plotted against the baselines, then the correlated flux density (a single float value) corresponding to a specific wavelength (wl) is extracted and returned from the array (shape: (lsize,)). This can be specified with wl_array.
-	
-	Parameters: 
-	
-	F_map 		  : 2D array (shape: (NPOINT, lsize)) of the combined flux map for all solids in erg/(s Hz sr cm^2) i.e. CGS units (float)
-	R_arr         : 1D array of radii in AU obtained from the temperature array in GGchem output based on the power law model (float)
-	lamda         : 1D array of wavelengths (shape: (lsize,)) of the solid in microns (float)
-	wl 			  : A single wavelength (in micron) where the correlated flux is required if the fluxes are plot against baseline (float). It is used only if wl_array = False
-	B 			  : The interferometric baseline value in m (float)
-	wl_array 	  : If True, the returned correlated fluxes is an array of shape (lsize,) to be plotted against the wavelengths. If False, the correlated flux for a single wavelength value is returned to be plot against the baselines (Boolean)
-	
-	Returns:
-	
-	inter_flux_abs: The absolute correlated flux density in Jy. If wl_array = True, a float array of shape (lsize,) is returned, else a single float value is returned
-	"""
-	
-	rad_arr = r_to_rad(R_arr, dist_pc) 						 											# Converting radius (AU) to arcseconds to radians	
-	rad_arr = rad_arr[np.newaxis]
-	rad_arr = rad_arr.T 																		# Shape: (NPOINT, 1)
-	rad_arr = rad_arr.to('', equivalencies=u.dimensionless_angles()) 
-	
-	# Finding the Bessel function of the first kind, zeroth order
-	bessel = j0(2.0 * np.pi * rad_arr * B_arr / (wl.to(u.m)))           							# Shape: (NPOINT, lsize)
-	
-	# Calculating the absolute interferometric flux
-	inter_flux = 2.0 * np.pi * np.trapz(rad_arr * bessel * F_map, x = rad_arr, axis = 0)   		# Shape: (lsize,)
-	inter_flux_abs = np.abs(inter_flux) * u.rad**2
-	inter_flux_abs = inter_flux_abs.to(u.Jy, equivalencies = u.dimensionless_angles())
-	
-	return inter_flux_abs
+
 	
 	
 def main():
@@ -149,6 +128,8 @@ def main():
 	# top5_solids = np.setdiff1d(top5_solids, not_there)
 	opcurves_available = ['Fe2SiO4', 'Fe3O4', 'Fe', 'FeS', 'Mg2SiO4', 'MgSiO3', 'Ni', 'SiO']
 	top5_solids = list(set(top5_solids).intersection(opcurves_available))
+	amorphous_solids = ['MgOlivine', 'MgPyroxene']
+	top5_solids = top5_solids + amorphous_solids
 	
 	# Calculating the surface density
 	molwt = molecular_weight(top5_solids)
@@ -156,7 +137,7 @@ def main():
 	
 	# Defining a nested dictionary where each dictionary within is named after a mineral and each such dictionary consists of grain size ranges as keys with their opacities as values
 	kdict = {outer_k: {inner_k: None for inner_k in gs_ranges} for outer_k in top5_solids}
-	lamda = gimme_l('Qcurve_inputs_mult_GS/0.1_to_1.5/Q_Fe2SiO4_rv0.1-1.5_fmax0.7.dat')
+	lamda = gimme_l('Qcurve_inputs_mult_GS/0.1_to_1.5/Q_Mg2SiO4_rv0.1-1.5_fmax0.7.dat')         # Since wavelength values for all solids are the same, just picking one file
 	
 	for path in paths:	
 		
@@ -203,7 +184,7 @@ def main():
 	plt.show()
 	
 	# Plotting the correlated flux density for multiple baselines against wavelengths
-	fig, axs = plt.subplots(2, 2, figsize=(20, 20))
+	fig, axs = plt.subplots(2, 2, figsize=(20, 15))
 	axes = [axs[0, 0], axs[0, 1], axs[1,0], axs[1, 1]]
 	i = 0
 	ind = np.where(lamda <= 20 * u.micron)[0][-1]
@@ -234,7 +215,7 @@ def main():
 	
 	# Plotting correlated fluxes against baselines for multiple wavelengths and size ranges
 	inter_flux = {key: np.zeros(len(B)) * u.Jy for key in gs_ranges}
-	fig, axs = plt.subplots(2, 2, figsize=(20, 20))
+	fig, axs = plt.subplots(2, 2, figsize=(20, 15))
 	axes = [axs[0, 0], axs[0, 1], axs[1,0], axs[1, 1]]
 	ind = np.where(lamda <= 20 * u.micron)[0][-1]
 	i = 0
@@ -255,8 +236,8 @@ def main():
 	# Hide x labels and tick labels for top plots and y ticks for right plots.
 	# ~ for ax in axs.flat:
 	    # ~ ax.label_outer()	
-	axs[0,0].get_xaxis().set_visible(False)
-	axs[0,1].get_xaxis().set_visible(False)
+	# ~ axs[0,0].get_xaxis().set_visible(False)
+	# ~ axs[0,1].get_xaxis().set_visible(False)
              
 	fig.suptitle(r'{0} correlated flux for multiple wavelengths and grain sizes'.format(disk))
 	plt.savefig(folder + 'Correlated_flux_multwl_multgs.png')
