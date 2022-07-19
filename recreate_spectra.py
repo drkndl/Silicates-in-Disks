@@ -17,6 +17,7 @@ from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import Qcurve_plotter, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
 from compare_Qcurve import gimme_k, gimme_l
+from HD179218.properties import *
 
 
 def get_paper_spectra(filename):
@@ -44,8 +45,13 @@ def get_paper_spectra(filename):
 	
 def main():
 	
-	file = 'HD144432/HD144432_Static_Conc.dat'      # Simulation output file
-	disk = 'HD144432'
+	subplot_size = 12                                        # Some font size definitions
+	fullplot_size = 15
+	labelsize = 11
+	
+	R_star = star_radius(L_star, T_star).to(u.AU)   		# Star's radius (AU)
+	fmax = 0.7
+	
 	data   = open(file)
 	dummy  = data.readline()                # Ignoring first line
 	dimens = data.readline()                
@@ -67,45 +73,18 @@ def main():
 	Tmin  = np.min(Tg)                            # Minimum gas temperature
 	Tmax  = np.max(Tg)                      	  # Maximum gas temperature
 	
-	# Converting temperatures to corresponding radii
-	T0 = 1500.0 * u.K                          		# Dust sublimation temperature (K)
-	Qr = 3                                  		# Ratio of absorption efficiencies 
-	L_star = 10**1.01 * const.L_sun.cgs         	# Stellar luminosity
-	T_star = 7345.138 * u.K                         # Effective temperature of the star (K)
-	R_star = star_radius(L_star, T_star).to(u.AU)   # Star's radius (AU)
-	Sigma0 = 1700 * u.g / u.cm**2          			# Surface density with MMSN (g/cm^2)
-	M_star = 1.8 * 1.99E33 * u.g         			# Solar mass (g)
-	q = -0.5 										# Disk temperature gradient exponent
-	e = -1.0 										# Disk surface density gradient exponent
-	dist_pc = 145 * u.pc                            # Star distance in parsec
-	
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
 	R_arr = r_from_T(R_in, Tg, T0, q)             # 1D array of radii obtained from the power law disk model (AU)
+	Rmin = np.round(np.min(R_arr), 3) 						# Minimum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
+	Rmax = np.round(np.max(R_arr), 3)						# Maximum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
 	# H = scale_height(M_star, R_arr, Tg)
-	H = 1.0 * u.cm 								  # Scale height (cm)
-	
-	top = 5                                 	  			# Top X condensates whose abundance is the highest	
-	lmin = 0.0 * u.micron 						  			# Lower limit of wavelength (microns)
-	lmax = 20.0 * u.micron						  			# Upper limit of wavelength (microns)
-	# lsize = 300 								  			# Number of wavelength (and kappa) points 
-	Rmin = np.round(np.min(R_arr), 3) 						# Minimum radius for spectrum plotting (AU) ENSURE IT IS ONLY 2 DECIMAL PLACES LONG
-	Rmax = np.round(np.max(R_arr), 3)						# Maximum radius for spectrum plotting (AU) ENSURE IT IS ONLY 2 DECIMAL PLACES LONG
-	dist_pc = 100 * u.pc  			            			# Assuming a distance to the Sun-like star in parsec
-	gs = 0.1E-4 * u.cm                            			# Grain radius (cm)
-	wl = 5.5 * u.micron                           			# Observing wavelength (microns)
-	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
-	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
-	B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)
-	fmax = 0.7
-	amor_temp = 1000.0 * u.K
-	folder = 'HD144432/'                               			# Folder where all the results go
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	paths = ['Qcurve_inputs_mult_GS/0.1_to_1.5/*.dat', 'Qcurve_inputs_mult_GS/0.1_to_10/*.dat', 'Qcurve_inputs_mult_GS/0.1_to_20/*.dat', 'Qcurve_inputs_mult_GS/0.1_to_100/*.dat']
 	gs_ranges = ['0.1_to_1.5', '0.1_to_10', '0.1_to_20', '0.1_to_100']
 	
 	# Plotting the abunances as a function of radius and temperature
-	# R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
+	R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk, NELEM, NMOLE, NDUST)
 	
 	# Finding the most abundant condensates
 	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST) 
@@ -128,7 +107,7 @@ def main():
 	# Removing the solids without opfiles from top5_solids
 	# not_there = ['SiO', 'Mg3Si4O12H2', 'Fe3Si2O9H4', 'Ni', 'NaAlSi3O8', 'NaMg3AlSi3O12H2', 'CaAl2Si2O8', 'H2O', 'Ca2MgSi2O7', 'NH3', 'Al2O3', 'Ca2Al2SiO7', 'Ca3Al2Si3O12', 'CaAl2Si2O8', 'ZrO2', 'Ti3O5', 'W', 'VO', 'CaTiO3', 'NaAlSiO4']
 	# top5_solids = np.setdiff1d(top5_solids, not_there)
-	opcurves_available = ['Fe2SiO4', 'Fe3O4', 'Fe', 'FeS', 'Mg2SiO4', 'MgSiO3', 'Ni', 'SiO', 'Olivine', 'Pyroxene']
+	opcurves_available = ['Fe2SiO4', 'Fe3O4', 'Fe', 'FeS', 'Mg2SiO4', 'MgSiO3', 'Ni', 'SiO']
 	top5_solids = list(set(top5_solids).intersection(opcurves_available))
 	
 	# Calculating the surface density
@@ -151,7 +130,8 @@ def main():
 			kdict[mineral][size] = gimme_k(opfile)
 			# Qcurve_plotter(lamda, kdict[mineral][size], mineral, size, fmax, folder)
 			
-	# Calculating and plotting spectra
+	#################################################################### Calculating and plotting spectra ###################################################################################################
+	intflux = {outer_k: {inner_k: None for inner_k in gs_ranges} for outer_k in top5_solids}
 	F_map_sum = {key: np.zeros((NPOINT, len(lamda))) * u.erg / (u.s * u.Hz * u.sr * u.cm**2) for key in gs_ranges}
 	intflux_sum = {key: np.zeros(len(lamda)) * u.Jy for key in gs_ranges}
 	
@@ -162,10 +142,10 @@ def main():
 			tau = tau_calc(surf_dens[mineral], kdict[mineral][size])
 			F_map = flux_map(tau, I)
 			F_map_sum[size] += F_map
-			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)
-			intflux_sum[size] += intflux
+			intflux[mineral][size] = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)
+			intflux_sum[size] += intflux[mineral][size]
 		
-		# Plot spectra between 8 to 13 microns as in the van Boekel paper
+		# Plot overall spectra between 8 to 13 microns as in the van Boekel paper for each grain size range
 		first = np.where(lamda >= 8 * u.micron)[0][0]
 		last = np.where(lamda <= 13 * u.micron)[0][-1]
 		lamda_plot = lamda[first: last+1]
@@ -179,47 +159,84 @@ def main():
 		
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux (Jy)')
-	plt.title(r'{0} Spectrum multiple grain sizes $\mu$m R={1}-{2} AU'.format(disk, Rmin.value, Rmax.value))
+	plt.title(r'{0} Spectrum multiple grain sizes R={1}-{2} AU'.format(disk, Rmin.value, Rmax.value))
 	plt.legend()
 	plt.savefig(folder + "{0}_spectrum_multgs_R{1}-{2}.png".format(disk, Rmin.value, Rmax.value))
 	plt.show()
 	
-	# Plotting the correlated flux density for multiple baselines against wavelengths
+	#################################################### Plotting the spectra of each individual condensate for the various grain size ranges ############################################################
+	
+	# Obtaining indices for only 0-20 micron wavelength values
+	ind_20 = np.where(lamda <= 20 * u.micron)[0][-1]
+	
+	for mineral in top5_solids:
+		for size in gs_ranges:
+			plt.plot(lamda[:ind_20+1], intflux[mineral][size][:ind_20+1], label=size)
+		plt.xlabel(r'$\lambda$ ($\mu$m)')
+		plt.ylabel('Flux (Jy)')
+		plt.title(r'{0} {1} Overall Spectrum multiple grain sizes'.format(disk, latex_name(mineral)))
+		plt.legend()
+		plt.savefig(folder + "{0}_{1}_spectrum_multgs.png".format(disk, mineral))
+		plt.show()
+		
+	##################################################################### Plotting the spectra for multiple radii limits ##################################################################################
 	fig, axs = plt.subplots(2, 2, figsize=(20, 15))
 	axes = [axs[0, 0], axs[0, 1], axs[1,0], axs[1, 1]]
 	i = 0
-	ind = np.where(lamda <= 20 * u.micron)[0][-1]
+	R_list = np.round(R_arr[np.linspace(0, len(R_arr)-1, 7).astype(int)], 3)
+	Rmin_list = R_list[:-1]
+	Rmax_list = R_list[1:]
+	
+	for size in gs_ranges:
+		for j in range(len(Rmax_list)):		
+				
+			intflux_sum_mr = calculate_spectra(F_map_sum[size], R_arr, Rmin_list[j], Rmax_list[j], dist_pc)	
+			axes[i].plot(lamda[:ind_20+1], intflux_sum_mr[:ind_20+1], label=r"($R_{{min}}$,$R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[j].value, Rmax_list[j].value))
+		
+		axes[i].set_xlabel(r'$\lambda$ ($\mu$m)', fontsize = labelsize)
+		axes[i].set_ylabel('Flux (Jy)', fontsize = labelsize)
+		axes[i].set_title("gs={0} $\mu$m".format(size), fontsize = subplot_size) 
+		axes[i].legend()
+		i += 1
+	
+	axs[0,0].get_xaxis().set_visible(False)
+	axs[0,1].get_xaxis().set_visible(False)
+             
+	fig.suptitle(r'{0} Spectra for multiple radial limits and grain sizes'.format(disk) , fontsize = fullplot_size)
+	fig.tight_layout()
+	plt.savefig(folder + 'spectra_multradii_multgs.png')
+	plt.show()		
+		
+	##################################################### Plotting the correlated flux density for multiple baselines against wavelengths ##################################################################
+	fig, axs = plt.subplots(2, 2, figsize=(20, 15))
+	axes = [axs[0, 0], axs[0, 1], axs[1,0], axs[1, 1]]
+	i = 0
 	
 	for size in gs_ranges:
 		
 		for Bl in B_small:
 			
 			corr_flux_absB = hankel_transform(F_map_sum[size], R_arr, lamda, wl, Bl, dist_pc, wl_array = True) 
-			axes[i].plot(lamda[:ind+1], corr_flux_absB[:ind+1], label = r'B={0} m'.format(Bl.value))
-			
-		axes[i].set_title("gs={0} $\mu$m".format(size)) 
+			axes[i].plot(lamda[:ind_20+1], corr_flux_absB[:ind_20+1], label = r'B={0} m'.format(Bl.value))
+		
+		axes[i].set_xlabel(r'$\lambda$ ($\mu$m)', fontsize = labelsize)
+		axes[i].set_ylabel('Correlated flux (Jy)', fontsize = labelsize)	
+		axes[i].set_title("gs={0} $\mu$m".format(size), fontsize = subplot_size) 
 		axes[i].legend()
 		i += 1
 	
-	for ax in axs.flat:
-		ax.set(xlabel=r'$\lambda$ ($\mu$m)', ylabel='Correlated flux (Jy)')
-
-	# Hide x labels and tick labels for top plots and y ticks for right plots.
-	# ~ for ax in axs.flat:
-	    # ~ ax.label_outer()	
 	axs[0,0].get_xaxis().set_visible(False)
 	axs[0,1].get_xaxis().set_visible(False)
              
-	fig.suptitle(r'{0} correlated flux for multiple baselines and grain sizes'.format(disk))
+	fig.suptitle(r'{0} correlated flux for multiple baselines and grain sizes'.format(disk), fontsize = fullplot_size)
 	fig.tight_layout()
 	plt.savefig(folder + 'Correlated_flux_multB_multgs.png')
 	plt.show()
 	
-	# Plotting correlated fluxes against baselines for multiple wavelengths and size ranges
+	############################################## Plotting correlated fluxes against baselines for multiple wavelengths and size ranges ############################################################3
 	inter_flux = {key: np.zeros(len(B)) * u.Jy for key in gs_ranges}
 	fig, axs = plt.subplots(2, 2, figsize=(20, 15))
 	axes = [axs[0, 0], axs[0, 1], axs[1,0], axs[1, 1]]
-	ind = np.where(lamda <= 20 * u.micron)[0][-1]
 	i = 0
 	
 	for size in gs_ranges:		
@@ -228,20 +245,13 @@ def main():
 				inter_flux[size][bl] = hankel_transform(F_map_sum[size], R_arr, lamda, wl, B[bl], dist_pc, wl_array = False)
 			axes[i].plot(B, inter_flux[size], label=r"{0} $\mu$m".format(wl.value))	
 		
-		axes[i].set_title("gs={0} $\mu$m".format(size)) 
+		axes[i].set_xlabel(r'Baseline (m)', fontsize = labelsize)
+		axes[i].set_ylabel('Correlated flux (Jy)', fontsize = labelsize)
+		axes[i].set_title("gs={0} $\mu$m".format(size), fontsize = subplot_size) 
 		axes[i].legend()
 		i += 1
-		
-	for ax in axs.flat:
-		ax.set(xlabel=r'Baseline (m)', ylabel='Correlated flux (Jy)')
-
-	# Hide x labels and tick labels for top plots and y ticks for right plots.
-	# ~ for ax in axs.flat:
-	    # ~ ax.label_outer()	
-	# ~ axs[0,0].get_xaxis().set_visible(False)
-	# ~ axs[0,1].get_xaxis().set_visible(False)
              
-	fig.suptitle(r'{0} correlated flux for multiple wavelengths and grain sizes'.format(disk))
+	fig.suptitle(r'{0} correlated flux for multiple wavelengths and grain sizes'.format(disk), fontsize = fullplot_size)
 	fig.tight_layout()
 	plt.savefig(folder + 'Correlated_flux_multwl_multgs.png')
 	plt.show()

@@ -12,7 +12,7 @@ from fancy_name import latex_name
 # plt.rcParams["figure.figsize"] = (14, 7)
 
 
-def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST):
+def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk, NELEM, NMOLE, NDUST):
 	
 	# Some stylistic choices
 	colo = ['blue', 'black', 'red', 'darkorange', 'gold', 'darkorchid', 'aqua', 'cadetblue', 'cornflowerblue', 'chartreuse', 'limegreen', 'darkgreen', 'chocolate', 'darkgoldenrod', 'darkolivegreen', 'darkmagenta', 'crimson', 'darkcyan', 'springgreen', 'darkslateblue', 'hotpink']
@@ -70,7 +70,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM
 	# Plot formatting
 	Tlimit = 200 * u.K 
 	Rlimit = r_from_T(R_in, Tlimit, T0, q)                                            # Radius limit for zoomed in plot (AU)
-	plt.title('Abundances of Condensates vs R', fontsize=12)
+	plt.title('{0} Abundances of Condensates vs R'.format(disk), fontsize=12)
 	ax.set_xlabel(r'$R\ \mathrm{[AU]}$', fontsize=10)
 	ax.set_ylabel(r'$\mathrm{log}_{10}\ n_\mathrm{solid}/n_\mathrm{\langle H\rangle}$', fontsize=10)
 	ax.set_xlim(Rmin.value, Rlimit.value)

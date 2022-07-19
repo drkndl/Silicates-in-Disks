@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.constants import astropyconst20 as const
+from HD179218.properties import *
 
 # Some constants in CGS
 Na = const.N_A.cgs                    		# Avogadro's number in /mol
@@ -177,18 +178,7 @@ def pressure(rho, T):
 
 def main():
 	
-	T0 = 1500.0 * u.K                          		# Dust sublimation temperature (K)
-	Qr = 3                                  		# Ratio of absorption efficiencies 
-	L_star = 10**1.01 * const.L_sun.cgs         	# Stellar luminosity
-	T_star = 7345.138 * u.K                         # Effective temperature of the star (K)
-	R_star = star_radius(L_star, T_star).to(u.AU)   # Star's radius (AU)
-	Sigma0 = 1700 * u.g / u.cm**2          			# Surface density with MMSN (g/cm^2)
-	M_star = 1.8 * 1.99E33 * u.g         			# Solar mass (g)
-	q = -0.5 										# Disk temperature gradient exponent
-	e = -1.0 										# Disk surface density gradient exponent
-	R_sun = 0.00465047      						# Sun's radius (AU)
-	M_sun = 1.99E33         						# Solar mass (g)
-	Folder = "HD144432/"  							# Path where output files are saved
+	R_star = star_radius(L_star, T_star).to(u.AU)   		# Star's radius (AU)
 	
 	# Defining a radius array
 	r_arr = np.linspace(0.05, 2.5, 100) * u.AU     
@@ -212,7 +202,7 @@ def main():
 	plt.xlabel("Radius R [AU]")
 	plt.ylabel("Midplane Temperature T [K]")
 	plt.title(r"$T_{{mid}}$ vs R, $R_{{star}}$ = {0}$R_\odot$, $T_{{star}}$ = {1} K, $M_{{star}}$ = {2}$M_\odot$, $\Sigma_0$ = {3} $g/cm^2$".format(R_label.value, T_star.value, M_label.value, Sigma0.value), fontsize=10)
-	plt.savefig(Folder + "Tmid_vs_R.png")
+	plt.savefig(folder + "Tmid_vs_R.png")
 	plt.show()
 	
 	# Plotting the radial profile of pressure and density 
@@ -222,15 +212,16 @@ def main():
 	plt.ylabel("Properties")
 	plt.title(r"Radial dependence of $\rho$, P")
 	plt.legend()
-	plt.savefig(Folder + "Pandrho_vs_R.png")
+	plt.savefig(folder + "Pandrho_vs_R.png")
 	plt.show()
 	
 	# Write the disk property values required for GGchem to a file
-	with open(Folder + 'disk_props.dat', 'w') as f:
+	with open(folder + 'disk_props.dat', 'w') as f:
 		f.write('R_in' + '\t' + str(R_in) + '\n')
+		f.write('\n')
 		f.write('Prop \t Max \t Min \n')
 		f.write('P' + '\t' + str(P.max()) + '\t' + str(P.min()) + '\n')
-		f.write('nH' + '\t' + str(nH.max()) + '\t' + str(nH.min()) + '\n')
+		f.write('nH' + '\t' + str(format(nH.max(),'.3E')) + '\t' + str(format(nH.min(),'.3E')) + '\n')
 	
 
 if __name__ == "__main__":

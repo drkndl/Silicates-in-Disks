@@ -12,6 +12,7 @@ from radial_plot import R_plot
 from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import Qcurve_plotter, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
+from HD97048.properties import *
 
 
 # Some constants in CGS
@@ -28,7 +29,10 @@ G = const.G.cgs           					# Gravitational constant (cm^3 g^-1 s^-2)
 
 def main():
 	
-	file   = 'HotStar_q0.5_p1_Qr3/HS_Static_Conc.dat'      # Simulation output file
+	R_star = star_radius(L_star, T_star).to(u.AU)   		# Star's radius (AU)
+	Rmin = np.round(np.min(R_arr), 3) 						# Minimum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
+	Rmax = np.round(np.max(R_arr), 3)						# Maximum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
+	
 	data   = open(file)
 	dummy  = data.readline()                # Ignoring first line
 	dimens = data.readline()                
@@ -48,38 +52,11 @@ def main():
 	nHtot = dat[:,1] / u.cm**3                    # n<H> [cm^-3]          
 	press = dat[:,2]                        	  # p [dyn/cm^2]
 	Tmin  = np.min(Tg)                            # Minimum gas temperature
-	Tmax  = np.max(Tg)                      	  # Maximum gas temperature
-	
-	# Converting temperatures to corresponding radii
-	T0 = 1500.0 * u.K                          		# Dust sublimation temperature (K)
-	Qr = 3.0                                  		# Ratio of absorption efficiencies 
-	L_star = 10**1.01 * const.L_sun.cgs         	# Stellar luminosity
-	T_star = 7345.138 * u.K                         # Effective temperature of the star (K)
-	R_star = star_radius(L_star, T_star).to(u.AU)   # Star's radius (AU)
-	Sigma0 = 1700.0 * u.g / u.cm**2          			# Surface density with MMSN (g/cm^2)
-	M_star = 1.8 * 1.99E33 * u.g         			# Solar mass (g)
-	q = -0.5 										# Disk temperature gradient exponent
-	e = -1.0 										# Disk surface density gradient exponent
-	dist_pc = 145 * u.pc                          # Star distance in parsec
+	Tmax  = np.max(Tg)                      	  # Maximum gas temperature	
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
 	R_arr = r_from_T(R_in, Tg, T0, q)             # 1D array of radii obtained from the power law disk model (AU)
 	# H = scale_height(M_star, R_arr, Tg)
-	H = 1.0 * u.cm 								  # Scale height (cm)
-	
-	top = 5                                 	  			# Top X condensates whose abundance is the highest	
-	lmin = 0.0 * u.micron 						  			# Lower limit of wavelength (microns)
-	lmax = 20.0 * u.micron						  			# Upper limit of wavelength (microns)
-	lsize = 450 								  			# Number of wavelength (and kappa) points 
-	Rmin = np.round(np.min(R_arr), 3) 						# Minimum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
-	Rmax = np.round(np.max(R_arr), 3)						# Maximum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
-	gs = 0.1 * u.micron                           			# Grain radius (cm)
-	wl = 5.5 * u.micron                           			# Observing wavelength (microns)
-	wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
-	B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
-	B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)
-	amor_temp = 1000.0 * u.K
-	folder = 'Amorphous_1000K/'                               			# Folder where all the results go
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
