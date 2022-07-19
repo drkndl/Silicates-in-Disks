@@ -13,7 +13,7 @@ q = -0.5 												# Disk temperature gradient exponent
 e = -1.0 												# Disk surface density gradient exponent
 R_sun = 0.00465047      								# Sun's radius (AU)
 M_sun = 1.99E33         								# Solar mass (g)
-dist_pc = 122 * u.pc                           			# Star distance in parsec
+dist_pc = 101 * u.pc                           			# Star distance in parsec (Calahan et al. 2021 MAPS)
 H = 1.0 * u.cm 								    		# Scale height (cm)
 
 disk = 'HD163296' 										# The name of the disk

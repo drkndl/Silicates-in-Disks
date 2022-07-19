@@ -17,7 +17,7 @@ from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import Qcurve_plotter, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
 from compare_Qcurve import gimme_k, gimme_l
-from HD179218.properties import *
+from HD163296.properties import *
 
 
 def get_paper_spectra(filename):
