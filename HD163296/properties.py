@@ -21,7 +21,7 @@ folder = disk + '/'  								    # Path where output files are saved
 file = '{0}{1}_Static_Conc.dat'.format(folder, disk)    # Simulation output file
 	
 top = 5                                 	  			# Top X condensates whose abundance is the highest	
-lmin = 0.0 * u.micron 						  			# Lower limit of wavelength (microns)
+lmin = 0.0 * u.micron 						  			# Lower limit of wavelength (microns) 
 lmax = 20.0 * u.micron						  			# Upper limit of wavelength (microns)
 lsize = 450 								  			# Number of wavelength (and kappa) points 
 gs = 0.1 * u.micron                           			# Grain radius (cm)

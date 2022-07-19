@@ -12,7 +12,8 @@ from radial_plot import R_plot
 from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import Qcurve_plotter, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
-from HD97048.properties import *
+from compare_grain_sizes import get_paper_spectra
+from HD163296_q04_p075_S3000_Tamf1400.properties import *
 
 
 # Some constants in CGS
@@ -30,8 +31,6 @@ G = const.G.cgs           					# Gravitational constant (cm^3 g^-1 s^-2)
 def main():
 	
 	R_star = star_radius(L_star, T_star).to(u.AU)   		# Star's radius (AU)
-	Rmin = np.round(np.min(R_arr), 3) 						# Minimum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
-	Rmax = np.round(np.max(R_arr), 3)						# Maximum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
 	
 	data   = open(file)
 	dummy  = data.readline()                # Ignoring first line
@@ -56,12 +55,14 @@ def main():
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
 	R_arr = r_from_T(R_in, Tg, T0, q)             # 1D array of radii obtained from the power law disk model (AU)
+	Rmin = np.round(np.min(R_arr), 3) 						# Minimum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
+	Rmax = np.round(np.max(R_arr), 3)						# Maximum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
 	# H = scale_height(M_star, R_arr, Tg)
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
 	# Plotting the abunances as a function of radius and temperature
-	# R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, NELEM, NMOLE, NDUST)
+	R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk, NELEM, NMOLE, NDUST)
 	
 	# Finding the most abundant condensates
 	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST) 
@@ -138,7 +139,7 @@ def main():
 			F_map_sum += F_map
 			
 			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
-			# plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
+			plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
 			intflux_sum += intflux
 			
 		elif solid == "MgSiO3":
@@ -154,7 +155,7 @@ def main():
 			F_map_sum += F_map
 			
 			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
-			# plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
+			plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
 			intflux_sum += intflux
 			
 		else:
@@ -170,7 +171,7 @@ def main():
 			F_map_sum += F_map
 			
 			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
-			# plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
+			plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
 			intflux_sum += intflux
 			
 	# Plotting the overall flux map
@@ -194,16 +195,41 @@ def main():
 	plt.savefig(folder + "overall_fluxmap.png", bbox_inches = 'tight')
 	plt.show()
 	
-	# Plotting the overall spectrum
+	############################################################### Plotting the overall spectrum and the paper spectrum #####################################################################################
 	fig = plt.figure()
-	plt.plot(lamdas['Mg2SiO4'], intflux_sum)
+	plt.plot(lamdas['Mg2SiO4'], intflux_sum, label='Model')
+	
+	diskname = disk.split('_')[0]
+	datfile = folder + 'van_Boekel_' + diskname + '.dat'
+	wl, flux = get_paper_spectra(datfile)
+	plt.plot(wl, flux, label="van Boekel (2005)")
+	
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux (Jy)')
 	plt.title(r'Overall Spectrum r=0.1 $\mu$m R={0}-{1} AU'.format(Rmin.value, Rmax.value))
+	plt.legend()
 	plt.savefig(folder + "Overall_spectrum_r0.1_R{0}-{1}.png".format(Rmin.value, Rmax.value))
 	plt.show()
 	
-	# Plotting the overall spectrum considering multiple radii limits
+	################################################################ 8 to 13 microns zoomed in version of the above plot #####################################################################################
+	first = np.where(lamda >= 8 * u.micron)[0][0]
+	last = np.where(lamda <= 13 * u.micron)[0][-1]
+	fig = plt.figure()
+	plt.plot(lamdas['Mg2SiO4'][first: last+1], intflux_sum[first: last+1], label='Model')
+	
+	diskname = disk.split('_')[0]
+	datfile = folder + 'van_Boekel_' + diskname + '.dat'
+	wl, flux = get_paper_spectra(datfile)
+	plt.plot(wl, flux, label="van Boekel (2005)")
+	
+	plt.xlabel(r'$\lambda$ ($\mu$m)')
+	plt.ylabel('Flux (Jy)')
+	plt.title(r'Overall Spectrum r=0.1 $\mu$m R={0}-{1} AU'.format(Rmin.value, Rmax.value))
+	plt.legend()
+	plt.savefig(folder + "Overall_spectrum_r0.1_wl8_13.png".format(Rmin.value, Rmax.value))
+	plt.show()
+	
+	############################################################## Plotting the overall spectrum considering multiple radii limits ###########################################################################
 	R_list = np.round(R_arr[np.linspace(0, len(R_arr)-1, 7).astype(int)], 3)
 	Rmin_list = R_list[:-1]
 	Rmax_list = R_list[1:]
@@ -220,7 +246,7 @@ def main():
 	plt.savefig(folder + "Overall_spectrum_multiple_radii_limits.png")
 	plt.show()
 	
-	# Plotting the correlated flux density for multiple baselines against wavelengths
+	##################################################### Plotting the correlated flux density for multiple baselines against wavelengths #####################################################################
 	fig = plt.figure()
 	
 	for Bl in B_small:
@@ -235,7 +261,7 @@ def main():
 	plt.savefig(folder + 'Correlated_flux_multB_rv0.1.png')
 	plt.show()
 	
-	# Plotting the correlated flux density for a single wavelength against baselines
+	##################################################### Plotting the correlated flux density for a single wavelength against baselines ######################################################################
 	inter_flux = np.zeros(len(B)) * u.Jy
 	
 	for wl in wl_list:
