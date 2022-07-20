@@ -57,7 +57,7 @@ def molecular_weight(solids):
 
 
 
-def surface_density(solids, molwt, top_abunds, nHtot, H):
+def surface_density(solids, molwt, top_abunds, nHtot, H, add_gap, R_arr, rgap, wgap, sgap):
 	
 	"""
 	Calculates the surface density of the given solids. Note that the calculated "surface" densities are actually (g/cm^3), but we assume column height to be 1 cm, so the surface density can be g/cm^2. The surface densities can also be calculated by assuming a column height of H AU, but this does not give accurate results at the moment
@@ -78,6 +78,7 @@ def surface_density(solids, molwt, top_abunds, nHtot, H):
 	surf_dens = {key: None for key in solids}
 	
 	for solid in surf_dens.keys():
+		
 		if solid == 'Olivine':
 			n_solid = nHtot * 10**top_abunds['Mg2SiO4']
 			surf_dens[solid] = molwt[solid] * n_solid
@@ -95,6 +96,29 @@ def surface_density(solids, molwt, top_abunds, nHtot, H):
 			surf_dens[solid] = molwt[solid] * n_solid
 			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
 			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
+		
+		# Adding a gap in the disk	
+	if add_gap:
+		
+		# Find indices corresponding to gap radius and width
+		print((rgap - wgap/2.0), (rgap + wgap/2.0))
+		rgap_ind = np.where(np.round(R_arr, 1) == rgap)[0][0]
+		wgap_ind1 = np.where(np.round(R_arr, 1) == np.ceil(rgap - wgap/2.0))[0][0]
+		wgap_ind2 = np.where(np.round(R_arr, 1) == np.ceil(rgap + wgap/2.0))[0][0]
+		
+		for solid in surf_dens.keys():
+			
+			for i in range(wgap_ind1, wgap_ind2 + 1):
+				
+				if i <= rgap_ind:
+					
+					m = (sgap * surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind1])/(R_arr[rgap_ind] - R_arr[wgap_ind1])
+					surf_dens[solid][i] = surf_dens[solid][wgap_ind1] + m * (R_arr[i] - R_arr[wgap_ind1])
+				
+				else:
+					
+					m = (surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind2])/(R_arr[rgap_ind] - R_arr[wgap_ind2])
+					surf_dens[solid][i] = surf_dens[solid][rgap_ind] + m * (R_arr[i] - R_arr[rgap_ind])
 		
 	return surf_dens
 

@@ -29,7 +29,67 @@ def Qcurve_plotter(lamda, kappa, mineral, rv, fmax, folder):
 	plt.show()
 	
 	
+def plot_surf_dens_radial(surf_dens, R_arr, folder):
 	
+	"""
+	Plots the radial distribution of surface densities of the different condensates in the disk
+	
+	Parameters:
+	
+	surf_dens    : Dictionary of surface densities with the condensate names as keys and the 1D arrays of surface densities (shape: (NPOINT,)) in g/cm^2 as the values (float)
+	R_arr 		 : 1D array of the disk radii in AU (shape: (NPOINT,)) (float)
+	folder 		 : Path where the output plot is stored (string)
+	"""
+	
+	for solid in surf_dens.keys():
+		
+		plt.semilogy(R_arr, surf_dens[solid], label = latex_name(solid))
+		
+	plt.title("Radial distribution of surface densities".format(latex_name(solid)))
+	plt.ylabel(r"Surface density log($\Sigma$) ($g/cm^2)$")
+	# plt.ylim(10**-27, 10**-5)
+	# plt.gca().set_ylim(bottom=10**-27)
+	# plt.gca().set_xlim(right=40)
+	plt.xlabel(r"Disk radius R (AU)")
+	plt.legend()
+	plt.savefig(folder + "surf_dens_vs_R.png")
+	plt.show()
+	
+
+def plot_surf_dens_disk(surf_dens, R, NPOINT, folder):
+	
+	"""
+	Plots the disk surface density including the azimuthal component (by assuming an azimuthally symmetric surface density distribution
+	
+	Parameters:
+	
+	surf_dens    : Dictionary of surface densities with the condensate names as keys and the 1D arrays of surface densities (shape: (NPOINT,)) in g/cm^2 as the values (float)
+	R_arr 		 : 1D array of the disk radii in AU (shape: (NPOINT,)) (float)
+	NPOINT       : Total number of simulation points in GGchem (int)
+	folder 		 : Path where the output plot is stored (string)
+	"""
+	
+	phi = np.linspace(0, 360, NPOINT)
+	r_m, phi_m = np.meshgrid(R.value, phi)
+	total_surf_dens = np.zeros((NPOINT, NPOINT)) * u.g / u.cm**2
+	
+	for solid in surf_dens.keys():		
+		surf_dens[solid] = np.tile(surf_dens[solid], NPOINT).reshape(len(R.value), len(R.value))
+		total_surf_dens += surf_dens[solid]
+		
+	# print(np.shape(total_surf_dens))
+	x_m = r_m * np.cos(np.deg2rad(phi_m))
+	y_m = r_m * np.sin(np.deg2rad(phi_m))
+	
+	plt.pcolormesh(x_m, y_m, np.log10(total_surf_dens.value), cmap="inferno")
+	plt.xlabel("R (AU)")
+	plt.ylabel("R (AU)")
+	plt.title("Disk surface density (assuming azimuthal symmetry)")
+	plt.colorbar(pad=0, label=r"log($\Sigma$) ($g/cm^2$)")
+	plt.savefig(folder + "disk_surf_dens.png")
+	plt.show()
+	
+			
 def plot_Bv(lamda, I, solid, folder):
 	
 	"""
