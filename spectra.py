@@ -102,23 +102,25 @@ def surface_density(solids, molwt, top_abunds, nHtot, H, add_gap, R_arr, rgap, w
 		
 		# Find indices corresponding to gap radius and width
 		print((rgap - wgap/2.0), (rgap + wgap/2.0))
+		print(np.round(rgap - wgap/2.0, 1), np.round(rgap + wgap/2.0, 1))
 		rgap_ind = np.where(np.round(R_arr, 1) == rgap)[0][0]
-		wgap_ind1 = np.where(np.round(R_arr, 1) == np.ceil(rgap - wgap/2.0))[0][0]
-		wgap_ind2 = np.where(np.round(R_arr, 1) == np.ceil(rgap + wgap/2.0))[0][0]
+		wgap_ind1 = np.where(np.round(R_arr, 1) == np.round(rgap - wgap/2.0, 1))[0][0]
+		wgap_ind2 = np.where(np.round(R_arr, 1) == np.round(rgap + wgap/2.0, 1))[0][0]
 		
 		for solid in surf_dens.keys():
 			
 			for i in range(wgap_ind1, wgap_ind2 + 1):
 				
-				if i <= rgap_ind:
+				surf_dens[solid][i] = sgap * surf_dens[solid][i]
+				# ~ if i <= rgap_ind:
 					
-					m = (sgap * surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind1])/(R_arr[rgap_ind] - R_arr[wgap_ind1])
-					surf_dens[solid][i] = surf_dens[solid][wgap_ind1] + m * (R_arr[i] - R_arr[wgap_ind1])
+					# ~ m = (sgap * surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind1])/(R_arr[rgap_ind] - R_arr[wgap_ind1])
+					# ~ surf_dens[solid][i] = surf_dens[solid][wgap_ind1] + m * (R_arr[i] - R_arr[wgap_ind1])
 				
-				else:
+				# ~ else:
 					
-					m = (surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind2])/(R_arr[rgap_ind] - R_arr[wgap_ind2])
-					surf_dens[solid][i] = surf_dens[solid][rgap_ind] + m * (R_arr[i] - R_arr[rgap_ind])
+					# ~ m = (surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind2])/(R_arr[rgap_ind] - R_arr[wgap_ind2])
+					# ~ surf_dens[solid][i] = surf_dens[solid][rgap_ind] + m * (R_arr[i] - R_arr[rgap_ind])
 		
 	return surf_dens
 

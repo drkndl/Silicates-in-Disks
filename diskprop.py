@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.constants import astropyconst20 as const
-from HD163296_q04_p075_S3000_Tamf1400_gap.properties import *
+from HD163296_q04_p065_S4000_Tamf1250_gap1.properties import *
 
 # Some constants in CGS
 Na = const.N_A.cgs                    		# Avogadro's number in /mol
@@ -200,7 +200,7 @@ def main():
 	M_label = np.round(M_star/M_sun, 1)
 	plt.plot(r_arr, T_arr)
 	plt.xlabel("Radius R [AU]")
-	plt.ylabel("Midplane Temperature T [K]")
+	plt.ylabel("Temperature T [K]")
 	plt.title(r"$T_{{mid}}$ vs R, $R_{{star}}$ = {0}$R_\odot$, $T_{{star}}$ = {1} K, $M_{{star}}$ = {2}$M_\odot$, $\Sigma_0$ = {3} $g/cm^2$".format(R_label.value, T_star.value, M_label.value, Sigma0.value), fontsize=10)
 	plt.savefig(folder + "Tmid_vs_R.png")
 	plt.show()

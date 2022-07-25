@@ -13,7 +13,7 @@ from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import Qcurve_plotter, plot_surf_dens_radial, plot_surf_dens_disk, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
 from compare_grain_sizes import get_paper_spectra
-from HD163296_q04_p075_S3000_Tamf1400_gap.properties import *
+from HD163296_q04_p065_S4000_Tamf1250_gap1.properties import *
 
 
 # Some constants in CGS
@@ -30,6 +30,7 @@ G = const.G.cgs           					# Gravitational constant (cm^3 g^-1 s^-2)
 
 def main():
 	
+	fullplot_size = 7                                       # Plot title size
 	R_star = star_radius(L_star, T_star).to(u.AU)   		# Star's radius (AU)
 	
 	data   = open(file)
@@ -62,7 +63,7 @@ def main():
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
 	# Plotting the abunances as a function of radius and temperature
-	# R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk, NELEM, NMOLE, NDUST)
+	R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk, NELEM, NMOLE, NDUST)
 	
 	# Finding the most abundant condensates
 	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST) 
@@ -92,8 +93,6 @@ def main():
 	surf_dens = surface_density(top5_solids, molwt, topabunds_radii, nHtot, H, add_gap, R_arr, rgap, wgap, sgap)
 	plot_surf_dens_radial(surf_dens, R_arr, folder)
 	plot_surf_dens_disk(surf_dens, R_arr, NPOINT, folder)
-	
-	printfff
 	
 	# Creating a dictionary of Qcurve input files and the corresponding material densities in g/cm^3
 	opfile_dens = {'Qcurve_inputs/Q_CaMgSi2O6_rv0.1_fmaxxxx.dat' : 3.278, 'Qcurve_inputs/Q_MgSiO3_Jaeger_DHS_fmax1.0_rv0.1.dat' : 3.2, 'Qcurve_inputs/Q_Mg2SiO4_Sogawa_DHS_fmax1.0_rv0.1.dat' : 3.27, 'Qcurve_inputs/qval_Fe3O4_rv0.1_fmax0.7.dat' : 5.17, 'Qcurve_inputs/qval_Fe2SiO4_rv0.1_fmax1.0.dat' : 4.392, 'Qcurve_inputs/qval_Fe_met_rv0.1_fmax0.7.dat' : 7.874, 'Qcurve_inputs/qval_FeS_rv0.1_fmax0.7.dat' : 4.84, 'Qcurve_inputs/qval_Mg3Si2O9H4_rv0.1_fmax0.7.dat' : 2.6, 'Qcurve_inputs/qval_MgAl2O4_rv0.1_fmax0.7.dat' : 3.64, 'Qcurve_inputs/Q_Olivine_rv0.1_fmax0.7.dat': 3.71, 'Qcurve_inputs/Q_Pyroxene_rv0.1_fmax0.7.dat': 3.01}
@@ -178,7 +177,7 @@ def main():
 			plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
 			intflux_sum += intflux
 			
-	# Plotting the overall flux map
+	########################################################################## Plotting the overall flux map ################################################################################################
 	fig, ax = plt.subplots(1,1)
 	img = ax.imshow(F_map_sum, cmap='plasma', interpolation='none')
 	
@@ -194,7 +193,10 @@ def main():
 	ax.set_yticklabels(y_axis_labels.value)
 	ax.set_ylabel('R (AU)')
 	
-	ax.set_title(r"Overall Flux Map for r=0.1 microns")
+	if add_gap:
+		ax.set_title(r'Overall FluxMap r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+	else:
+		ax.set_title(r'Overall FluxMap r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
 	fig.colorbar(img, label=r'{0}'.format(F_map_sum.unit))
 	plt.savefig(folder + "overall_fluxmap.png", bbox_inches = 'tight')
 	plt.show()
@@ -210,7 +212,10 @@ def main():
 	
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux (Jy)')
-	plt.title(r'Overall Spectrum r=0.1 $\mu$m R={0}-{1} AU'.format(Rmin.value, Rmax.value))
+	if add_gap:
+		plt.title(r'Overall Spectrum r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+	else:
+		plt.title(r'Overall Spectrum r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
 	plt.legend()
 	plt.savefig(folder + "Overall_spectrum_r0.1_R{0}-{1}.png".format(Rmin.value, Rmax.value))
 	plt.show()
@@ -228,7 +233,10 @@ def main():
 	
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux (Jy)')
-	plt.title(r'Overall Spectrum r=0.1 $\mu$m R={0}-{1} AU'.format(Rmin.value, Rmax.value))
+	if add_gap:
+		plt.title(r'Overall Spectrum r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+	else:
+		plt.title(r'Overall Spectrum r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
 	plt.legend()
 	plt.savefig(folder + "Overall_spectrum_r0.1_wl8_13.png".format(Rmin.value, Rmax.value))
 	plt.show()
@@ -245,7 +253,10 @@ def main():
 			
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux (Jy)')
-	plt.title(r'Overall spectrum for multiple radii')
+	if add_gap:
+		plt.title(r'Spectrum Radii Limits r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+	else:
+		plt.title(r'Spectrum Radii Limits r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
 	plt.legend()	
 	plt.savefig(folder + "Overall_spectrum_multiple_radii_limits.png")
 	plt.show()
@@ -260,7 +271,10 @@ def main():
 	
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Correlated flux (Jy)')             
-	plt.title(r'Correlated flux for multiple baselines, rv = 0.1 $\mu$m')
+	if add_gap:
+		plt.title(r'Correlated Flux Multi B r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+	else:
+		plt.title(r'Correlated Flux Multi B r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
 	plt.legend()
 	plt.savefig(folder + 'Correlated_flux_multB_rv0.1.png')
 	plt.show()
@@ -276,7 +290,10 @@ def main():
 	
 	plt.xlabel(r'Baseline B (m)')
 	plt.ylabel('Correlated flux (Jy)')
-	plt.title(r'Correlated flux for multiple wavelengths, rv = 0.1 $\mu$m')
+	if add_gap:
+		plt.title(r'Correlated Flux Multi $\lambda$ r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+	else:
+		plt.title(r'Correlated Flux Multi $\lambda$ r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
 	plt.legend()
 	plt.savefig(folder + "Correlated_flux_multWL_rv0.1.png")
 	plt.show()

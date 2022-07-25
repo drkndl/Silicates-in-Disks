@@ -15,6 +15,10 @@ R_sun = 0.00465047      								# Sun's radius (AU)
 M_sun = 1.99E33         								# Solar mass (g)
 dist_pc = 101 * u.pc                           			# Star distance in parsec (Calahan et al. 2021 MAPS)
 H = 1.0 * u.cm 								    		# Scale height (cm)
+add_gap = False                                          # True if adding a gap to the disk
+rgap = 0.7 * u.AU 										# The location of the gap in the disk (from the star) (AU)
+wgap = 0.8 * u.AU 										# Total width of the gap (AU)
+sgap = 10**-3  											# The amount by which the surface density is to be dampened in the gap
 
 disk = 'HD163296_q04_p075_S3400' 										# The name of the disk
 folder = disk + '/'  								    # Path where output files are saved

@@ -73,9 +73,10 @@ def plot_surf_dens_disk(surf_dens, R, NPOINT, folder):
 	r_m, phi_m = np.meshgrid(R.value, phi)
 	total_surf_dens = np.zeros((NPOINT, NPOINT)) * u.g / u.cm**2
 	
+	copy = surf_dens.copy()
 	for solid in surf_dens.keys():		
-		surf_dens[solid] = np.tile(surf_dens[solid], NPOINT).reshape(len(R.value), len(R.value))
-		total_surf_dens += surf_dens[solid]
+		copy[solid] = np.tile(surf_dens[solid], NPOINT).reshape(len(R.value), len(R.value))
+		total_surf_dens += copy[solid]
 		
 	# print(np.shape(total_surf_dens))
 	x_m = r_m * np.cos(np.deg2rad(phi_m))
