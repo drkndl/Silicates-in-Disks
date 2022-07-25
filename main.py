@@ -13,7 +13,7 @@ from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import Qcurve_plotter, plot_surf_dens_radial, plot_surf_dens_disk, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
 from compare_grain_sizes import get_paper_spectra
-from HD163296_q04_p065_S4000_Tamf1250_gap1.properties import *
+from HD144432_gap3.properties import *
 
 
 # Some constants in CGS
@@ -56,8 +56,8 @@ def main():
 	
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
 	R_arr = r_from_T(R_in, Tg, T0, q)             # 1D array of radii obtained from the power law disk model (AU)
-	Rmin = np.round(np.min(R_arr), 3) 						# Minimum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
-	Rmax = np.round(np.max(R_arr), 3)						# Maximum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
+	Rmin = np.round(np.min(R_arr), 1) 						# Minimum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
+	Rmax = np.round(np.max(R_arr), 1)						# Maximum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
 	# H = scale_height(M_star, R_arr, Tg)
 	
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
@@ -87,95 +87,173 @@ def main():
 	not_there = ['SiO', 'Mg3Si4O12H2', 'Fe3Si2O9H4', 'Ni', 'NaAlSi3O8', 'NaMg3AlSi3O12H2', 'CaAl2Si2O8', 'H2O', 'Ca2MgSi2O7', 'NH3', 'Al2O3', 'Ca2Al2SiO7', 'Ca3Al2Si3O12', 'CaAl2Si2O8', 'ZrO2', 'Ti3O5', 'W', 'VO', 'CaTiO3', 'NaAlSiO4']
 	top5_solids = np.setdiff1d(top5_solids, not_there)
 	top5_solids = np.concatenate((top5_solids, ['Olivine', 'Pyroxene']))
+	silicates = ['Olivine', 'Pyroxene', 'Mg2SiO4', 'MgSiO3']
+	olisilicates = ['Olivine', 'Mg2SiO4']
+	pyrosilicates = ['Pyroxene', 'MgSiO3']
 	
 	# Calculating the surface density
 	molwt = molecular_weight(top5_solids)
-	surf_dens = surface_density(top5_solids, molwt, topabunds_radii, nHtot, H, add_gap, R_arr, rgap, wgap, sgap)
+	surf_dens, rgap_ind, wgap_ind1, wgap_ind2 = surface_density(top5_solids, molwt, mass_fracs, topabunds_radii, nHtot, H, add_gap, R_arr, rgap, wgap, sgap)
 	plot_surf_dens_radial(surf_dens, R_arr, folder)
 	plot_surf_dens_disk(surf_dens, R_arr, NPOINT, folder)
 	
 	# Creating a dictionary of Qcurve input files and the corresponding material densities in g/cm^3
-	opfile_dens = {'Qcurve_inputs/Q_CaMgSi2O6_rv0.1_fmaxxxx.dat' : 3.278, 'Qcurve_inputs/Q_MgSiO3_Jaeger_DHS_fmax1.0_rv0.1.dat' : 3.2, 'Qcurve_inputs/Q_Mg2SiO4_Sogawa_DHS_fmax1.0_rv0.1.dat' : 3.27, 'Qcurve_inputs/qval_Fe3O4_rv0.1_fmax0.7.dat' : 5.17, 'Qcurve_inputs/qval_Fe2SiO4_rv0.1_fmax1.0.dat' : 4.392, 'Qcurve_inputs/qval_Fe_met_rv0.1_fmax0.7.dat' : 7.874, 'Qcurve_inputs/qval_FeS_rv0.1_fmax0.7.dat' : 4.84, 'Qcurve_inputs/qval_Mg3Si2O9H4_rv0.1_fmax0.7.dat' : 2.6, 'Qcurve_inputs/qval_MgAl2O4_rv0.1_fmax0.7.dat' : 3.64, 'Qcurve_inputs/Q_Olivine_rv0.1_fmax0.7.dat': 3.71, 'Qcurve_inputs/Q_Pyroxene_rv0.1_fmax0.7.dat': 3.01}
+	opfile_dens = {'Qcurve_inputs/Q_CaMgSi2O6_rv0.1_fmaxxxx.dat' : 3.278, 'Qcurve_inputs/Q_MgSiO3_Jaeger_DHS_fmax1.0_rv0.1.dat' : 3.2, 'Qcurve_inputs/Q_MgSiO3_Jaeger_DHS_fmax1.0_rv2.0.dat' : 3.2, 'Qcurve_inputs/Q_Mg2SiO4_Sogawa_DHS_fmax1.0_rv0.1.dat' : 3.27, 'Qcurve_inputs/Q_Mg2SiO4_Sogawa_DHS_fmax1.0_rv2.0.dat' : 3.27, 'Qcurve_inputs/qval_Fe3O4_rv0.1_fmax0.7.dat' : 5.17, 'Qcurve_inputs/qval_Fe3O4_rv2.0_fmax0.7.dat' : 5.17, 'Qcurve_inputs/qval_Fe2SiO4_rv0.1_fmax1.0.dat' : 4.392, 'Qcurve_inputs/qval_Fe2SiO4_rv2.0_fmax1.0.dat' : 4.392, 'Qcurve_inputs/qval_Fe_met_rv0.1_fmax0.7.dat' : 7.874, 'Qcurve_inputs/qval_Fe_met_rv2.0_fmax0.7.dat' : 7.874, 'Qcurve_inputs/qval_FeS_rv0.1_fmax0.7.dat' : 4.84, 'Qcurve_inputs/qval_FeS_rv2.0_fmax0.7.dat' : 4.84, 'Qcurve_inputs/qval_Mg3Si2O9H4_rv0.1_fmax0.7.dat' : 2.6, 'Qcurve_inputs/qval_Mg3Si2O9H4_rv2.0_fmax0.7.dat' : 2.6, 'Qcurve_inputs/qval_MgAl2O4_rv0.1_fmax0.7.dat' : 3.64, 'Qcurve_inputs/qval_MgAl2O4_rv2.0_fmax0.7.dat' : 3.64, 'Qcurve_inputs/Q_Olivine_rv0.1_fmax0.7.dat': 3.71, 'Qcurve_inputs/Q_Olivine_rv2.0_fmax0.7.dat' : 3.71, 'Qcurve_inputs/Q_Pyroxene_rv0.1_fmax0.7.dat': 3.01, 'Qcurve_inputs/Q_Pyroxene_fmax0.7_rv2.0.dat': 3.01}
 	
 	# Adding units to the material densities using astropy
 	for key, value in opfile_dens.items():
 		opfile_dens[key] = value * u.g / u.cm**3
 	
 	# Initializing dictionaries for the wavelengths, opacities, grain sizes and emptiness fractions used in the opfiles for each solid 	
-	lamdas = {key: None for key in top5_solids}
-	kappas = {key: None for key in top5_solids}
-	rvs = {key: None for key in top5_solids}
+	gs_ranges = ['0.1', '2.0']
+	lamdas = {outer_k: {inner_k: None for inner_k in gs_ranges} for outer_k in top5_solids}
+	kappas = {outer_k: {inner_k: None for inner_k in gs_ranges} for outer_k in top5_solids}
 	fmaxs = {key: None for key in top5_solids}
 	
 	for opfile, density in opfile_dens.items():
-		mineral, rv, fmax, lamda, kappa = get_l_and_k(opfile, density, gs, lmin, lmax, lsize)
+		mineral, rv, fmax, lamda, kappa = get_l_and_k(opfile, density, mass_fracs, lmin, lmax, lsize)
+		if mineral in silicates and mass_fracs[mineral][rv] == 0:
+			print("Skipping: ", mineral, rv)
+			continue		
 		# Qcurve_plotter(lamda, kappa, mineral, rv, fmax, folder)
-		lamdas[mineral] = lamda
-		kappas[mineral] = kappa
-		rvs[mineral] = rv
+		lamdas[mineral][rv] = lamda
+		kappas[mineral][rv] = kappa
 		fmaxs[mineral] = fmax			
 	
 	# Plotting the flux map and calculating the integrated flux for each solid
-	I = {key: None for key in top5_solids}
-	tau = {key: None for key in top5_solids}
+	I = {outer_k: {inner_k: None for inner_k in gs_ranges} for outer_k in top5_solids}
+	tau = {outer_k: {inner_k: None for inner_k in gs_ranges} for outer_k in top5_solids}
 	F_map_sum = np.zeros((NPOINT, lsize)) * u.erg / (u.s * u.Hz * u.sr * u.cm**2)
 	intflux_sum = np.zeros(lsize) * u.Jy
 	
 	for solid in top5_solids:
+		for size in gs_ranges:
+			
+			if lamdas[solid][size] == None:
+				print("Skipping: ", solid, size)
+				continue
 		
-		if solid == 'Olivine':
-			continue
-		
-		elif solid == 'Pyroxene':
-			continue
+			if solid == 'Olivine':
+				continue
+			
+			elif solid == 'Pyroxene':
+				continue
+						
+			elif solid == "Mg2SiO4":
+				
+				if mass_fracs['Mg2SiO4'][size] == 0:
 					
-		elif solid == "Mg2SiO4":
-			
-			I[solid] = Plancks(lamdas[solid], Tg) 
-			# plot_Bv(lamdas[solid], I[solid], solid, folder)
-			
-			tau[solid] = tau_calc_amorphous(surf_dens[solid], surf_dens['Olivine'], kappas[solid], kappas['Olivine'], Tg, amor_temp)
-			# plot_tau(tau[solid], solid, folder)
-			
-			F_map = flux_map(tau[solid], I[solid])
-			# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
-			F_map_sum += F_map
-			
-			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
-			plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
-			intflux_sum += intflux
-			
-		elif solid == "MgSiO3":
-			
-			I[solid] = Plancks(lamdas[solid], Tg) 
-			# plot_Bv(lamdas[solid], I[solid], solid, folder)
-			
-			tau[solid] = tau_calc_amorphous(surf_dens[solid], surf_dens['Pyroxene'], kappas[solid], kappas['Pyroxene'], Tg, amor_temp)
-			# plot_tau(tau[solid], solid, folder)
-			
-			F_map = flux_map(tau[solid], I[solid])
-			# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
-			F_map_sum += F_map
-			
-			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
-			plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
-			intflux_sum += intflux
-			
-		else:
-			
-			I[solid] = Plancks(lamdas[solid], Tg) 
-			# plot_Bv(lamdas[solid], I[solid], solid, folder)
-			
-			tau[solid] = tau_calc(surf_dens[solid], kappas[solid])
-			# plot_tau(tau[solid], solid, folder)
-			
-			F_map = flux_map(tau[solid], I[solid])
-			# plot_fluxmap(solid, rvs[solid], fmaxs[solid], F_map, lamdas[solid], R_arr, folder) 
-			F_map_sum += F_map
-			
-			intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
-			plot_spectra(lamdas[solid], intflux, solid, rvs[solid], fmaxs[solid], Rmin, Rmax, folder)
-			intflux_sum += intflux
+					I[solid][size] = Plancks(lamdas[solid][size], Tg) 
+					# plot_Bv(lamdas[solid], I[solid], solid, folder)
+					
+					tau[solid][size] = tau_calc(surf_dens[solid], kappas['Olivine'][size])
+					# plot_tau(tau[solid][size], solid, size, folder)
+					
+					F_map = flux_map(tau[solid][size], I[solid][size])
+					# plot_fluxmap(solid, size, fmaxs[solid], F_map, lamdas[solid][size], R_arr, folder)
+					F_map_sum += F_map
+					
+					intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
+					# plot_spectra(lamdas[solid][size], intflux, solid, size, fmaxs[solid], Rmin, Rmax, folder)
+					intflux_sum += intflux
+					
+				elif mass_fracs['Olivine'][size] == 0:
+					
+					I[solid][size] = Plancks(lamdas[solid][size], Tg) 
+					# plot_Bv(lamdas[solid], I[solid], solid, folder)
+					
+					tau[solid][size] = tau_calc(surf_dens[solid], kappas['Mg2SiO4'][size])
+					# plot_tau(tau[solid][size], solid, size, folder)
+					
+					F_map = flux_map(tau[solid][size], I[solid][size])
+					# plot_fluxmap(solid, size, fmaxs[solid], F_map, lamdas[solid][size], R_arr, folder)
+					F_map_sum += F_map
+					
+					intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
+					# plot_spectra(lamdas[solid][size], intflux, solid, size, fmaxs[solid], Rmin, Rmax, folder)
+					intflux_sum += intflux
+				
+				else: 
+					
+					I[solid][size] = Plancks(lamdas[solid][size], Tg) 
+					# plot_Bv(lamdas[solid], I[solid], solid, folder)
+					
+					tau[solid][size] = tau_calc_amorphous(surf_dens[solid], surf_dens['Olivine'], kappas[solid][size], kappas['Olivine'][size], Tg, amor_temp)
+					# plot_tau(tau[solid][size], solid, size, folder)
+					
+					F_map = flux_map(tau[solid][size], I[solid][size])
+					# plot_fluxmap(solid, size, fmaxs[solid], F_map, lamdas[solid][size], R_arr, folder) 
+					F_map_sum += F_map
+					
+					intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
+					# plot_spectra(lamdas[solid][size], intflux, solid, size, fmaxs[solid], Rmin, Rmax, folder)
+					intflux_sum += intflux
+				
+			elif solid == "MgSiO3":
+				
+				if mass_fracs['MgSiO3'][size] == 0:
+					
+					I[solid][size] = Plancks(lamdas[solid][size], Tg) 
+					# plot_Bv(lamdas[solid], I[solid], solid, folder)
+					
+					tau[solid][size] = tau_calc(surf_dens[solid], kappas['Pyroxene'][size])
+					# plot_tau(tau[solid][size], solid, size, folder)
+					
+					F_map = flux_map(tau[solid][size], I[solid][size])
+					# plot_fluxmap(solid, size, fmaxs[solid], F_map, lamdas[solid][size], R_arr, folder)
+					F_map_sum += F_map
+					
+					intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
+					# plot_spectra(lamdas[solid][size], intflux, solid, size, fmaxs[solid], Rmin, Rmax, folder)
+					intflux_sum += intflux
+					
+				elif mass_fracs['Pyroxene'][size] == 0:
+					
+					I[solid][size] = Plancks(lamdas[solid][size], Tg) 
+					# plot_Bv(lamdas[solid], I[solid], solid, folder)
+					
+					tau[solid][size] = tau_calc(surf_dens[solid], kappas['MgSiO3'][size])
+					# plot_tau(tau[solid][size], solid, size, folder)
+					
+					F_map = flux_map(tau[solid][size], I[solid][size])
+					# plot_fluxmap(solid, size, fmaxs[solid], F_map, lamdas[solid][size], R_arr, folder)
+					F_map_sum += F_map
+					
+					intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
+					# plot_spectra(lamdas[solid][size], intflux, solid, size, fmaxs[solid], Rmin, Rmax, folder)
+					intflux_sum += intflux
+				
+				else: 
+					
+					I[solid][size] = Plancks(lamdas[solid][size], Tg) 
+					# plot_Bv(lamdas[solid], I[solid], solid, folder)
+					
+					tau[solid][size] = tau_calc_amorphous(surf_dens[solid], surf_dens['Pyroxene'], kappas[solid][size], kappas['Pyroxene'][size], Tg, amor_temp)
+					# plot_tau(tau[solid][size], solid, size, folder)
+					
+					F_map = flux_map(tau[solid][size], I[solid][size])
+					# plot_fluxmap(solid, size, fmaxs[solid], F_map, lamdas[solid][size], R_arr, folder) 
+					F_map_sum += F_map
+					
+					intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
+					# plot_spectra(lamdas[solid][size], intflux, solid, size, fmaxs[solid], Rmin, Rmax, folder)
+					intflux_sum += intflux
+				
+			else:
+				
+				I[solid][size] = Plancks(lamdas[solid][size], Tg) 
+				# plot_Bv(lamdas[solid], I[solid], solid, folder)
+				
+				tau[solid][size] = tau_calc(surf_dens[solid], kappas[solid][size])
+				# plot_tau(tau[solid][size], solid, size, folder)
+				
+				F_map = flux_map(tau[solid][size], I[solid][size])
+				# plot_fluxmap(solid, size, fmaxs[solid], F_map, lamdas[solid][size], R_arr, folder)
+				F_map_sum += F_map
+				
+				intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
+				# plot_spectra(lamdas[solid][size], intflux, solid, size, fmaxs[solid], Rmin, Rmax, folder)
+				intflux_sum += intflux
 			
 	########################################################################## Plotting the overall flux map ################################################################################################
 	fig, ax = plt.subplots(1,1)
@@ -194,16 +272,16 @@ def main():
 	ax.set_ylabel('R (AU)')
 	
 	if add_gap:
-		ax.set_title(r'Overall FluxMap r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+		ax.set_title(r'Overall FluxMap mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
 	else:
-		ax.set_title(r'Overall FluxMap r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
+		ax.set_title(r'Overall FluxMap mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
 	fig.colorbar(img, label=r'{0}'.format(F_map_sum.unit))
 	plt.savefig(folder + "overall_fluxmap.png", bbox_inches = 'tight')
 	plt.show()
 	
 	############################################################### Plotting the overall spectrum and the paper spectrum #####################################################################################
 	fig = plt.figure()
-	plt.plot(lamdas['Mg2SiO4'], intflux_sum, label='Model')
+	plt.plot(lamda, intflux_sum, label='Model')
 	
 	diskname = disk.split('_')[0]
 	datfile = folder + 'van_Boekel_' + diskname + '.dat'
@@ -213,18 +291,18 @@ def main():
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux (Jy)')
 	if add_gap:
-		plt.title(r'Overall Spectrum r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+		plt.title(r'Overall Spectrum mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
 	else:
-		plt.title(r'Overall Spectrum r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
+		plt.title(r'Overall Spectrum mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
 	plt.legend()
-	plt.savefig(folder + "Overall_spectrum_r0.1_R{0}-{1}.png".format(Rmin.value, Rmax.value))
+	plt.savefig(folder + "Overall_spectrum_multgs_R{0}-{1}.png".format(Rmin.value, Rmax.value))
 	plt.show()
 	
 	################################################################ 8 to 13 microns zoomed in version of the above plot #####################################################################################
 	first = np.where(lamda >= 8 * u.micron)[0][0]
 	last = np.where(lamda <= 13 * u.micron)[0][-1]
 	fig = plt.figure()
-	plt.plot(lamdas['Mg2SiO4'][first: last+1], intflux_sum[first: last+1], label='Model')
+	plt.plot(lamda[first: last+1], intflux_sum[first: last+1], label='Model')
 	
 	diskname = disk.split('_')[0]
 	datfile = folder + 'van_Boekel_' + diskname + '.dat'
@@ -234,29 +312,57 @@ def main():
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux (Jy)')
 	if add_gap:
-		plt.title(r'Overall Spectrum r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+		plt.title(r'Overall Spectrum mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
 	else:
-		plt.title(r'Overall Spectrum r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
+		plt.title(r'Overall Spectrum mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
 	plt.legend()
-	plt.savefig(folder + "Overall_spectrum_r0.1_wl8_13.png".format(Rmin.value, Rmax.value))
+	plt.savefig(folder + "Overall_spectrum_multgs_wl8_13.png")
 	plt.show()
 	
+	################################################################### Plotting the overall spectrum before and after the gap ###############################################################################
+	if add_gap:
+		
+		R_gap1 = np.round(R_arr[wgap_ind1], 1)
+		R_gap2 = np.round(R_arr[wgap_ind2], 1)
+		
+		# Calculating and plotting the spectrum before the gap
+		intflux_beforegap = calculate_spectra(F_map_sum, R_arr, Rmin, R_gap1, dist_pc)	
+		plt.plot(lamda, intflux_beforegap, label=r"Before Gap = ({0},{1}) AU".format(Rmin.value, R_gap1.value))
+		
+		# Calculating and plotting the spectrum in the gap
+		intflux_gap = calculate_spectra(F_map_sum, R_arr, R_gap1, R_gap2, dist_pc)	
+		plt.plot(lamda, intflux_gap, label=r"Gap = ({0},{1}) AU".format(R_gap1.value, R_gap2.value))
+		
+		# Calculating and plotting the spectrum after the gap
+		intflux_aftergap = calculate_spectra(F_map_sum, R_arr, R_gap2, Rmax, dist_pc)	
+		plt.plot(lamda, intflux_aftergap, label=r"After Gap = ({0},{1}) AU".format(R_gap2.value, Rmax.value))
+		
+		plt.xlabel(r'$\lambda$ ($\mu$m)')
+		plt.ylabel('Flux (Jy)')
+		if add_gap:
+			plt.title(r'Gap Spectra mult gs, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+		else:
+			plt.title(r'Gap Spectra mult gs, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
+		plt.legend()	
+		plt.savefig(folder + "Gap_spectra.png")
+		plt.show()		
+		
 	############################################################## Plotting the overall spectrum considering multiple radii limits ###########################################################################
-	R_list = np.round(R_arr[np.linspace(0, len(R_arr)-1, 7).astype(int)], 3)
+	R_list = np.round(R_arr[np.linspace(0, len(R_arr)-1, 7).astype(int)], 1)
 	Rmin_list = R_list[:-1]
 	Rmax_list = R_list[1:]
 	fig = plt.figure()
 	
 	for i in range(len(Rmax_list)):			
 		intflux_sum_mr = calculate_spectra(F_map_sum, R_arr, Rmin_list[i], Rmax_list[i], dist_pc)	
-		plt.plot(lamdas['Mg2SiO4'], intflux_sum_mr, label=r"($R_{{min}}$,$R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[i].value, Rmax_list[i].value))
+		plt.plot(lamda, intflux_sum_mr, label=r"($R_{{min}}$,$R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[i].value, Rmax_list[i].value))
 			
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux (Jy)')
 	if add_gap:
-		plt.title(r'Spectrum Radii Limits r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+		plt.title(r'Spectrum Radii Limits mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
 	else:
-		plt.title(r'Spectrum Radii Limits r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
+		plt.title(r'Spectrum Radii Limits mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
 	plt.legend()	
 	plt.savefig(folder + "Overall_spectrum_multiple_radii_limits.png")
 	plt.show()
@@ -266,36 +372,37 @@ def main():
 	
 	for Bl in B_small:
 		
-		corr_flux_absB = hankel_transform(F_map_sum, R_arr, lamdas['Mg2SiO4'], wl, Bl, dist_pc, wl_array = True) 
-		plt.plot(lamdas['Mg2SiO4'], corr_flux_absB, label = 'B = {0} m'.format(Bl.value))
+		corr_flux_absB = hankel_transform(F_map_sum, R_arr, lamda, wl, Bl, dist_pc, wl_array = True) 
+		plt.plot(lamda, corr_flux_absB, label = 'B = {0} m'.format(Bl.value))
 	
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Correlated flux (Jy)')             
 	if add_gap:
-		plt.title(r'Correlated Flux Multi B r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+		plt.title(r'Correlated Flux Multi B mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
 	else:
-		plt.title(r'Correlated Flux Multi B r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
+		plt.title(r'Correlated Flux Multi B mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
 	plt.legend()
-	plt.savefig(folder + 'Correlated_flux_multB_rv0.1.png')
+	plt.savefig(folder + 'Correlated_flux_multB_multgs.png')
 	plt.show()
 	
 	##################################################### Plotting the correlated flux density for a single wavelength against baselines ######################################################################
 	inter_flux = np.zeros(len(B)) * u.Jy
 	
 	for wl in wl_list:
+		print(wl)
 		for bl in range(len(B)):			
-			inter_flux[bl] = hankel_transform(F_map_sum, R_arr, lamdas['Mg2SiO4'], wl, B[bl], dist_pc, wl_array = False) 
+			inter_flux[bl] = hankel_transform(F_map_sum, R_arr, lamda, wl, B[bl], dist_pc, wl_array = False) 
 		plt.plot(B, inter_flux, label=r"{0} $\mu$m".format(wl.value))	
 		inter_flux = np.zeros(len(B)) * u.Jy	
 	
 	plt.xlabel(r'Baseline B (m)')
 	plt.ylabel('Correlated flux (Jy)')
 	if add_gap:
-		plt.title(r'Correlated Flux Multi $\lambda$ r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+		plt.title(r'Correlated Flux Multi $\lambda$ mult gs, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
 	else:
-		plt.title(r'Correlated Flux Multi $\lambda$ r=0.1$\mu$m, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
+		plt.title(r'Correlated Flux Multi $\lambda$ mult gs, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
 	plt.legend()
-	plt.savefig(folder + "Correlated_flux_multWL_rv0.1.png")
+	plt.savefig(folder + "Correlated_flux_multWL_multgs.png")
 	plt.show()
 
 

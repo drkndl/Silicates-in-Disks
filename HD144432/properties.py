@@ -15,6 +15,10 @@ R_sun = 0.00465047      								# Sun's radius (AU)
 M_sun = 1.99E33         								# Solar mass (g)
 dist_pc = 145 * u.pc                           			# Star distance in parsec
 H = 1.0 * u.cm 								    		# Scale height (cm)
+add_gap = False                                         # True if adding a gap to the disk
+rgap = 0.7 * u.AU 										# The location of the gap in the disk (from the star) (AU)
+wgap = 0.8 * u.AU 										# Total width of the gap (AU)
+sgap = 10**-3  											# The amount by which the surface density is to be dampened in the gap
 
 disk = 'HD144432' 										# The name of the disk
 folder = disk + '/'  								    # Path where output files are saved
@@ -24,8 +28,10 @@ top = 5                                 	  			# Top X condensates whose abundanc
 lmin = 0.0 * u.micron 						  			# Lower limit of wavelength (microns)
 lmax = 20.0 * u.micron						  			# Upper limit of wavelength (microns)
 lsize = 450 								  			# Number of wavelength (and kappa) points 
-gs = 0.1 * u.micron                           			# Grain radius (cm)
-wl = 5.5 * u.micron                           			# Observing wavelength (microns)
+mass_fracs = {'Olivine': {'0.1': 0.527, '2': 0},        # Mass fractions of the various silicates and grain sizes according to van Boekel (2005)
+			'Pyroxene': {'0.1': 0, '2': 0.423},  
+			'Mg2SiO4': {'0.1': 0.019, '2': 0.007},  
+			'MgSiO3': {'0.1': 0.007, '2': 0.009}}
 wl_list = [1.0, 2.0, 3.2, 5.5, 10.0, 12.0] * u.micron	# 1D list of wavelengths to plot correlated flux against baselines (microns)
 B = np.arange(0.0, 130.0, 2.0) * u.m          			# 1D array of baselines (m)
 B_small = np.linspace(0.0, 130.0, 5) * u.m    			# 1D array of a few baselines to plot correlated flux against wavelengths (m)

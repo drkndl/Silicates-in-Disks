@@ -108,12 +108,12 @@ def plot_Bv(lamda, I, solid, folder):
 	plt.title("{0} Spectral radiance vs Wavelength".format(latex_name(solid)))
 	plt.ylabel("Spectral radiance ({0})".format(I.unit))
 	plt.xlabel(r"$\lambda$ ($\mu$m)")
-	plt.savefig(folder + "Bv_vs_wl_{0}_rv0.1.png".format(solid))
+	plt.savefig(folder + "Bv_vs_wl_{0}_rv.png".format(solid))
 	plt.show()
 	
 	
 	
-def plot_tau(tau, solid, folder):
+def plot_tau(tau, solid, size, folder):
 	
 	"""
 	Plots the optical depth values for each solid
@@ -127,8 +127,8 @@ def plot_tau(tau, solid, folder):
 	
 	plt.imshow(tau)
 	plt.colorbar()
-	plt.title("Optical depth - {0}".format(latex_name(solid)))
-	plt.savefig(folder + "OptDepth_{0}.png".format(solid))
+	plt.title("Optical depth - {0}, gs = {1}".format(latex_name(solid), size))
+	plt.savefig(folder + "OptDepth_{0}_gs{1}.png".format(solid, size))
 	plt.show()
 	
 	
@@ -165,9 +165,9 @@ def plot_fluxmap(solid_name, rv, fmax, F_map, lamda, R_arr, folder):
 	ax.set_yticklabels(y_axis_labels.value)
 	ax.set_ylabel('R (AU)')
 	
-	ax.set_title(r"Flux Map for {0}, r = {1}, $f_{{max}}$ = {2}".format(latex_name(solid_name), rv, fmax))
+	ax.set_title(r"Flux Map for {0}, gs = {1}, $f_{{max}}$ = {2}".format(latex_name(solid_name), rv, fmax))
 	fig.colorbar(img, label=r'{0}'.format(F_map.unit))
-	plt.savefig(folder + "Fluxmap_{0}_r{1}_fmax{2}.png".format(solid_name, rv, fmax), bbox_inches = 'tight')
+	plt.savefig(folder + "Fluxmap_{0}_gs{1}_fmax{2}.png".format(solid_name, rv, fmax), bbox_inches = 'tight')
 	plt.show()
 	
 	
@@ -193,6 +193,6 @@ def plot_spectra(lamda, summ, solid_name, rv, fmax, Rmin, Rmax, folder):
 	plt.plot(lamda, summ)
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux (Jy)')
-	plt.title(r'Spectrum {0} r={1} $\mu$m $f_{{max}}$={2} R={3}-{4} AU'.format(latex_name(solid_name), rv, fmax, Rmin.value, Rmax.value))
-	plt.savefig(folder + "Spectrum_{0}_r{1}_f{2}_R{3}-{4}.png".format(solid_name, rv, fmax, Rmin.value, Rmax.value))
+	plt.title(r'Spectrum {0}, gs = {1}, $f_{{max}}$={2} R={3}-{4} AU'.format(latex_name(solid_name), rv, fmax, Rmin.value, Rmax.value))
+	plt.savefig(folder + "Spectrum_{0}_gs{1}_f{2}_R{3}-{4}.png".format(solid_name, rv, fmax, Rmin.value, Rmax.value))
 	plt.show()

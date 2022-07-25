@@ -6,6 +6,32 @@ import astropy.units as u
 from astropy.constants import astropyconst20 as const 
 from HD142527.properties import *
 
+opfile = 'Qcurve_inputs/Q_MgSiO3_Jaeger_DHS_fmax1.0_rv0.1.dat'
+filename = opfile.split('/')[1]
+values = filename.split('_')
+mineral = values[1]
+
+for i in range(len(values)):
+
+	if values[i].startswith('rv'):
+		rv = values[i][2:5] 
+	elif values[i].startswith('fmax'):
+		fmax = values[i][4:7]
+		
+gs = float(rv) * u.micron
+print(gs)
+
+mass_fracs = {'Olivine': {'0.1': 0.527, '2': 0},  'Pyroxene': {'0.1': 0, '2': 0.423},  'Mg2SiO4': {'0.1': 0.019, '2': 0.007},  'MgSiO3': {'0.1': 0.007, '2': 0.009}}
+olisilicates = ['Olivine', 'Mg2SiO4']
+pyrosilicates = ['Pyroxene', 'MgSiO3']
+
+for solid in pyrosilicates:
+	other = np.setdiff1d(pyrosilicates, solid)[0]
+	print(solid, other)
+	solid_mass = (mass_fracs[solid]['0.1'] + mass_fracs[solid]['2']) / (mass_fracs[solid]['0.1'] + mass_fracs[solid]['2'] + mass_fracs[other]['0.1'] + mass_fracs[other]['2'])
+	print(solid_mass)
+
+printfff
 # Checking Gauss for 
 r = np.linspace(0.1, 375, 3000)
 sigma = 3000 * r**(-0.75)

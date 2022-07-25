@@ -57,7 +57,7 @@ def molecular_weight(solids):
 
 
 
-def surface_density(solids, molwt, top_abunds, nHtot, H, add_gap, R_arr, rgap, wgap, sgap):
+def surface_density(solids, molwt, mass_fracs, top_abunds, nHtot, H, add_gap, R_arr, rgap, wgap, sgap):
 	
 	"""
 	Calculates the surface density of the given solids. Note that the calculated "surface" densities are actually (g/cm^3), but we assume column height to be 1 cm, so the surface density can be g/cm^2. The surface densities can also be calculated by assuming a column height of H AU, but this does not give accurate results at the moment
@@ -66,6 +66,7 @@ def surface_density(solids, molwt, top_abunds, nHtot, H, add_gap, R_arr, rgap, w
 	
 	solids        : A 1D list of the names (strings) of the top 5 most abundant solids at all radii
 	molwt         : A dictionary of the molecular weights (in g) for each of the given solids where the keys are the solid names and the values are the molecular weights (float)
+	mass_fracs    : A nested dictionary of olivine, pyroxene, forsterite and enstatite and their mass fractions according to van Boekel (2005) (float)
 	top_abunds    : A dictionary of the abundances (in log10(nsolid/nH)) for each of the given solids where the keys are the solid names and the values are the array (shape: (NPOINT,)) of abundances (float)
 	nHtot         : A 1D array (shape: (NPOINT,)) of total Hydrogen nuclei particle density (/cm^3) at each radius point (float)
 	H 			  : 1 1D array (shape: (NPOINT,)) of pressure scale heights at each radius point in AU (float)
@@ -76,17 +77,25 @@ def surface_density(solids, molwt, top_abunds, nHtot, H, add_gap, R_arr, rgap, w
 	"""
 	
 	surf_dens = {key: None for key in solids}
+	olisilicates = ['Olivine', 'Mg2SiO4']
+	pyrosilicates = ['Pyroxene', 'MgSiO3']
 	
 	for solid in surf_dens.keys():
 		
-		if solid == 'Olivine':
-			n_solid = nHtot * 10**top_abunds['Mg2SiO4']
+		if solid in olisilicates:
+			
+			other = np.setdiff1d(olisilicates, solid)[0]
+			solid_massfrac = (mass_fracs[solid]['0.1'] + mass_fracs[solid]['2.0']) / (mass_fracs[solid]['0.1'] + mass_fracs[solid]['2.0'] + mass_fracs[other]['0.1'] + mass_fracs[other]['2.0'])
+			n_solid = solid_massfrac * nHtot * 10**top_abunds['Mg2SiO4']
 			surf_dens[solid] = molwt[solid] * n_solid
 			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
 			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
+		
+		elif solid in pyrosilicates:
 			
-		elif solid == 'Pyroxene':
-			n_solid = nHtot * 10**top_abunds['MgSiO3']
+			other = np.setdiff1d(pyrosilicates, solid)[0]
+			solid_massfrac = (mass_fracs[solid]['0.1'] + mass_fracs[solid]['2.0']) / (mass_fracs[solid]['0.1'] + mass_fracs[solid]['2.0'] + mass_fracs[other]['0.1'] + mass_fracs[other]['2.0'])
+			n_solid = solid_massfrac * nHtot * 10**top_abunds['MgSiO3']
 			surf_dens[solid] = molwt[solid] * n_solid
 			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
 			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
@@ -101,11 +110,10 @@ def surface_density(solids, molwt, top_abunds, nHtot, H, add_gap, R_arr, rgap, w
 	if add_gap:
 		
 		# Find indices corresponding to gap radius and width
-		print((rgap - wgap/2.0), (rgap + wgap/2.0))
-		print(np.round(rgap - wgap/2.0, 1), np.round(rgap + wgap/2.0, 1))
 		rgap_ind = np.where(np.round(R_arr, 1) == rgap)[0][0]
 		wgap_ind1 = np.where(np.round(R_arr, 1) == np.round(rgap - wgap/2.0, 1))[0][0]
 		wgap_ind2 = np.where(np.round(R_arr, 1) == np.round(rgap + wgap/2.0, 1))[0][0]
+		# print(rgap_ind, wgap_ind1, wgap_ind2)
 		
 		for solid in surf_dens.keys():
 			
@@ -122,7 +130,7 @@ def surface_density(solids, molwt, top_abunds, nHtot, H, add_gap, R_arr, rgap, w
 					# ~ m = (surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind2])/(R_arr[rgap_ind] - R_arr[wgap_ind2])
 					# ~ surf_dens[solid][i] = surf_dens[solid][rgap_ind] + m * (R_arr[i] - R_arr[rgap_ind])
 		
-	return surf_dens
+	return surf_dens, rgap_ind, wgap_ind1, wgap_ind2
 
 
 def r_to_rad(R_arr, dist_pc):
@@ -193,7 +201,7 @@ def slice_lQ(lamda, Q, lmin, lmax, lsize):
 	
 		
 		
-def get_l_and_k(opfile, dens, gs, lmin, lmax, lsize):
+def get_l_and_k(opfile, dens, mass_fracs, lmin, lmax, lsize):
 	
 	"""
 	Obtains the wavelength and Q_abs values for a condensate from the given opfile, and calculates the corresponding kappa values
@@ -202,7 +210,7 @@ def get_l_and_k(opfile, dens, gs, lmin, lmax, lsize):
 	
 	opfile       : Path to the file that contains wavelength and Qabs values for a solid (string)
 	dens         : Material density of the solid in g/cm^3 (float)
-	gs           : Grain radius in cm (float)
+	mass_fracs    : A nested dictionary of olivine, pyroxene, forsterite and enstatite and their mass fractions according to van Boekel (2005) (float)
 	lmin         : Lower limit of wavelength in microns (float)
 	lmax         : Upper limit of wavelength in microns (float)
 	lsize        : Number of wavelength (and kappa) points
@@ -229,26 +237,21 @@ def get_l_and_k(opfile, dens, gs, lmin, lmax, lsize):
 			rv = values[i][2:5] 
 		elif values[i].startswith('fmax'):
 			fmax = values[i][4:7]
-	
-	# Since the opfile for H2O is created using optool which has a different output file, its wavelength and opacity are extracted differently 
-	if mineral == 'H2O':
+	gs = float(rv) * u.micron
 		
-		Q_curve = pd.read_csv(opfile, delimiter='\s+', skiprows = 1, names = ['wavelength', 'Kabs', 'Ksca', 'g_asymm'])
-		lamda = u.Quantity(Q_curve['wavelength'].to_numpy(), u.micron)
-		kappa = Q_curve['Kabs'].to_numpy() * u.cm**2 / u.g
-		lamda, kappa = slice_lQ(lamda, kappa, lmin, lmax, lsize)
-		
-		return mineral, rv, fmax, lamda, kappa
-		
-	Q_curve = pd.read_csv(opfile, delimiter='\s+', skiprows=1, names=['wavelength','Q'])
-	
+	Q_curve = pd.read_csv(opfile, delimiter='\s+', skiprows=1, names=['wavelength','Q'])	
 	lamda = Q_curve['wavelength'].to_numpy() * u.micron
 	Q = Q_curve['Q'].to_numpy()
 	
 	lamda, Q = slice_lQ(lamda, Q, lmin, lmax, lsize)
 	
-	# Obtaining k_abs from Q_abs
-	kappa = 3 * Q / (4 * gs.to(u.cm) * dens)
+	# Obtaining k_abs from Q_abs	
+	if mineral in ['Olivine', 'Pyroxene', 'Mg2SiO4', 'MgSiO3']:
+		kappa = 3 * Q / (4 * mass_fracs[mineral][rv] * gs.to(u.cm) * dens)		        # Assuming the mass fractions given in van Boekel et al. (2005) for silicates
+	elif mineral == 'CaMgSi2O6':
+		kappa = 3 * Q / (4 * gs.to(u.cm) * dens) 		 								# Since diopside has only 0.1 microns grains opfile, I do not assume a mass fraction for this mineral
+	else:
+		kappa = 3 * Q / (4 * 0.5 * gs.to(u.cm) * dens)   								# For other condensates, I assume that half the grains are 0.1 microns and the other half, 2 microns
 	
 	return mineral, rv, fmax, lamda, kappa
 
@@ -385,7 +388,7 @@ def calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc):
 	"""
 	
 	# Finding the indices of Rmin and Rmax by taking the first instance of where they are in the rounded R_arr 
-	R_rounded = np.round(R_arr, 3)	
+	R_rounded = np.round(R_arr, 1)	
 	Rmin_id = np.where(R_rounded == Rmin)[0][0]
 	Rmax_id = np.where(R_rounded == Rmax)[0][0] 
 	
