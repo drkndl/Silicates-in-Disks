@@ -81,7 +81,7 @@ def surface_density(solids, molwt, mass_fracs, top_abunds, nHtot, H, add_gap, R_
 	pyrosilicates = ['Pyroxene', 'MgSiO3']
 	
 	for solid in surf_dens.keys():
-		
+		"""
 		if solid in olisilicates:
 			
 			other = np.setdiff1d(olisilicates, solid)[0]
@@ -96,6 +96,24 @@ def surface_density(solids, molwt, mass_fracs, top_abunds, nHtot, H, add_gap, R_
 			other = np.setdiff1d(pyrosilicates, solid)[0]
 			solid_massfrac = (mass_fracs[solid]['0.1'] + mass_fracs[solid]['2.0']) / (mass_fracs[solid]['0.1'] + mass_fracs[solid]['2.0'] + mass_fracs[other]['0.1'] + mass_fracs[other]['2.0'])
 			n_solid = solid_massfrac * nHtot * 10**top_abunds['MgSiO3']
+			surf_dens[solid] = molwt[solid] * n_solid
+			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
+			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
+		
+		else:
+			n_solid = nHtot * 10**top_abunds[solid]
+			surf_dens[solid] = molwt[solid] * n_solid
+			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
+			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
+		"""	
+		if solid == 'Olivine':
+			n_solid = nHtot * 10**top_abunds['Mg2SiO4']
+			surf_dens[solid] = molwt[solid] * n_solid
+			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
+			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
+			
+		elif solid == 'Pyroxene':
+			n_solid = nHtot * 10**top_abunds['MgSiO3']
 			surf_dens[solid] = molwt[solid] * n_solid
 			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
 			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
@@ -130,7 +148,9 @@ def surface_density(solids, molwt, mass_fracs, top_abunds, nHtot, H, add_gap, R_
 					# ~ m = (surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind2])/(R_arr[rgap_ind] - R_arr[wgap_ind2])
 					# ~ surf_dens[solid][i] = surf_dens[solid][rgap_ind] + m * (R_arr[i] - R_arr[rgap_ind])
 		
-	return surf_dens, rgap_ind, wgap_ind1, wgap_ind2
+		return surf_dens, rgap_ind, wgap_ind1, wgap_ind2
+		
+	return surf_dens
 
 
 def r_to_rad(R_arr, dist_pc):
@@ -245,13 +265,13 @@ def get_l_and_k(opfile, dens, mass_fracs, lmin, lmax, lsize):
 	
 	lamda, Q = slice_lQ(lamda, Q, lmin, lmax, lsize)
 	
-	# Obtaining k_abs from Q_abs	
-	if mineral in ['Olivine', 'Pyroxene', 'Mg2SiO4', 'MgSiO3']:
-		kappa = 3 * Q / (4 * mass_fracs[mineral][rv] * gs.to(u.cm) * dens)		        # Assuming the mass fractions given in van Boekel et al. (2005) for silicates
-	elif mineral == 'CaMgSi2O6':
-		kappa = 3 * Q / (4 * gs.to(u.cm) * dens) 		 								# Since diopside has only 0.1 microns grains opfile, I do not assume a mass fraction for this mineral
-	else:
-		kappa = 3 * Q / (4 * 0.5 * gs.to(u.cm) * dens)   								# For other condensates, I assume that half the grains are 0.1 microns and the other half, 2 microns
+	# Calculating the mass fraction
+	kappa = 3 * Q / (4 * gs.to(u.cm) * dens)
+	# ~ # Obtaining k_abs from Q_abs	
+	# ~ if mineral == 'CaMgSi2O6':
+		# ~ kappa = 3 * Q / (4 * gs.to(u.cm) * dens) 		 								# Since diopside has only 0.1 microns grains opfile, I do not assume a mass fraction for this mineral
+	# ~ else:
+		# ~ kappa = 3 * * mass_fracs[mineral][rv] * Q / (4 * gs.to(u.cm) * dens)   								# For other condensates, I assume that half the grains are 0.1 microns and the other half, 2 microns
 	
 	return mineral, rv, fmax, lamda, kappa
 
@@ -287,7 +307,7 @@ def Plancks(lamda, Tg):
 
 
 
-def tau_calc(sigma, kappa):
+def tau_calc(sigma, kappa, mass_frac):
     
     """
     Calculates the optical depth tau for a solid (unitless)
@@ -306,13 +326,13 @@ def tau_calc(sigma, kappa):
     sigma = sigma[np.newaxis]
     sigma = sigma.T
 
-    tau = sigma * kappa
+    tau = sigma * kappa * mass_frac
     
     return tau
     
     
 
-def tau_calc_amorphous(sigma, sigma_am, kappa, kappa_am, Tg, amor_temp):
+def tau_calc_amorphous(sigma, sigma_am, kappa, kappa_am, Tg, amor_temp, mass_frac):
 	
 	"""
 	Calculates the optical depths tau for a solid (unitless) by considering the amorphous opacities for temperatures below 500K
@@ -333,6 +353,7 @@ def tau_calc_amorphous(sigma, sigma_am, kappa, kappa_am, Tg, amor_temp):
 	
 	tau = np.zeros((len(sigma), len(kappa)))
 	l_ind = np.where(Tg < (amor_temp))[0][0]     # Taking the first index where the temperature goes below 500K. Due to the power law, we can assume every index after this also has T < 500K
+	print(l_ind)
 	
 	# Transposing 1D row array (shape: (NPOINT,)) into 2D column array (shape: (NPOINT, 1)) for matrix multiplication
 	sigma = sigma[np.newaxis]
@@ -341,8 +362,8 @@ def tau_calc_amorphous(sigma, sigma_am, kappa, kappa_am, Tg, amor_temp):
 	sigma_am = sigma_am.T
 	
 	# Considering the crystalline kappas for temperatures at amor_temp and above, and amorphous kappas for temperatures below amor_temp
-	tau[:l_ind, :] = sigma[:l_ind, :] * kappa
-	tau[l_ind:, :] = sigma_am[l_ind:, :] * kappa_am
+	tau[:l_ind, :] = sigma[:l_ind, :] * kappa * mass_frac
+	tau[l_ind:, :] = sigma_am[l_ind:, :] * kappa_am * mass_frac
 	
 	return tau
     

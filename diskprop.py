@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.constants import astropyconst20 as const
-from HD144432_gap3.properties import *
+from HD144432_q04_p065_S4000_Tamf1420_massfrac.properties import *
 
 # Some constants in CGS
 Na = const.N_A.cgs                    		# Avogadro's number in /mol

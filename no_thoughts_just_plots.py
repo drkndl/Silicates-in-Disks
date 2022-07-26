@@ -22,6 +22,7 @@ def Qcurve_plotter(lamda, kappa, mineral, rv, fmax, folder):
 	"""		
 		
 	plt.plot(lamda, kappa)
+	plt.axvline(x=10, color='red', alpha=0.7)
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel(r'$\kappa_{abs}$ ($cm^2/g$)')
 	plt.title(r"Q-curve for {0}, r = {1}, $f_{{max}}$ = {2}".format(latex_name(mineral), rv, fmax))
