@@ -13,7 +13,7 @@ from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import Qcurve_plotter, plot_surf_dens_radial, plot_surf_dens_disk, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
 from compare_grain_sizes import get_paper_spectra
-from HD144432_q04_p065_S4000_Tamf1420_massfrac.properties import *
+from HD144432_q0373_p065_S4500_Tamf1410_massfrac.properties import *
 
 
 # Some constants in CGS
@@ -97,7 +97,7 @@ def main():
 		surf_dens, rgap_ind, wgap_ind1, wgap_ind2 = surface_density(top5_solids, molwt, mass_fracs, topabunds_radii, nHtot, H, add_gap, R_arr, rgap, wgap, sgap)
 	else:
 		surf_dens = surface_density(top5_solids, molwt, mass_fracs, topabunds_radii, nHtot, H, add_gap, R_arr, rgap, wgap, sgap)
-	# plot_surf_dens_radial(surf_dens, R_arr, folder)
+	plot_surf_dens_radial(surf_dens, R_arr, folder)
 	plot_surf_dens_disk(surf_dens, R_arr, NPOINT, folder)
 	
 	# Creating a dictionary of Qcurve input files and the corresponding material densities in g/cm^3
