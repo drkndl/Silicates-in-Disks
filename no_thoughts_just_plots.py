@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import cmasher as cmr
 from astropy import units as u
 from astropy.constants import astropyconst20 as const
 from fancy_name import latex_name
@@ -42,15 +43,32 @@ def plot_surf_dens_radial(surf_dens, R_arr, folder):
 	folder 		 : Path where the output plot is stored (string)
 	"""
 	
+	n = len(surf_dens.keys())
+	# colours = cmr.take_cmap_colors(np.tile(np.linspace(0,1,np.ceil(n/2).astype(int)), 2))
+	colours = cmr.take_cmap_colors('cmr.torch', np.ceil(n/2).astype(int), cmap_range=(0.1, 0.9))
+	# colours = plt.cm.Dark2(np.linspace(0, 1, n))
+	styles = ['solid', 'dashed']
+	i, j = 0, 0
+	
 	for solid in surf_dens.keys():
 		
-		plt.semilogy(R_arr, surf_dens[solid], label = latex_name(solid))
+		if i < np.ceil(n/2).astype(int):
+			plt.semilogy(R_arr, surf_dens[solid], label = latex_name(solid), color=colours[i], linestyle=styles[0])
+			print(i, "done")
+		else:
+			plt.semilogy(R_arr, surf_dens[solid], label = latex_name(solid), color=colours[j], linestyle=styles[1])
+			j += 1
+			print(i, "done")
+		# plt.semilogy(R_arr, surf_dens[solid], label = latex_name(solid), color=colours[i])
+		i += 1
+		
 		
 	plt.title("Radial distribution of surface densities".format(latex_name(solid)))
 	plt.ylabel(r"Surface density log($\Sigma$) ($g/cm^2)$")
-	# plt.ylim(10**-27, 10**-5)
+	plt.ylim(10**-15, 10**-8)
 	# plt.gca().set_ylim(bottom=10**-27)
-	# plt.gca().set_xlim(right=40)
+	# plt.gca().set_xlim(right=30)
+	plt.xlim(0, 30)
 	plt.xlabel(r"Disk radius R (AU)")
 	plt.legend()
 	plt.savefig(folder + "surf_dens_vs_R.png")

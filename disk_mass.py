@@ -2,7 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt 
 from astropy import units as u
 from astropy.constants import astropyconst20 as const
-from HD144432_q04_p065_S4000_Tamf1420_massfrac.properties import *
+from diskprop import star_radius, inner_radius, r_from_T, surface_density, scale_height, density
+from HD144432_q0373_p065_S4500_Tamf1410_massfrac.properties import *
+
 
 # Some constants in CGS
 Na = const.N_A.cgs                    		# Avogadro's number in /mol
@@ -15,6 +17,7 @@ mu = 2.3                					# Mean molecular weight
 Rc = const.R.cgs           					# Ideal gas constant (erg K^-1 mol^-1)
 G = const.G.cgs           					# Gravitational constant (cm^3 g^-1 s^-2)
 
+
 def dust_to_gas(dat, keyword):
 	
 	"""
@@ -22,18 +25,40 @@ def dust_to_gas(dat, keyword):
 	"""
 	
 	ind = np.where(keyword == "dust/gas")[0]
-	dg_ratio = dat[:,ind]
+	dg_ratio = 10**dat[:,ind].T[0, :]
 	
 	return dg_ratio
 	
-def gas_mass(nH):
+	
+def dust_density(gasdens, dg_ratio):
 	
 	"""
 	Returns the gas mass in the disk by multiplying Hydrogen mass to the Hydrogen particle nuclei density obtained by the GGchem simulation
 	"""
 	
-	gasmass = mp * nH
-	return gasmass
+	dustdens = dg_ratio * gasdens
+	
+	return dustdens
+	
+	
+def dust_vol(dat, keyword):
+	
+	"""
+	Calculates the dust volume per H nucleus from the GGchem output file
+	"""
+	
+	ind = np.where(keyword == "dustVol/H")[0]
+	dustVol = 10**dat[:,ind].T[0, :] * u.cm**3
+	
+	return dustVol
+	
+	
+def masses(dustdens, dustvol, dg_ratio):
+	
+	dustmass = dustdens * dustvol
+	gasmass = dustmass / dg_ratio
+	
+	return dustmass, gasmass
 	
 	
 def main():
@@ -52,9 +77,6 @@ def main():
 	dat = np.loadtxt(file,skiprows=3)
 	keyword = np.array(header.split())      # Array of parameter names such as molecule names 
 	
-	dg_ratio = dust_to_gas(dat, keyword)
-	print(dg_ratio)
-	
 	# Extracting data from the output file
 	Tg    = dat[:,0] * u.K                        # T [K]
 	nHtot = dat[:,1] / u.cm**3                    # n<H> [cm^-3]          
@@ -62,10 +84,39 @@ def main():
 	Tmin  = np.min(Tg)                            # Minimum gas temperature
 	Tmax  = np.max(Tg)                      	  # Maximum gas temperature	
 	
+	R_star = star_radius(L_star, T_star).to(u.AU)   		# Star's radius (AU)
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
 	R_arr = r_from_T(R_in, Tg, T0, q)             # 1D array of radii obtained from the power law disk model (AU)
-	Rmin = np.round(np.min(R_arr), 1) 						# Minimum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
-	Rmax = np.round(np.max(R_arr), 1)						# Maximum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
+	
+	# print(R_arr)
+	Sigma = surface_density(Sigma0, R_arr, e)
+	scaleH = scale_height(M_star, R_arr, Tg)
+	# print(scaleH)
+	
+	dg_ratio = dust_to_gas(dat, keyword)
+	# print(dg_ratio, dg_ratio.shape)
+	
+	gasdens, nH = density(Sigma, scaleH)
+	# print(gasdens)
+	
+	dustdens = dust_density(gasdens, dg_ratio)
+	# print(dustdens)
+	
+	
+	# ~ gasdens, dustdens = densities(nHtot, dg_ratio)
+	
+	# ~ print(gasdens)
+	# ~ print(gasdens.shape, gasdens.unit)
+	# ~ print(dustdens)
+	# ~ print(dustdens.shape, dustdens.unit)
+	dustVol = dust_vol(dat, keyword)            
+	# print(dustVol, dustVol.shape)
+	
+	dustmass = dustVol * dustdens
+	print(np.sum(dustmass))						# 1.0136448541736987e-34 g
+	
+	# ~ dustmass, gasmass = masses(dustdens, dustVol, dg_ratio)
+	# ~ print(dustmass, gasmass)
 	
 if __name__ == '__main__':
 	main()

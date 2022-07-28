@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.constants import astropyconst20 as const
-from HD144432_q0373_p065_S4500_Tamf1410_massfrac.properties import *
+from HD144432_q0373_p07_S4500_Tamf1350_mfchange4.properties import *
 
 # Some constants in CGS
 Na = const.N_A.cgs                    		# Avogadro's number in /mol
@@ -178,20 +178,18 @@ def pressure(rho, T):
 
 def main():
 	
-	R_star = star_radius(L_star, T_star).to(u.AU)   		# Star's radius (AU)
-	
-	# Defining a radius array
-	r_arr = np.linspace(0.05, 2.5, 100) * u.AU     
-	
+	R_star = star_radius(L_star, T_star).to(u.AU)   		# Star's radius (AU) 
+	r_arr = np.linspace(0.05*u.AU, 2.5*u.AU, 100)
 	R_in = inner_radius(Qr, T0, R_star, T_star)
+	# r_arr = np.linspace(R_in, 10.0*u.AU, 100) 		   			# Defining a radius array
 	T_arr = midplaneT_profile(R_in, T0, r_arr, q)	
 	
 	Sigma = surface_density(Sigma0, r_arr, e)
 	H = scale_height(M_star, r_arr, T_arr)
 	
 	rho, nH = density(Sigma, H)
-	# print("Number density nH: ", nH)
-	
+	print("Number density nH: ", nH)
+
 	P = pressure(rho, T_arr)
 	# print("Pressure: ", P)
 	

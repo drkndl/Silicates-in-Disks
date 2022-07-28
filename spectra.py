@@ -267,11 +267,6 @@ def get_l_and_k(opfile, dens, mass_fracs, lmin, lmax, lsize):
 	
 	# Calculating the mass fraction
 	kappa = 3 * Q / (4 * gs.to(u.cm) * dens)
-	# ~ # Obtaining k_abs from Q_abs	
-	# ~ if mineral == 'CaMgSi2O6':
-		# ~ kappa = 3 * Q / (4 * gs.to(u.cm) * dens) 		 								# Since diopside has only 0.1 microns grains opfile, I do not assume a mass fraction for this mineral
-	# ~ else:
-		# ~ kappa = 3 * * mass_fracs[mineral][rv] * Q / (4 * gs.to(u.cm) * dens)   								# For other condensates, I assume that half the grains are 0.1 microns and the other half, 2 microns
 	
 	return mineral, rv, fmax, lamda, kappa
 
@@ -353,7 +348,6 @@ def tau_calc_amorphous(sigma, sigma_am, kappa, kappa_am, Tg, amor_temp, mass_fra
 	
 	tau = np.zeros((len(sigma), len(kappa)))
 	l_ind = np.where(Tg < (amor_temp))[0][0]     # Taking the first index where the temperature goes below 500K. Due to the power law, we can assume every index after this also has T < 500K
-	print(l_ind)
 	
 	# Transposing 1D row array (shape: (NPOINT,)) into 2D column array (shape: (NPOINT, 1)) for matrix multiplication
 	sigma = sigma[np.newaxis]

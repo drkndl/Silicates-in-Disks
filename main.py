@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import cmasher as cmr
 from astropy import units as u
 from astropy.constants import astropyconst20 as const
 from fancy_name import latex_name
@@ -13,7 +14,7 @@ from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import Qcurve_plotter, plot_surf_dens_radial, plot_surf_dens_disk, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
 from compare_grain_sizes import get_paper_spectra
-from HD144432_q0373_p065_S4500_Tamf1410_massfrac.properties import *
+from HD144432_q0373_p07_S4500_Tamf1350_mfchange4.properties import *
 
 
 # Some constants in CGS
@@ -63,7 +64,7 @@ def main():
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
 	# Plotting the abunances as a function of radius and temperature
-	R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk, NELEM, NMOLE, NDUST)
+	# R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk, NELEM, NMOLE, NDUST)
 	
 	# Finding the most abundant condensates
 	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST) 
@@ -98,7 +99,7 @@ def main():
 	else:
 		surf_dens = surface_density(top5_solids, molwt, mass_fracs, topabunds_radii, nHtot, H, add_gap, R_arr, rgap, wgap, sgap)
 	plot_surf_dens_radial(surf_dens, R_arr, folder)
-	plot_surf_dens_disk(surf_dens, R_arr, NPOINT, folder)
+	# plot_surf_dens_disk(surf_dens, R_arr, NPOINT, folder)
 	
 	# Creating a dictionary of Qcurve input files and the corresponding material densities in g/cm^3
 	opfile_dens = {'Qcurve_inputs/Q_CaMgSi2O6_rv0.1_fmaxxxx.dat' : 3.278, 'Qcurve_inputs/Q_MgSiO3_Jaeger_DHS_fmax1.0_rv0.1.dat' : 3.2, 'Qcurve_inputs/Q_MgSiO3_Jaeger_DHS_fmax1.0_rv2.0.dat' : 3.2, 'Qcurve_inputs/Q_Mg2SiO4_Sogawa_DHS_fmax1.0_rv0.1.dat' : 3.27, 'Qcurve_inputs/Q_Mg2SiO4_Sogawa_DHS_fmax1.0_rv2.0.dat' : 3.27, 'Qcurve_inputs/qval_Fe3O4_rv0.1_fmax0.7.dat' : 5.17, 'Qcurve_inputs/qval_Fe3O4_rv2.0_fmax0.7.dat' : 5.17, 'Qcurve_inputs/qval_Fe2SiO4_rv0.1_fmax1.0.dat' : 4.392, 'Qcurve_inputs/qval_Fe2SiO4_rv2.0_fmax1.0.dat' : 4.392, 'Qcurve_inputs/qval_Fe_met_rv0.1_fmax0.7.dat' : 7.874, 'Qcurve_inputs/qval_Fe_met_rv2.0_fmax0.7.dat' : 7.874, 'Qcurve_inputs/qval_FeS_rv0.1_fmax0.7.dat' : 4.84, 'Qcurve_inputs/qval_FeS_rv2.0_fmax0.7.dat' : 4.84, 'Qcurve_inputs/qval_Mg3Si2O9H4_rv0.1_fmax0.7.dat' : 2.6, 'Qcurve_inputs/qval_Mg3Si2O9H4_rv2.0_fmax0.7.dat' : 2.6, 'Qcurve_inputs/qval_MgAl2O4_rv0.1_fmax0.7.dat' : 3.64, 'Qcurve_inputs/qval_MgAl2O4_rv2.0_fmax0.7.dat' : 3.64, 'Qcurve_inputs/Q_Olivine_rv0.1_fmax0.7.dat': 3.71, 'Qcurve_inputs/Q_Olivine_rv2.0_fmax0.7.dat' : 3.71, 'Qcurve_inputs/Q_Pyroxene_rv0.1_fmax0.7.dat': 3.01, 'Qcurve_inputs/Q_Pyroxene_fmax0.7_rv2.0.dat': 3.01}
@@ -155,7 +156,7 @@ def main():
 				F_map_sum += F_map
 				
 				intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
-				plot_spectra(lamdas[solid][size], intflux, solid, size, fmaxs[solid], Rmin, Rmax, folder)
+				# plot_spectra(lamdas[solid][size], intflux, solid, size, fmaxs[solid], Rmin, Rmax, folder)
 				intflux_sum += intflux
 				
 			elif solid == "MgSiO3":
@@ -171,7 +172,7 @@ def main():
 				F_map_sum += F_map
 				
 				intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
-				plot_spectra(lamdas[solid][size], intflux, solid, size, fmaxs[solid], Rmin, Rmax, folder)
+				# plot_spectra(lamdas[solid][size], intflux, solid, size, fmaxs[solid], Rmin, Rmax, folder)
 				intflux_sum += intflux
 				
 			else:
@@ -187,7 +188,7 @@ def main():
 				F_map_sum += F_map
 				
 				intflux = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
-				plot_spectra(lamdas[solid][size], intflux, solid, size, fmaxs[solid], Rmin, Rmax, folder)
+				# plot_spectra(lamdas[solid][size], intflux, solid, size, fmaxs[solid], Rmin, Rmax, folder)
 				intflux_sum += intflux
 			
 	########################################################################## Plotting the overall flux map ################################################################################################
@@ -289,9 +290,14 @@ def main():
 	Rmax_list = R_list[1:]
 	fig = plt.figure()
 	
+	n = len(Rmin_list)
+	colours = plt.cm.Dark2(np.linspace(0,1,n))   
+	j = 0
+	
 	for i in range(len(Rmax_list)):			
 		intflux_sum_mr = calculate_spectra(F_map_sum, R_arr, Rmin_list[i], Rmax_list[i], dist_pc)	
-		plt.plot(lamda, intflux_sum_mr, label=r"($R_{{min}}$,$R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[i].value, Rmax_list[i].value))
+		plt.plot(lamda, intflux_sum_mr, color = colours[j], label=r"($R_{{min}}$,$R_{{max}}$) = ({0},{1}) AU".format(Rmin_list[i].value, Rmax_list[i].value))
+		j += 1
 			
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux (Jy)')
@@ -304,40 +310,68 @@ def main():
 	plt.show()
 	
 	##################################################### Plotting the correlated flux density for multiple baselines against wavelengths #####################################################################
-	fig = plt.figure()
+	fig, axs = plt.subplots(1, 2, figsize=(14, 7))
+	n = len(B_small)
+	colours = plt.cm.viridis(np.linspace(0,1,n))
+	i = 0
 	
 	for Bl in B_small:
 		
 		corr_flux_absB = hankel_transform(F_map_sum, R_arr, lamda, wl, Bl, dist_pc, wl_array = True) 
-		plt.plot(lamda, corr_flux_absB, label = 'B = {0} m'.format(Bl.value))
+		axs[0].plot(lamda, corr_flux_absB, color = colours[i], label = 'B = {0} m'.format(Bl.value))
+		axs[1].plot(lamda[first: last+1], corr_flux_absB[first: last+1], color = colours[i], label = 'B = {0} m'.format(Bl.value))	
+		i += 1
+
+	for ax in axs:
+		ax.set_xlabel(r'$\lambda$ ($\mu$m)')
+		ax.set_ylabel('Correlated flux (Jy)')
+		ax.label_outer()
+		ax.legend()
 	
-	plt.xlabel(r'$\lambda$ ($\mu$m)')
-	plt.ylabel('Correlated flux (Jy)')             
+	axs[0].set_title(r"0 to 20 $\mu$m")
+	axs[1].set_title(r"8 to 13 $\mu$m")
+		             
 	if add_gap:
-		plt.title(r'Correlated Flux Multi B mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+		fig.suptitle(r'Correlated Flux Multi B mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
 	else:
-		plt.title(r'Correlated Flux Multi B mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
-	plt.legend()
+		fig.suptitle(r'Correlated Flux Multi B mult gs q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
+
+	fig.tight_layout()
 	plt.savefig(folder + 'Correlated_flux_multB_multgs.png')
 	plt.show()
 	
 	##################################################### Plotting the correlated flux density for a single wavelength against baselines ######################################################################
+	fig, axs = plt.subplots(2,1)
 	inter_flux = np.zeros(len(B)) * u.Jy
+	n = len(wl_list)
+	colours = plt.cm.viridis(np.linspace(0,1,n))
+	i = 0
 	
 	for wl in wl_list:
 		print(wl)
 		for bl in range(len(B)):			
 			inter_flux[bl] = hankel_transform(F_map_sum, R_arr, lamda, wl, B[bl], dist_pc, wl_array = False) 
-		plt.plot(B, inter_flux, label=r"{0} $\mu$m".format(wl.value))	
+		axs[0].plot(B, inter_flux, color = colours[i], label=r"{0} $\mu$m".format(wl.value))
+		if wl < 10.0 * u.micron:
+			axs[1].plot(B, inter_flux, color = colours[i], label=r"{0} $\mu$m".format(wl.value))	
 		inter_flux = np.zeros(len(B)) * u.Jy	
+		i += 1
 	
-	plt.xlabel(r'Baseline B (m)')
-	plt.ylabel('Correlated flux (Jy)')
+	for ax in axs:
+		ax.set_xlabel(r'Baseline B (m)')
+		ax.set_ylabel('Correlated flux (Jy)')
+		ax.label_outer()
+		ax.legend()
+	
+	axs[0].set_title(r"All wavelengths")
+	axs[1].set_title(r"Zoomed-in version")
+	
 	if add_gap:
-		plt.title(r'Correlated Flux Multi $\lambda$ mult gs, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
+		fig.suptitle(r'Correlated Flux Multi $\lambda$ mult gs, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, rgap={5}, wgap={6}, sgap={7}'.format(q, e, Qr, Sigma0.value, amor_temp, rgap.value, wgap.value, sgap), fontsize=fullplot_size)
 	else:
-		plt.title(r'Correlated Flux Multi $\lambda$ mult gs, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
-	plt.legend()
+		fig.suptitle(r'Correlated Flux Multi $\lambda$ mult gs, q={0}, p={1}, Qr={2}, $\Sigma_0$={3}, $T_{{amf}}$={4}, no gap'.format(q, e, Qr, Sigma0.value, amor_temp))
+	
+	fig.tight_layout()
 	plt.savefig(folder + "Correlated_flux_multWL_multgs.png")
 	plt.show()
 
