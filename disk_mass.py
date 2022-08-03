@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt 
 from astropy import units as u
 from astropy.constants import astropyconst20 as const
-from diskprop import star_radius, inner_radius, r_from_T, surface_density, scale_height, density
-from HD144432_q0373_p065_S4500_Tamf1410_massfrac.properties import *
+from diskprop2 import midplaneT_profile, star_radius, inner_radius, r_from_T, surface_density, scale_height, density
+from Temp.properties import *
 
 
 # Some constants in CGS
@@ -86,37 +86,60 @@ def main():
 	
 	R_star = star_radius(L_star, T_star).to(u.AU)   		# Star's radius (AU)
 	R_in = inner_radius(Qr, T0, R_star, T_star)   # Inner-most radius beyond which the dust is sublimated (AU)
-	R_arr = r_from_T(R_in, Tg, T0, q)             # 1D array of radii obtained from the power law disk model (AU)
+	# R_arr = r_from_T(R_in, Tg, T0, q)           # 1D array of radii obtained from the power law disk model (AU)
+	# print(np.max(R_arr))
+	Rc = 1 * u.AU
+	# ~ R_out = 10 * Rc
+	R_out = r_from_T(R_in, 100.0 * u.K, T0, q)
+	R_arr = np.linspace(R_in, R_out, 200)
+	T_arr = midplaneT_profile(R_in, T0, R_arr, q)
 	
-	# print(R_arr)
-	Sigma = surface_density(Sigma0, R_arr, e)
+	# plt.style.use('dark_background')
+	
+	plt.plot(R_arr, Tg, label = "GGchem", color='blue')
+	plt.plot(R_arr, T_arr, label = "Calculated", color='red')
+	plt.xlabel("Radius R [AU]")
+	plt.ylabel("Temperature T [K]")
+	plt.title("Temp Profile: GGchem output vs Calculated")
+	plt.legend()
+	plt.savefig(folder + "T_profile_GGchem_vs_calc.png")
+	plt.show()
+	
+	q_GGchem = np.log(Tg / T0) / np.log(R_arr / R_in)
+	# plt.plot(np.log(R_arr/R_in), np.log(Tg/T0))
+	plt.plot(R_arr, np.log(Tg/T0) / np.log(R_arr/R_in))
+	plt.xlabel(r"Radius R [AU]")
+	plt.ylabel(r"$\frac{{log(T_g / T_0)}}{{log(R / R_{in})}}$")
+	plt.title("q used by GGchem")
+	plt.tight_layout()
+	plt.savefig(folder + "q_GGchem.png")
+	plt.show()
+	print("q used by GGchem: ", q_GGchem)
+	
+	# plt.style.use('classic')
+	
+	T_with_ggchemq = midplaneT_profile(R_in, T0, R_arr, q_GGchem)
+	plt.plot(R_arr, Tg, label = "GGchem", linewidth = 5)
+	plt.plot(R_arr, T_with_ggchemq, label = "Calculated using GGchem q values")
+	plt.xlabel("Radius R [AU]")
+	plt.ylabel("Temperature T [K]")
+	plt.title("Temp Profile: GGchem output vs Calculated with GGchem q")
+	plt.legend()
+	plt.savefig(folder + "T_profile_GGchem_vs_calcGGchemq.png")
+	plt.show()
+	
 	scaleH = scale_height(M_star, R_arr, Tg)
-	# print(scaleH)
 	
-	dg_ratio = dust_to_gas(dat, keyword)
-	# print(dg_ratio, dg_ratio.shape)
-	
-	gasdens, nH = density(Sigma, scaleH)
-	# print(gasdens)
-	
-	dustdens = dust_density(gasdens, dg_ratio)
-	# print(dustdens)
-	
-	
-	# ~ gasdens, dustdens = densities(nHtot, dg_ratio)
-	
-	# ~ print(gasdens)
-	# ~ print(gasdens.shape, gasdens.unit)
-	# ~ print(dustdens)
-	# ~ print(dustdens.shape, dustdens.unit)
-	dustVol = dust_vol(dat, keyword)            
-	# print(dustVol, dustVol.shape)
-	
-	dustmass = dustVol * dustdens
-	print(np.sum(dustmass))						# 1.0136448541736987e-34 g
-	
-	# ~ dustmass, gasmass = masses(dustdens, dustVol, dg_ratio)
-	# ~ print(dustmass, gasmass)
+	nHana = 0.5 * 0.7 * np.pi * Sigma0 * (R_arr / Rc)**e / (scaleH * mp)
+	# nHana = np.pi * Sigma0 * (R_arr / (1 * u.AU))**e / (scaleH * mp)
+	plt.semilogy(R_arr, nHana, label = "Calculated", color='red')
+	plt.semilogy(R_arr, nHtot, label = "GGchem", color='blue')
+	plt.xlabel("Radius R [AU]")
+	plt.ylabel(r"nH [$/cm^3$]")
+	plt.title("nH Profile: GGchem output vs Calculated")
+	plt.legend()
+	plt.savefig(folder + "nH_profile_GGchem_vs_calc.png")
+	plt.show()
 	
 if __name__ == '__main__':
 	main()

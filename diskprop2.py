@@ -197,8 +197,10 @@ def main():
 	Mdust = 10**-4 * M_star
 	Rc = 1 * u.AU
 	R_in = inner_radius(Qr, T0, R_star, T_star)
-	R_out = 10 * Rc
-	r_arr = np.linspace(R_in, R_out, 100) 		   			# Defining a radius array
+	# R_out = 10 * Rc
+	R_out = r_from_T(R_in, 100.0 * u.K, T0, q)
+	# print(R_out)
+	r_arr = np.linspace(R_in, R_out, 200) 		   			# Defining a radius array
 	T_arr = midplaneT_profile(R_in, T0, r_arr, q)	
 	
 	Sigma0 = get_Sigma0(Mdust, e, Rc, R_in, R_out)
@@ -215,7 +217,6 @@ def main():
 	rho, nH = density(Sigma, H)
 	print("Number density nH: ", nH)
 	
-	prtinfdf
 	P = pressure(rho, T_arr)
 	# print("Pressure: ", P)
 	
@@ -228,7 +229,7 @@ def main():
 	plt.title(r"$T_{{mid}}$ vs R, $R_{{star}}$ = {0}$R_\odot$, $T_{{star}}$ = {1} K, $M_{{star}}$ = {2}$M_\odot$, $\Sigma_0$ = {3} $g/cm^2$".format(R_label.value, T_star.value, M_label.value, Sigma0.value), fontsize=10)
 	plt.savefig(folder + "Tmid_vs_R.png")
 	plt.show()
-	
+
 	# Plotting the radial profile of pressure and density 
 	plt.semilogy(r_arr, rho, label = r"Density $\rho$ [$gm/cm^3$]")
 	plt.semilogy(r_arr, P, label = "Pressure [bar]")

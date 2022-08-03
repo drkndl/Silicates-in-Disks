@@ -4,7 +4,55 @@ import pyvalem.formula as fo
 from molmass import Formula
 import astropy.units as u
 from astropy.constants import astropyconst20 as const 
-from HD142527.properties import *
+from compare_grain_sizes import get_paper_spectra
+from scipy.interpolate import UnivariateSpline
+from HD163296_q04_p07_S3700_Tamf1150_mfchange.properties import *
+from no_thoughts_just_plots import add_textbox
+import matplotlib.font_manager
+fpaths = matplotlib.font_manager.findSystemFonts()
+
+disk = 'MCMC_HD144432' 										# The name of the disk
+folder = disk + '/'  								    # Path where output files are saved
+diskname = disk.split('_')[1]
+datfile = folder + 'van_Boekel_' + diskname + '.dat'
+wl, flux = get_paper_spectra(datfile)
+lsize = 450
+
+if len(wl) < lsize:
+		
+	# If there are less than lsize points of lamda, lsize points are created through interpolation and lamda is reassigned accordingly
+	old_indices = np.arange(0, len(wl))
+	new_indices = np.linspace(0, len(wl)-1, lsize)
+	
+	spl1 = UnivariateSpline(old_indices, wl, k=3, s=0)
+	wl = spl1(new_indices)
+	
+	spl2 = UnivariateSpline(old_indices, flux, k=3, s=0)
+	flux = spl2(new_indices)
+
+print(len(wl), len(flux))	
+plt.plot(wl, flux)
+plt.show()
+
+def sin(x, **kwargs):
+	
+	fig, ax = plt.subplots(1, 1)
+	y = np.sin(x)
+	plt.plot(x, y)
+	textstr = add_textbox(q, e, Qr, Sigma0.value, amor_temp.value, add_gap, rgap.value, wgap.value, sgap)	
+	plt.text(0.15, 0.8, textstr, transform=ax.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
+	plt.tight_layout()
+	plt.show()
+
+x = np.linspace(0, 1, 100)
+kwargs = {'q': q, 'e': e, 'Qr': Qr, 'Sigma0': Sigma0, 'amor_temp': amor_temp, 'add_gap': add_gap, 'rgap': rgap, 'wgap': wgap, 'sgap': sgap}
+sin(x, **kwargs)
+
+refjref
+
+for i in fpaths:
+    f = matplotlib.font_manager.get_font(i)
+    print(f.family_name)
 
 opfile = 'Qcurve_inputs/Q_MgSiO3_Jaeger_DHS_fmax1.0_rv0.1.dat'
 filename = opfile.split('/')[1]

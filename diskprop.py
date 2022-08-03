@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.constants import astropyconst20 as const
-from HD144432_q0373_p07_S4500_Tamf1350_mfchange4.properties import *
+from HD163296_q04_p07_S4500_Tamf1350.properties import *
 
 # Some constants in CGS
 Na = const.N_A.cgs                    		# Avogadro's number in /mol
@@ -181,7 +181,8 @@ def main():
 	R_star = star_radius(L_star, T_star).to(u.AU)   		# Star's radius (AU) 
 	r_arr = np.linspace(0.05*u.AU, 2.5*u.AU, 100)
 	R_in = inner_radius(Qr, T0, R_star, T_star)
-	# r_arr = np.linspace(R_in, 10.0*u.AU, 100) 		   			# Defining a radius array
+	R_out = r_from_T(R_in, 100.0 * u.K, T0, q)
+	# r_arr = np.linspace(R_in, R_out, 200)
 	T_arr = midplaneT_profile(R_in, T0, r_arr, q)	
 	
 	Sigma = surface_density(Sigma0, r_arr, e)

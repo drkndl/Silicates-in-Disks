@@ -70,9 +70,10 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	# Plot formatting
 	Tlimit = 200 * u.K 
 	Rlimit = r_from_T(R_in, Tlimit, T0, q)                                            # Radius limit for zoomed in plot (AU)
-	plt.title('{0} Abundances of Condensates vs R'.format(disk), fontsize=12)
-	ax.set_xlabel(r'$R\ \mathrm{[AU]}$', fontsize=10)
-	ax.set_ylabel(r'$\mathrm{log}_{10}\ n_\mathrm{solid}/n_\mathrm{\langle H\rangle}$', fontsize=10)
+	# Rlimit = Rmax
+	plt.title('{0} Abundances of Condensates vs R'.format(disk), fontsize=14)
+	ax.set_xlabel(r'$R\ \mathrm{[AU]}$', fontsize=12)
+	ax.set_ylabel(r'$\mathrm{log}_{10}\ n_\mathrm{solid}/n_\mathrm{\langle H\rangle}$', fontsize=12)
 	ax.set_xlim(Rmin.value, Rlimit.value)
 	ax.set_ylim(ymin, ymax)
 	
@@ -84,7 +85,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	ax2.set_xlim(ax.get_xlim())
 	ax2.set_xticks(x_ticks.value)
 	ax2.set_xticklabels(T_ticks.value)
-	ax2.set_xlabel(r"$T \mathrm{[K]}$", fontsize=10)
+	ax2.set_xlabel(r"$T \mathrm{[K]}$", fontsize=12)
 	
 	leg = plt.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize=9, fancybox=True, handlelength=0.5, prop={'size':csize}, ncol=2)       # Legend properties
 	for color, text in zip(colors, leg.get_texts()):

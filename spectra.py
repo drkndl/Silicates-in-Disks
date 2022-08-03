@@ -57,7 +57,7 @@ def molecular_weight(solids):
 
 
 
-def surface_density(solids, molwt, mass_fracs, top_abunds, nHtot, H, add_gap, R_arr, rgap, wgap, sgap):
+def surface_density(solids, molwt, top_abunds, nHtot, H, add_gap, R_arr, rgap, wgap, sgap, add_ring, rring, wring, sring):
 	
 	"""
 	Calculates the surface density of the given solids. Note that the calculated "surface" densities are actually (g/cm^3), but we assume column height to be 1 cm, so the surface density can be g/cm^2. The surface densities can also be calculated by assuming a column height of H AU, but this does not give accurate results at the moment
@@ -81,31 +81,7 @@ def surface_density(solids, molwt, mass_fracs, top_abunds, nHtot, H, add_gap, R_
 	pyrosilicates = ['Pyroxene', 'MgSiO3']
 	
 	for solid in surf_dens.keys():
-		"""
-		if solid in olisilicates:
-			
-			other = np.setdiff1d(olisilicates, solid)[0]
-			solid_massfrac = (mass_fracs[solid]['0.1'] + mass_fracs[solid]['2.0']) / (mass_fracs[solid]['0.1'] + mass_fracs[solid]['2.0'] + mass_fracs[other]['0.1'] + mass_fracs[other]['2.0'])
-			n_solid = solid_massfrac * nHtot * 10**top_abunds['Mg2SiO4']
-			surf_dens[solid] = molwt[solid] * n_solid
-			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
-			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
 		
-		elif solid in pyrosilicates:
-			
-			other = np.setdiff1d(pyrosilicates, solid)[0]
-			solid_massfrac = (mass_fracs[solid]['0.1'] + mass_fracs[solid]['2.0']) / (mass_fracs[solid]['0.1'] + mass_fracs[solid]['2.0'] + mass_fracs[other]['0.1'] + mass_fracs[other]['2.0'])
-			n_solid = solid_massfrac * nHtot * 10**top_abunds['MgSiO3']
-			surf_dens[solid] = molwt[solid] * n_solid
-			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
-			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
-		
-		else:
-			n_solid = nHtot * 10**top_abunds[solid]
-			surf_dens[solid] = molwt[solid] * n_solid
-			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
-			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
-		"""	
 		if solid == 'Olivine':
 			n_solid = nHtot * 10**top_abunds['Mg2SiO4']
 			surf_dens[solid] = molwt[solid] * n_solid
@@ -124,11 +100,11 @@ def surface_density(solids, molwt, mass_fracs, top_abunds, nHtot, H, add_gap, R_
 			# surf_dens[solid] = H * u.cm * np.sqrt(2*np.pi) * surf_dens[solid] * np.exp(0.5)   # Assuming a column height of H AU and using the rho-Sigma formula for protodisks
 			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
 		
-		# Adding a gap in the disk	
+	# Adding a gap in the disk	
 	if add_gap:
 		
 		# Find indices corresponding to gap radius and width
-		rgap_ind = np.where(np.round(R_arr, 1) == rgap)[0][0]
+		rgap_ind = np.where(np.round(R_arr, 1) == np.round(rgap, 1))[0][0]
 		wgap_ind1 = np.where(np.round(R_arr, 1) == np.round(rgap - wgap/2.0, 1))[0][0]
 		wgap_ind2 = np.where(np.round(R_arr, 1) == np.round(rgap + wgap/2.0, 1))[0][0]
 		# print(rgap_ind, wgap_ind1, wgap_ind2)
@@ -149,6 +125,32 @@ def surface_density(solids, molwt, mass_fracs, top_abunds, nHtot, H, add_gap, R_
 					# ~ surf_dens[solid][i] = surf_dens[solid][rgap_ind] + m * (R_arr[i] - R_arr[rgap_ind])
 		
 		return surf_dens, rgap_ind, wgap_ind1, wgap_ind2
+	
+	# Adding a ring to the disk	
+	elif add_ring:
+		
+		# Find indices corresponding to ring radius and width
+		rring_ind = np.where(np.round(R_arr, 1) == rring)[0][0]
+		wring_ind1 = np.where(np.round(R_arr, 1) == np.round(rgap - wring/2.0, 1))[0][0]
+		wring_ind2 = np.where(np.round(R_arr, 1) == np.round(rgap + wring/2.0, 1))[0][0]
+		# print(rgap_ind, wgap_ind1, wgap_ind2)
+		
+		for solid in surf_dens.keys():
+			
+			for i in range(wring_ind1, wring_ind2 + 1):
+				
+				surf_dens[solid][i] = sring * surf_dens[solid][i]
+				# ~ if i <= rgap_ind:
+					
+					# ~ m = (sgap * surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind1])/(R_arr[rgap_ind] - R_arr[wgap_ind1])
+					# ~ surf_dens[solid][i] = surf_dens[solid][wgap_ind1] + m * (R_arr[i] - R_arr[wgap_ind1])
+				
+				# ~ else:
+					
+					# ~ m = (surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind2])/(R_arr[rgap_ind] - R_arr[wgap_ind2])
+					# ~ surf_dens[solid][i] = surf_dens[solid][rgap_ind] + m * (R_arr[i] - R_arr[rgap_ind])
+		
+		return surf_dens, rring_ind, wring_ind1, wring_ind2
 		
 	return surf_dens
 
@@ -205,7 +207,7 @@ def slice_lQ(lamda, Q, lmin, lmax, lsize):
 		lamda = lamda[idx]
 		Q = Q[idx]
 	
-	elif len(lamda) < lsize:
+	if len(lamda) < lsize:
 		
 		# If there are less than lsize points of lamda, lsize points are created through interpolation and lamda is reassigned accordingly
 		old_indices = np.arange(0, len(lamda))
@@ -217,11 +219,28 @@ def slice_lQ(lamda, Q, lmin, lmax, lsize):
 		spl2 = UnivariateSpline(old_indices, Q, k=3, s=0)
 		Q = spl2(new_indices)
 		
+	# ~ old_indices = np.arange(0, len(lamda))
+	# ~ new_indices = np.linspace(0, len(req_lamda)-1, 1000000)
+	
+	# ~ spl1 = UnivariateSpline(old_indices, lamda, k=3, s=0)
+	# ~ lamda = spl1(new_indices)
+	
+	# ~ spl2 = UnivariateSpline(old_indices, Q, k=3, s=0)
+	# ~ Q = spl2(new_indices)
+	
+	# ~ lamda = lamda * u.micron
+	# ~ # print(lamda)
+	# ~ print(np.round(lamda, 2))
+	# ~ ind = np.where(np.round(lamda, 2) == req_lamda)
+	# ~ print(ind)
+	# ~ lamda = lamda[ind]
+	# ~ Q = Q[ind]
+		
 	return lamda, Q
 	
 		
 		
-def get_l_and_k(opfile, dens, mass_fracs, lmin, lmax, lsize):
+def get_l_and_k(opfile, dens, lmin, lmax, lsize):
 	
 	"""
 	Obtains the wavelength and Q_abs values for a condensate from the given opfile, and calculates the corresponding kappa values

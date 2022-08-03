@@ -8,6 +8,49 @@ from astropy.constants import astropyconst20 as const
 from fancy_name import latex_name
 
 
+def add_textbox(q, e, Qr, Sigma0, amor_temp, add_gap, rgap, wgap, sgap, add_ring, rring, wring, sring):
+	
+	"""
+	Adding the parameters in a textbox to a plot
+	"""
+	
+	if add_gap:
+		
+		textstr = '\n'.join((
+			r'$q=%.3f$' % (q, ),
+			r'$p=%.2f$' % (e, ),
+			r'$Q_r=%d$' % (Qr, ),
+			r'$\Sigma_0=%.1f g/cm^2$' % (Sigma0.value, ),
+			r'$T_{amf}=%.1f K$' % (amor_temp.value, ),
+			r'$r_{gap}=%.1f AU$' % (rgap.value, ),
+			r'$w_{gap}=%.1f AU$' % (wgap.value, ),
+			r'$s_{gap}=%.4f$' % (sgap, ),))
+	
+	elif add_ring:
+		
+		textstr = '\n'.join((
+			r'$q=%.3f$' % (q, ),
+			r'$p=%.2f$' % (e, ),
+			r'$Q_r=%d$' % (Qr, ),
+			r'$\Sigma_0=%.1f g/cm^2$' % (Sigma0.value, ),
+			r'$T_{amf}=%.1f K$' % (amor_temp.value, ),
+			r'$r_{ring}=%.1f AU$' % (rring.value, ),
+			r'$w_{ring}=%.1f AU$' % (wring.value, ),
+			r'$s_{ring}=%.1f$' % (sring, ),))
+					
+	else:
+		
+		textstr = '\n'.join((
+			r'$q=%.3f$' % (q, ),
+			r'$p=%.2f$' % (e, ),
+			r'$Q_r=%d$' % (Qr, ),
+			r'$\Sigma_0=%.1f g/cm^2$' % (Sigma0.value, ),
+			r'$T_{amf}=%.1f K$' % (amor_temp.value, ),
+			r'No gap or ring'))
+		
+	return textstr
+	
+
 def Qcurve_plotter(lamda, kappa, mineral, rv, fmax, folder):
 	
 	"""
@@ -31,7 +74,7 @@ def Qcurve_plotter(lamda, kappa, mineral, rv, fmax, folder):
 	plt.show()
 	
 	
-def plot_surf_dens_radial(surf_dens, R_arr, folder):
+def plot_surf_dens_radial(surf_dens, R_arr, folder, **kwargs):
 	
 	"""
 	Plots the radial distribution of surface densities of the different condensates in the disk
@@ -44,38 +87,39 @@ def plot_surf_dens_radial(surf_dens, R_arr, folder):
 	"""
 	
 	n = len(surf_dens.keys())
-	# colours = cmr.take_cmap_colors(np.tile(np.linspace(0,1,np.ceil(n/2).astype(int)), 2))
 	colours = cmr.take_cmap_colors('cmr.torch', np.ceil(n/2).astype(int), cmap_range=(0.1, 0.9))
-	# colours = plt.cm.Dark2(np.linspace(0, 1, n))
 	styles = ['solid', 'dashed']
 	i, j = 0, 0
+	fig, ax = plt.subplots(1, 1, figsize=(10, 7))
 	
 	for solid in surf_dens.keys():
 		
 		if i < np.ceil(n/2).astype(int):
 			plt.semilogy(R_arr, surf_dens[solid], label = latex_name(solid), color=colours[i], linestyle=styles[0])
-			print(i, "done")
 		else:
 			plt.semilogy(R_arr, surf_dens[solid], label = latex_name(solid), color=colours[j], linestyle=styles[1])
 			j += 1
-			print(i, "done")
-		# plt.semilogy(R_arr, surf_dens[solid], label = latex_name(solid), color=colours[i])
+			
 		i += 1
 		
-		
+	plt.ylim(10**-13, 10**-6)
+	plt.xlim(0, 10)
+	
 	plt.title("Radial distribution of surface densities".format(latex_name(solid)))
-	plt.ylabel(r"Surface density log($\Sigma$) ($g/cm^2)$")
-	plt.ylim(10**-15, 10**-8)
-	# plt.gca().set_ylim(bottom=10**-27)
-	# plt.gca().set_xlim(right=30)
-	plt.xlim(0, 30)
+	plt.ylabel(r"Surface density $\Sigma$ ($g/cm^2)$")
 	plt.xlabel(r"Disk radius R (AU)")
-	plt.legend()
+	
+	plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+	# textstr = add_textbox(q, e, Qr, Sigma0.value, amor_temp.value, add_gap, rgap.value, wgap.value, sgap)	
+	textstr = add_textbox(**kwargs)
+	plt.text(1.1, 0.35, textstr, transform=ax.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
+	
+	plt.tight_layout()
 	plt.savefig(folder + "surf_dens_vs_R.png")
 	plt.show()
 	
 
-def plot_surf_dens_disk(surf_dens, R, NPOINT, folder):
+def plot_surf_dens_disk(surf_dens, R_arr, folder, **kwargs):
 	
 	"""
 	Plots the disk surface density including the azimuthal component (by assuming an azimuthally symmetric surface density distribution
@@ -83,29 +127,39 @@ def plot_surf_dens_disk(surf_dens, R, NPOINT, folder):
 	Parameters:
 	
 	surf_dens    : Dictionary of surface densities with the condensate names as keys and the 1D arrays of surface densities (shape: (NPOINT,)) in g/cm^2 as the values (float)
-	R_arr 		 : 1D array of the disk radii in AU (shape: (NPOINT,)) (float)
-	NPOINT       : Total number of simulation points in GGchem (int)
+	R_arr	 	 : 1D array of the disk radii in AU (shape: (NPOINT,)) (float)
 	folder 		 : Path where the output plot is stored (string)
 	"""
 	
-	phi = np.linspace(0, 360, NPOINT)
+	# Plotting the disk surface density only for 10 AU
+	ind10 = np.where(R_arr <= 10 *u.AU)[0]
+	R = R_arr[ind10]
+	
+	phi = np.linspace(0, 360, len(R))
 	r_m, phi_m = np.meshgrid(R.value, phi)
-	total_surf_dens = np.zeros((NPOINT, NPOINT)) * u.g / u.cm**2
+	total_surf_dens = np.zeros((len(R), len(R))) * u.g / u.cm**2
 	
 	copy = surf_dens.copy()
 	for solid in surf_dens.keys():		
-		copy[solid] = np.tile(surf_dens[solid], NPOINT).reshape(len(R.value), len(R.value))
+		copy[solid] = np.tile(surf_dens[solid][ind10], len(R)).reshape(len(R.value), len(R.value))
 		total_surf_dens += copy[solid]
 		
 	# print(np.shape(total_surf_dens))
 	x_m = r_m * np.cos(np.deg2rad(phi_m))
 	y_m = r_m * np.sin(np.deg2rad(phi_m))
 	
-	plt.pcolormesh(x_m, y_m, np.log10(total_surf_dens.value), cmap="inferno")
+	fig, ax = plt.subplots(1, 1)
+	plt.pcolormesh(x_m, y_m, np.log10(total_surf_dens.value), cmap="cmr.bubblegum")
+	
 	plt.xlabel("R (AU)")
 	plt.ylabel("R (AU)")
 	plt.title("Disk surface density (assuming azimuthal symmetry)")
-	plt.colorbar(pad=0, label=r"log($\Sigma$) ($g/cm^2$)")
+	
+	textstr = add_textbox(**kwargs)	
+	plt.text(0.15, 0.85, textstr, transform=ax.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
+	
+	plt.tight_layout()
+	plt.colorbar(pad=0.005, label=r"log($\Sigma$) ($g/cm^2$)")
 	plt.savefig(folder + "disk_surf_dens.png")
 	plt.show()
 	
@@ -152,7 +206,7 @@ def plot_tau(tau, solid, size, folder):
 	
 	
 	
-def plot_fluxmap(solid_name, rv, fmax, F_map, lamda, R_arr, folder):
+def plot_fluxmap(solid_name, rv, fmax, F_map, lamda, R_arr, folder, **kwargs):
 	
 	"""
 	Plots the flux map for a solid as a colormap
@@ -169,7 +223,7 @@ def plot_fluxmap(solid_name, rv, fmax, F_map, lamda, R_arr, folder):
 	"""
 	
 	fig, ax = plt.subplots(1,1)
-	img = ax.imshow(F_map, cmap='plasma', interpolation='none')
+	img = ax.imshow(F_map, cmap='cmr.bubblegum', interpolation='none')
 	
 	# Axes formatting    
 	x_axis_locations = np.linspace(0, len(lamda)-1, 8).astype(int)
@@ -184,8 +238,12 @@ def plot_fluxmap(solid_name, rv, fmax, F_map, lamda, R_arr, folder):
 	ax.set_yticklabels(y_axis_labels.value)
 	ax.set_ylabel('R (AU)')
 	
+	textstr = add_textbox(**kwargs)	
+	plt.text(0.15, 0.85, textstr, transform=ax.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
+	
 	ax.set_title(r"Flux Map for {0}, gs = {1}, $f_{{max}}$ = {2}".format(latex_name(solid_name), rv, fmax))
 	fig.colorbar(img, label=r'{0}'.format(F_map.unit))
+	plt.tight_layout()
 	plt.savefig(folder + "Fluxmap_{0}_gs{1}_fmax{2}.png".format(solid_name, rv, fmax), bbox_inches = 'tight')
 	plt.show()
 	
