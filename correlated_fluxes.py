@@ -17,7 +17,7 @@ from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import add_textbox, Qcurve_plotter, plot_surf_dens_radial, plot_surf_dens_disk, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
 from compare_grain_sizes import get_paper_spectra
-from HD144432_q0373_p07_S4500_Tamf1350_mfchange4.properties import *
+from HD144432_q0373_p07_S4900_Tamf1350_mfchange4_gap.properties import *
 
 
 plt.rcParams["font.family"] = "serif"
@@ -44,6 +44,17 @@ Rc = const.R.cgs           					# Ideal gas constant (erg K^-1 mol^-1)
 G = const.G.cgs           					# Gravitational constant (cm^3 g^-1 s^-2)	
 
 
+def baselines(fitsfile):
+	
+	hdul = fits.open('HD_144432_2022-03-22T09_11_24_N_TARGET_FINALCAL_INT_VISCORRFLUX.fits')
+	data = hdul['OI_VIS'].data
+	# print(data.columns)
+	uc = data.field('UCOORD')
+	vc = data.field('VCOORD')
+	
+	return uc, vc
+	
+	
 def hankel_transform_individual(F_map, R_arr, lamda, B, dist_pc):
 	
 	"""
@@ -70,7 +81,8 @@ def hankel_transform_individual(F_map, R_arr, lamda, B, dist_pc):
 	bessel = j0(2.0 * np.pi * rad_arr * B / (lamda.to(u.m)))           							# Shape: (NPOINT, lsize)
 	
 	# Calculating the absolute interferometric flux
-	inter_flux = 2.0 * np.pi * np.trapz(rad_arr * bessel * F_map, x = rad_arr, axis = 0)   		# Shape: (lsize,)
+	inter_flux = 2.0 * np.pi * np.trapz(rad_arr * bessel * F_map, x = rad_arr, axis = 0) * u.rad**2 		# Shape: (lsize,)
+	inter_flux = inter_flux.to(u.Jy, equivalencies = u.dimensionless_angles())
 	
 	return inter_flux * 10**4
 		
@@ -125,7 +137,10 @@ def main():
 	
 	# Calculating the surface density
 	molwt = molecular_weight(top5_solids)
-	if add_gap:
+	
+	if add_gap and add_ring:
+		surf_dens, rgap_ind, wgap_ind1, wgap_ind2, rring_ind, wring_ind1, wring_ind2 = surface_density(top5_solids, molwt, topabunds_radii, nHtot, H, add_gap, R_arr, rgap, wgap, sgap, add_ring, rring, wring, sring)
+	elif add_gap:
 		surf_dens, rgap_ind, wgap_ind1, wgap_ind2 = surface_density(top5_solids, molwt, topabunds_radii, nHtot, H, add_gap, R_arr, rgap, wgap, sgap, add_ring, rring, wring, sring)
 	elif add_ring:
 		surf_dens, rring_ind, wring_ind1, wring_ind2 = surface_density(top5_solids, molwt, topabunds_radii, nHtot, H, add_gap, R_arr, rgap, wgap, sgap, add_ring, rring, wring, sring)
@@ -232,9 +247,20 @@ def main():
 	corrflux = data.field('VISAMP')
 	plot_wl = hdul['OI_WAVELENGTH'].data['EFF_WAVE'] * 1e6 * u.micron
 	
-	for data1 in corrflux:	
-		plt.plot(plot_wl, data1)
-		
+	uc, vc = baselines('HD_144432_2022-03-22T09_11_24_N_TARGET_FINALCAL_INT_VISCORRFLUX.fits')
+	Blines = []
+	for i in range(len(uc)):
+		Blines.append(np.sqrt(uc[i]**2 + vc[i]**2))		
+	Blines = np.round(Blines, 1) * u.m
+	
+	for i in range(len(corrflux)):	
+		plt.plot(plot_wl, corrflux[i], label="%.1f m" % (Blines[i].value))
+	
+	plt.xlabel(r'$\lambda$ ($\mu$m)')
+	plt.ylabel('Correlated flux (Jy)')
+	plt.title("Correlated flux from Data")
+	plt.legend()
+	plt.savefig(folder + "data_corrflux.png")	
 	plt.show()
 	
 	##################################################### Plotting the correlated flux density for multiple baselines against wavelengths #####################################################################
@@ -242,14 +268,17 @@ def main():
 	lamda = lamdas['Mg2SiO4']['0.1']
 	
 	fig, axs = plt.subplots(2, 3, figsize=(20, 10))
+	# ~ plt.style.use('dark_background')
+	
 	axes = [axs[0, 0], axs[0, 1], axs[0, 2], axs[1,0], axs[1, 1], axs[1, 2]]
 	n = len(top5_solids)
-	colours = plt.cm.viridis(np.linspace(0,1,n))
+	colours = plt.cm.jet(np.linspace(0,1,n))
+	# ~ colours = ['darkblue', 'blue',  'teal', 'darkgreen', 'green', 'goldenrod', 'orangered', 'red', 'orchid']
 	styles = np.tile(['solid', 'dashed'], n)
-	print(len(colours), len(styles))
-	j, k = 0, 0
 	
-	for i in range(len(B_small)):
+	for i in range(len(Blines)):
+		j, k = 0, 0
+		corr_flux_total = np.zeros(lsize) * u.Jy
 		for solid in top5_solids:
 			for size in gs_ranges:
 				
@@ -261,31 +290,38 @@ def main():
 				first = np.where(lamdas[solid][size] >= 8 * u.micron)[0][0]
 				last = np.where(lamdas[solid][size] <= 13 * u.micron)[0][-1]
 				
-				corr_flux = hankel_transform_individual(F_map[solid][size], R_arr, lamdas[solid][size], B_small[i], dist_pc) 
-				# axes[i].plot(lamdas[solid][size][first: last+1], corr_flux[first: last+1], color=colours[j], linestyle=styles[k], label = '{0} {1}'.format(solid, size))	
-				axes[i].plot(lamdas[solid][size][first: last+1], corr_flux[first: last+1], label = '{0} {1}'.format(solid, size))	
+				corr_flux = hankel_transform_individual(F_map[solid][size], R_arr, lamdas[solid][size], Blines[i], dist_pc) 
+				corr_flux_total += corr_flux
+				axes[i].plot(lamdas[solid][size][first: last+1], corr_flux[first: last+1], color=colours[j], linestyle=styles[k], label = '{0} {1}'.format(latex_name(solid), size))	
 				k += 1
 			j += 1
-			
-		corr_flux_absB = hankel_transform(F_map_sum, R_arr, lamda, 0.0, B_small[i], dist_pc, wl_array = True) 
-		axes[i].plot(lamda, corr_flux_absB, color = 'black', label = 'Model')
-	
+		
+		# Plot the complete model	
+		# corr_flux_absB = hankel_transform(F_map_sum, R_arr, lamda, 0.0, Blines[i], dist_pc, wl_array = True) 
+		axes[i].plot(lamda[first: last+1], np.abs(corr_flux_total[first: last+1]), color = 'black', label = 'Model')
+		axes[i].set_ylim([-1.0, 5.0])
+		axes[i].set_title("B = {0} m".format(Blines[i].value))
+		
+		# Plot the data
+		axes[i].plot(plot_wl, corrflux[i], color='grey', label='Data')
+		
 	textstr = add_textbox(**kwargs)	
 	
-	for ax in axs.flat:
+	for ax in axes:
 		ax.set_xlabel(r'$\lambda$ ($\mu$m)')
 		ax.set_ylabel('Correlated flux (Jy)')
 		ax.label_outer()
 		# ax.legend(loc='upper right')
 	
-	axes[0].text(0.15, 0.85, textstr, transform=axes[0].transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
+	axes[0].text(0.15, 0.8, textstr, transform=axes[0].transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
 	
 	handles, labels = axes[0].get_legend_handles_labels()
-	fig.legend(handles, labels, loc='upper center')
+	lgd = fig.legend(handles, labels, loc='upper left', bbox_to_anchor=(1, 1), bbox_transform=axes[2].transAxes)
+	# fig.legend(handles, labels, loc='upper left', bbox_to_anchor=(1, 1))
 	          
 	fig.suptitle(r"Solid-wise Correlated Flux: Multiple Baselines")
 	fig.tight_layout()
-	plt.savefig(folder + 'Correlated_flux_multsolid_multB_multgs.png')
+	plt.savefig(folder + 'Correlated_flux_multsolid_multB_multgs.png', bbox_extra_artists=(lgd,), bbox_inches='tight')
 	plt.show()
 
 

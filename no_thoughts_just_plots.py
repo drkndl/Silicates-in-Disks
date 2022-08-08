@@ -14,7 +14,22 @@ def add_textbox(q, e, Qr, Sigma0, amor_temp, add_gap, rgap, wgap, sgap, add_ring
 	Adding the parameters in a textbox to a plot
 	"""
 	
-	if add_gap:
+	if add_gap and add_ring:
+		
+		textstr = '\n'.join((
+			r'$q=%.3f$' % (q, ),
+			r'$p=%.2f$' % (e, ),
+			r'$Q_r=%d$' % (Qr, ),
+			r'$\Sigma_0=%.1f g/cm^2$' % (Sigma0.value, ),
+			r'$T_{amf}=%.1f K$' % (amor_temp.value, ),
+			r'$r_{gap}=%.1f AU$' % (rgap.value, ),
+			r'$w_{gap}=%.1f AU$' % (wgap.value, ),
+			r'$s_{gap}=%.4f$' % (sgap, ),
+			r'$r_{ring}=%.1f AU$' % (rring.value, ),
+			r'$w_{ring}=%.1f AU$' % (wring.value, ),
+			r'$s_{ring}=%.1f$' % (sring, ),))
+	
+	elif add_gap:
 		
 		textstr = '\n'.join((
 			r'$q=%.3f$' % (q, ),
@@ -156,7 +171,7 @@ def plot_surf_dens_disk(surf_dens, R_arr, folder, **kwargs):
 	plt.title("Disk surface density (assuming azimuthal symmetry)")
 	
 	textstr = add_textbox(**kwargs)	
-	plt.text(0.15, 0.85, textstr, transform=ax.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
+	plt.text(0.15, 0.7, textstr, transform=ax.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
 	
 	plt.tight_layout()
 	plt.colorbar(pad=0.005, label=r"log($\Sigma$) ($g/cm^2$)")

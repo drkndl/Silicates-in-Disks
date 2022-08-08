@@ -16,8 +16,8 @@ def get_req_lamda(opfile, lmin, lmax):
 	
 	
 top5_solids = ['CaMgSi2O6', 'Fe', 'Fe2SiO4', 'Fe3O4', 'FeS', 'Mg2SiO4', 'Mg3Si2O9H4', 'MgAl2O4', 'MgSiO3', 'Olivine', 'Pyroxene']
-lmin = 5.0 * u.micron 						  			# Lower limit of wavelength (microns) 
-lmax = 21.0 * u.micron						  			# Upper limit of wavelength (microns)
+lmin = 0.0 * u.micron 						  			# Lower limit of wavelength (microns) 
+lmax = 20.0 * u.micron						  			# Upper limit of wavelength (microns)
 lsize = 450 								  			# Number of wavelength (and kappa) points 
 
 # Creating a dictionary of Qcurve input files and the corresponding material densities in g/cm^3
@@ -37,12 +37,16 @@ kappas = {outer_k: {inner_k: None for inner_k in gs_ranges} for outer_k in top5_
 fmaxs = {key: None for key in top5_solids}
 
 for opfile, density in opfile_dens.items():
-	mineral, rv, fmax, lamda, kappa = get_l_and_k(opfile, density, lmin, lmax, lsize, req_lamda)		
+	mineral, rv, fmax, lamda, kappa = get_l_and_k(opfile, density, lmin, lmax, lsize)		
 	# Qcurve_plotter(lamda, kappa, mineral, rv, fmax, folder)
 	lamdas[mineral][rv] = lamda
 	kappas[mineral][rv] = kappa
 	fmaxs[mineral] = fmax
 
+n = len(top5_solids)
+colours = plt.cm.jet(np.linspace(0,1,n))
+styles = np.tile(['solid', 'dashed'], n)
+i, j = 0, 0
 
 for solid in top5_solids:
 	for size in gs_ranges:
@@ -50,10 +54,15 @@ for solid in top5_solids:
 		if solid=="CaMgSi2O6" and size=='2.0':
 			print("Skipping: ", solid, size)
 			continue
-				
+		
+		if solid == "Fe":
+			x = range(len(lamdas[solid][size]))
+			plt.plot(x, lamdas[solid][size], color = colours[i], linestyle = styles[j], linewidth=4, label="{0} {1}".format(solid, size))	
+			continue	
 		x = range(len(lamdas[solid][size]))
-		print(len(x))
-		plt.plot(x, lamdas[solid][size], label="{0} {1}".format(solid, size))
+		plt.plot(x, lamdas[solid][size], color = colours[i], linestyle = styles[j], label="{0} {1}".format(solid, size))
+		j += 1
+	i += 1
 		
 plt.title("Checking wavelength distributions for all solids")
 plt.legend()

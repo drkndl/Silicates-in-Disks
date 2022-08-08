@@ -101,7 +101,31 @@ def surface_density(solids, molwt, top_abunds, nHtot, H, add_gap, R_arr, rgap, w
 			surf_dens[solid] = H.to(u.cm) * surf_dens[solid]
 		
 	# Adding a gap in the disk	
-	if add_gap:
+	if add_gap and add_ring:
+		
+		# Find indices corresponding to gap radius and width
+		rgap_ind = np.where(np.round(R_arr, 1) == np.round(rgap, 1))[0][0]
+		wgap_ind1 = np.where(np.round(R_arr, 1) == np.round(rgap - wgap/2.0, 1))[0][0]
+		wgap_ind2 = np.where(np.round(R_arr, 1) == np.round(rgap + wgap/2.0, 1))[0][0]
+		print(rgap_ind, wgap_ind1, wgap_ind2)
+		
+		for solid in surf_dens.keys():			
+			for i in range(wgap_ind1, wgap_ind2 + 1):				
+				surf_dens[solid][i] = sgap * surf_dens[solid][i]
+				
+		# Find indices corresponding to ring radius and width
+		rring_ind = np.where(np.round(R_arr, 1) == rring)[0][0]
+		wring_ind1 = np.where(np.round(R_arr, 1) == np.round(rring - wring/2.0, 1))[0][0]
+		wring_ind2 = np.where(np.round(R_arr, 1) == np.round(rring + wring/2.0, 1))[0][0]
+		print(rring_ind, wring_ind1, wring_ind2)
+		
+		for solid in surf_dens.keys():			
+			for i in range(wring_ind1, wring_ind2 + 1):				
+				surf_dens[solid][i] = sring * surf_dens[solid][i]
+				
+		return surf_dens, rgap_ind, wgap_ind1, wgap_ind2, rring_ind, wring_ind1, wring_ind2
+		
+	elif add_gap:
 		
 		# Find indices corresponding to gap radius and width
 		rgap_ind = np.where(np.round(R_arr, 1) == np.round(rgap, 1))[0][0]
@@ -109,20 +133,9 @@ def surface_density(solids, molwt, top_abunds, nHtot, H, add_gap, R_arr, rgap, w
 		wgap_ind2 = np.where(np.round(R_arr, 1) == np.round(rgap + wgap/2.0, 1))[0][0]
 		# print(rgap_ind, wgap_ind1, wgap_ind2)
 		
-		for solid in surf_dens.keys():
-			
-			for i in range(wgap_ind1, wgap_ind2 + 1):
-				
+		for solid in surf_dens.keys():			
+			for i in range(wgap_ind1, wgap_ind2 + 1):				
 				surf_dens[solid][i] = sgap * surf_dens[solid][i]
-				# ~ if i <= rgap_ind:
-					
-					# ~ m = (sgap * surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind1])/(R_arr[rgap_ind] - R_arr[wgap_ind1])
-					# ~ surf_dens[solid][i] = surf_dens[solid][wgap_ind1] + m * (R_arr[i] - R_arr[wgap_ind1])
-				
-				# ~ else:
-					
-					# ~ m = (surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind2])/(R_arr[rgap_ind] - R_arr[wgap_ind2])
-					# ~ surf_dens[solid][i] = surf_dens[solid][rgap_ind] + m * (R_arr[i] - R_arr[rgap_ind])
 		
 		return surf_dens, rgap_ind, wgap_ind1, wgap_ind2
 	
@@ -131,24 +144,13 @@ def surface_density(solids, molwt, top_abunds, nHtot, H, add_gap, R_arr, rgap, w
 		
 		# Find indices corresponding to ring radius and width
 		rring_ind = np.where(np.round(R_arr, 1) == rring)[0][0]
-		wring_ind1 = np.where(np.round(R_arr, 1) == np.round(rgap - wring/2.0, 1))[0][0]
-		wring_ind2 = np.where(np.round(R_arr, 1) == np.round(rgap + wring/2.0, 1))[0][0]
+		wring_ind1 = np.where(np.round(R_arr, 1) == np.round(rring - wring/2.0, 1))[0][0]
+		wring_ind2 = np.where(np.round(R_arr, 1) == np.round(rring + wring/2.0, 1))[0][0]
 		# print(rgap_ind, wgap_ind1, wgap_ind2)
 		
-		for solid in surf_dens.keys():
-			
-			for i in range(wring_ind1, wring_ind2 + 1):
-				
+		for solid in surf_dens.keys():			
+			for i in range(wring_ind1, wring_ind2 + 1):				
 				surf_dens[solid][i] = sring * surf_dens[solid][i]
-				# ~ if i <= rgap_ind:
-					
-					# ~ m = (sgap * surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind1])/(R_arr[rgap_ind] - R_arr[wgap_ind1])
-					# ~ surf_dens[solid][i] = surf_dens[solid][wgap_ind1] + m * (R_arr[i] - R_arr[wgap_ind1])
-				
-				# ~ else:
-					
-					# ~ m = (surf_dens[solid][rgap_ind] - surf_dens[solid][wgap_ind2])/(R_arr[rgap_ind] - R_arr[wgap_ind2])
-					# ~ surf_dens[solid][i] = surf_dens[solid][rgap_ind] + m * (R_arr[i] - R_arr[rgap_ind])
 		
 		return surf_dens, rring_ind, wring_ind1, wring_ind2
 		
@@ -442,6 +444,53 @@ def calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc):
 
 
 
+# ~ def hankel_transform(F_map, R_arr, lamda, wl, B, dist_pc, wl_array):
+	
+	# ~ """
+	# ~ Calculates the absolute correlated flux density (in Jy) using the combined flux map of all the solids. This involves finding the Fourier transform in cylindrical coordinates using the Bessel function of the first kind zeroth order (j0). It is assumed that the correlated fluxes (shape: (lsize,)) are to be plotted against the wavelengths. If, however, it is to be plotted against the baselines, then the correlated flux density (a single float value) corresponding to a specific wavelength (wl) is extracted and returned from the array (shape: (lsize,)). This can be specified with wl_array.
+	
+	# ~ Parameters: 
+	
+	# ~ F_map 		  : 2D array (shape: (NPOINT, lsize)) of the combined flux map for all solids in erg/(s Hz sr cm^2) i.e. CGS units (float)
+	# ~ R_arr         : 1D array of radii in AU obtained from the temperature array in GGchem output based on the power law model (float)
+	# ~ lamda         : 1D array of wavelengths (shape: (lsize,)) of the solid in microns (float)
+	# ~ wl 			  : A single wavelength (in micron) where the correlated flux is required if the fluxes are plot against baseline (float). It is used only if wl_array = False
+	# ~ B 			  : The interferometric baseline value in m (float)
+	# ~ wl_array 	  : If True, the returned correlated fluxes is an array of shape (lsize,) to be plotted against the wavelengths. If False, the correlated flux for a single wavelength value is returned to be plot against the baselines (Boolean)
+	
+	# ~ Returns:
+	
+	# ~ inter_flux_abs: The absolute correlated flux density in Jy. If wl_array = True, a float array of shape (lsize,) is returned, else a single float value is returned
+	# ~ """
+	
+	# ~ rad_arr = r_to_rad(R_arr, dist_pc) 						 											# Converting radius (AU) to arcseconds to radians	
+	# ~ rad_arr = rad_arr[np.newaxis]
+	# ~ rad_arr = rad_arr.T 																		# Shape: (NPOINT, 1)
+	# ~ rad_arr = rad_arr.to('', equivalencies=u.dimensionless_angles()) 
+	
+	# ~ # Finding the Bessel function of the first kind, zeroth order
+	# ~ bessel = j0(2.0 * np.pi * rad_arr * B / (lamda.to(u.m)))           							# Shape: (NPOINT, lsize)
+	
+	# ~ # Calculating the absolute interferometric flux
+	# ~ inter_flux = 2.0 * np.pi * np.trapz(rad_arr * bessel * F_map, x = rad_arr, axis = 0)   		# Shape: (lsize,)
+	# ~ inter_flux_abs = np.abs(inter_flux) * u.rad**2
+	# ~ inter_flux_abs = inter_flux_abs.to(u.Jy, equivalencies = u.dimensionless_angles())
+	
+	# ~ if wl_array: 
+		
+		# ~ return inter_flux_abs * 10**4
+		
+	# ~ else:
+		
+		# ~ # Finding the index where the array of wavelengths matches the given wavelength wl
+		# ~ lamda_rounded = np.round(lamda, 1)	
+		# ~ wl_id = np.where(lamda_rounded == wl)[0][0]
+		
+		# ~ inter_flux_abs = inter_flux_abs[wl_id]                                             		# Single float value
+		
+		# ~ return inter_flux_abs * 10**4
+		
+
 def hankel_transform(F_map, R_arr, lamda, wl, B, dist_pc, wl_array):
 	
 	"""
@@ -470,13 +519,13 @@ def hankel_transform(F_map, R_arr, lamda, wl, B, dist_pc, wl_array):
 	bessel = j0(2.0 * np.pi * rad_arr * B / (lamda.to(u.m)))           							# Shape: (NPOINT, lsize)
 	
 	# Calculating the absolute interferometric flux
-	inter_flux = 2.0 * np.pi * np.trapz(rad_arr * bessel * F_map, x = rad_arr, axis = 0)   		# Shape: (lsize,)
-	inter_flux_abs = np.abs(inter_flux) * u.rad**2
-	inter_flux_abs = inter_flux_abs.to(u.Jy, equivalencies = u.dimensionless_angles())
+	inter_flux = 2.0 * np.pi * np.trapz(rad_arr * bessel * F_map, x = rad_arr, axis = 0) * u.rad**2   		# Shape: (lsize,)
+	# inter_flux_abs = np.abs(inter_flux) * u.rad**2
+	inter_flux = inter_flux.to(u.Jy, equivalencies = u.dimensionless_angles())
 	
 	if wl_array: 
 		
-		return inter_flux_abs * 10**4
+		return inter_flux * 10**4
 		
 	else:
 		
@@ -484,6 +533,6 @@ def hankel_transform(F_map, R_arr, lamda, wl, B, dist_pc, wl_array):
 		lamda_rounded = np.round(lamda, 1)	
 		wl_id = np.where(lamda_rounded == wl)[0][0]
 		
-		inter_flux_abs = inter_flux_abs[wl_id]                                             		# Single float value
+		inter_flux = inter_flux[wl_id]                                             		# Single float value
 		
-		return inter_flux_abs * 10**4
+		return inter_flux * 10**4

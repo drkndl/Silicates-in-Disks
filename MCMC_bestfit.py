@@ -267,7 +267,6 @@ def lnlike(theta, x, y, yerr):
 def lnprior(theta):
 	
 	rgap, wgap, rring, wring, Tamf, mf_ol_01, mf_py_01, mf_fors_01, mf_ens_01, mf_Fe_01, mf_FeS_01 = theta
-	# ~ if 0.4 * u.AU <= rgap <= 5.0 * u.AU and 0.2 * u.AU <= wgap <= 2.0 * u.AU and 0.4 * u.AU <= rring <= 5.0 * u.AU and 0.2 * u.AU <= wring <= 2.0 * u.AU and 500.0 * u.K <= Tamf <= 1500.0 * u.K and 0.0 <= mf_ol_01 <= 1.0 and 0.0 <= mf_py_01 <= 1.0 and 0.0 <= mf_fors_01 <= 1.0 and 0.0 <= mf_ens_01 <= 1.0 and 0.0 <= mf_Fe_01 <= 1.0 and 0.0 <= mf_FeS_01 <= 1.0:
 	if 0.4 <= rgap <= 5.0 and 0.2 <= wgap <= 2.0 and 0.4 <= rring <= 5.0 and 0.2 <= wring <= 2.0 and 500.0 <= Tamf <= 1500.0 and 0.0 <= mf_ol_01 <= 1.0 and 0.0 <= mf_py_01 <= 1.0 and 0.0 <= mf_fors_01 <= 1.0 and 0.0 <= mf_ens_01 <= 1.0 and 0.0 <= mf_Fe_01 <= 1.0 and 0.0 <= mf_FeS_01 <= 1.0:
 		return 0.0
 	return -np.inf
@@ -300,5 +299,68 @@ theta_max  = samples[np.argmax(sampler.flatlnprobability)]
 print(theta_max)
 best_fit_model = model(theta_max)
 
-plt.plot(lamdas['Mg2SiO4']['0.1'], best_fit_model)
+diskname = disk.split('_')[0]
+datfile = folder + 'van_Boekel_' + diskname + '.dat'
+wl, flux = get_paper_spectra(datfile)
+
+if add_gap:
+	
+	textstr = '\n'.join((
+				r'$q=%.3f$' % (q, ),
+				r'$p=%.2f$' % (e, ),
+				r'$Q_r=%d$' % (Qr, ),
+				r'$\Sigma_0=%.1f g/cm^2$' % (Sigma0.value, ),
+				r'$T_{amf}=%.1f K$' % (theta_max[4], ),
+				r'$r_{gap}=%.1f AU$' % (theta_max[0], ),
+				r'$w_{gap}=%.1f AU$' % (theta_max[1], ),
+				r'$s_{gap}=%.4f$' % (sgap, ),
+				r'$mf_{Ol,0.1}=%.3f$' % (theta_max[5], ),
+				r'$mf_{Py,0.1}=%.3f$' % (theta_max[6], ),
+				r'$mf_{Fors,0.1}=%.3f$' % (theta_max[7], ),
+				r'$mf_{Ens,0.1}=%.3f$' % (theta_max[8], ),
+				r'$mf_{Fe,0.1}=%.3f$' % (theta_max[9], ),
+				r'$mf_{FeS,0.1}=%.3f$' % (theta_max[10], )))
+				
+elif add_ring:
+	
+	textstr = '\n'.join((
+				r'$q=%.3f$' % (q, ),
+				r'$p=%.2f$' % (e, ),
+				r'$Q_r=%d$' % (Qr, ),
+				r'$\Sigma_0=%.1f g/cm^2$' % (Sigma0.value, ),
+				r'$T_{amf}=%.1f K$' % (theta_max[4], ),
+				r'$r_{ring}=%.1f AU$' % (theta_max[2], ),
+				r'$w_{ring}=%.1f AU$' % (theta_max[3], ),
+				r'$s_{ring}=%.4f$' % (sring, ),
+				r'$mf_{Ol,0.1}=%.3f$' % (theta_max[5], ),
+				r'$mf_{Py,0.1}=%.3f$' % (theta_max[6], ),
+				r'$mf_{Fors,0.1}=%.3f$' % (theta_max[7], ),
+				r'$mf_{Ens,0.1}=%.3f$' % (theta_max[8], ),
+				r'$mf_{Fe,0.1}=%.3f$' % (theta_max[9], ),
+				r'$mf_{FeS,0.1}=%.3f$' % (theta_max[10], )))
+				
+else:
+	
+	textstr = '\n'.join((
+				r'$q=%.3f$' % (q, ),
+				r'$p=%.2f$' % (e, ),
+				r'$Q_r=%d$' % (Qr, ),
+				r'$\Sigma_0=%.1f g/cm^2$' % (Sigma0.value, ),
+				r'$T_{amf}=%.1f K$' % (theta_max[4], ),
+				r'No gap or ring',
+				r'$mf_{Ol,0.1}=%.3f$' % (theta_max[5], ),
+				r'$mf_{Py,0.1}=%.3f$' % (theta_max[6], ),
+				r'$mf_{Fors,0.1}=%.3f$' % (theta_max[7], ),
+				r'$mf_{Ens,0.1}=%.3f$' % (theta_max[8], ),
+				r'$mf_{Fe,0.1}=%.3f$' % (theta_max[9], ),
+				r'$mf_{FeS,0.1}=%.3f$' % (theta_max[10], )))
+
+plt.plot(lamdas['Mg2SiO4']['0.1'], best_fit_model, color="black", label="Best Fit")
+plt.plot(wl, flux, color="grey", label = "Data")
+plt.text(0.15, 0.85, textstr, transform=axs[0].transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
+plt.xlabel(r"Wavelength $\lambda$ ($\mu$m)")
+plt.ylabel(r"Flux (Jy)")
+plt.title("Spectrum with MCMC Best Fit")
+plt.legend()
+plt.savefig(folder + "bets_fit_spectrum.png")
 plt.show()

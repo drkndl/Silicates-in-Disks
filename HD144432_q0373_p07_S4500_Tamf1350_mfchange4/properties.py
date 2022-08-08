@@ -19,6 +19,10 @@ add_gap = False                                         # True if adding a gap t
 rgap = 0.5 * u.AU 										# The location of the gap in the disk (from the star) (AU)
 wgap = 0.2 * u.AU 										# Total width of the gap (AU)
 sgap = 10**-3  											# The amount by which the surface density is to be dampened in the gap
+add_ring = False                                         # True if adding a gap to the disk
+rring = 0.5 * u.AU 										# The location of the gap in the disk (from the star) (AU)
+wring = 0.2 * u.AU 										# Total width of the gap (AU)
+sring = 10**2  											# The amount by which the surface density is to be dampened in the gap
 
 disk = 'HD144432_q0373_p07_S4500_Tamf1350_mfchange4' 										# The name of the disk
 folder = disk + '/'  								    # Path where output files are saved

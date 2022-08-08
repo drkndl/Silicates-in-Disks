@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.constants import astropyconst20 as const
-from HD163296_q04_p07_S4500_Tamf1350.properties import *
+from HD144432_q0373_p07_S4900_Tamf1350_mfchange4_gap.properties import *
 
 # Some constants in CGS
 Na = const.N_A.cgs                    		# Avogadro's number in /mol
@@ -212,6 +212,15 @@ def main():
 	plt.title(r"Radial dependence of $\rho$, P")
 	plt.legend()
 	plt.savefig(folder + "Pandrho_vs_R.png")
+	plt.show()
+	
+	# Plot for presentation
+	plt.semilogy(r_arr, T_arr, color='blue', label = r"Temperature T [K]")
+	plt.semilogy(r_arr, Sigma, color='red', linestyle='dashed', label = r"Surface Density $\rho$ [$gm/cm^3$]")
+	plt.xlabel("Radius R [AU]")
+	plt.title(r"Radial profile of T, $\Sigma$")
+	plt.legend()
+	plt.savefig(folder + "presentation_plot.png")
 	plt.show()
 	
 	# Write the disk property values required for GGchem to a file

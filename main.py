@@ -15,7 +15,7 @@ from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import add_textbox, Qcurve_plotter, plot_surf_dens_radial, plot_surf_dens_disk, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
 from compare_grain_sizes import get_paper_spectra
-from HD163296_q04_p07_S4500_Tamf1350.properties import *
+from HD144432_q0373_p07_S4900_Tamf1350_mfchange4_gap.properties import *
 
 
 plt.rcParams["font.family"] = "serif"
@@ -102,14 +102,13 @@ def main():
 	not_there = ['SiO', 'Mg3Si4O12H2', 'Fe3Si2O9H4', 'Ni', 'NaAlSi3O8', 'NaMg3AlSi3O12H2', 'CaAl2Si2O8', 'H2O', 'Ca2MgSi2O7', 'NH3', 'Al2O3', 'Ca2Al2SiO7', 'Ca3Al2Si3O12', 'CaAl2Si2O8', 'ZrO2', 'Ti3O5', 'W', 'VO', 'CaTiO3', 'NaAlSiO4']
 	top5_solids = np.setdiff1d(top5_solids, not_there)
 	top5_solids = np.concatenate((top5_solids, ['Olivine', 'Pyroxene']))
-	silicates = ['Olivine', 'Pyroxene', 'Mg2SiO4', 'MgSiO3']
-	olisilicates = ['Olivine', 'Mg2SiO4']
-	pyrosilicates = ['Pyroxene', 'MgSiO3']
-	print(top5_solids)
-	dewjfbhrhjwfb
+	
 	# Calculating the surface density
 	molwt = molecular_weight(top5_solids)
-	if add_gap:
+	
+	if add_gap and add_ring:
+		surf_dens, rgap_ind, wgap_ind1, wgap_ind2, rring_ind, wring_ind1, wring_ind2 = surface_density(top5_solids, molwt, topabunds_radii, nHtot, H, add_gap, R_arr, rgap, wgap, sgap, add_ring, rring, wring, sring)
+	elif add_gap:
 		surf_dens, rgap_ind, wgap_ind1, wgap_ind2 = surface_density(top5_solids, molwt, topabunds_radii, nHtot, H, add_gap, R_arr, rgap, wgap, sgap, add_ring, rring, wring, sring)
 	elif add_ring:
 		surf_dens, rring_ind, wring_ind1, wring_ind2 = surface_density(top5_solids, molwt, topabunds_radii, nHtot, H, add_gap, R_arr, rgap, wgap, sgap, add_ring, rring, wring, sring)
@@ -142,6 +141,7 @@ def main():
 	# Plotting the flux map and calculating the integrated flux for each solid
 	I = {outer_k: {inner_k: None for inner_k in gs_ranges} for outer_k in top5_solids}
 	tau = {outer_k: {inner_k: None for inner_k in gs_ranges} for outer_k in top5_solids}
+	F_map = {outer_k: {inner_k: None for inner_k in gs_ranges} for outer_k in top5_solids}
 	F_map_sum = np.zeros((NPOINT, lsize)) * u.erg / (u.s * u.Hz * u.sr * u.cm**2)
 	intflux = {outer_k: {inner_k: None for inner_k in gs_ranges} for outer_k in top5_solids}
 	intflux_sum = np.zeros(lsize) * u.Jy
@@ -167,11 +167,11 @@ def main():
 				tau[solid][size] = tau_calc_amorphous(surf_dens[solid], surf_dens['Olivine'], kappas[solid][size], kappas['Olivine'][size], Tg, amor_temp, mass_fracs[solid][size])
 				# plot_tau(tau[solid][size], solid, size, folder)
 				
-				F_map = flux_map(tau[solid][size], I[solid][size])
-				# plot_fluxmap(solid, size, fmaxs[solid], F_map, lamdas[solid][size], R_arr, folder, **kwargs) 
-				F_map_sum += F_map
+				F_map[solid][size] = flux_map(tau[solid][size], I[solid][size])
+				# plot_fluxmap(solid, size, fmaxs[solid], F_map[solid][size], lamdas[solid][size], R_arr, folder, **kwargs) 
+				F_map_sum += F_map[solid][size]
 				
-				intflux[solid][size] = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
+				intflux[solid][size] = calculate_spectra(F_map[solid][size], R_arr, Rmin, Rmax, dist_pc)  
 				# plot_spectra(lamdas[solid][size], intflux[solid][size], solid, size, fmaxs[solid], Rmin, Rmax, folder)
 				intflux_sum += intflux[solid][size]
 				
@@ -183,11 +183,11 @@ def main():
 				tau[solid][size] = tau_calc_amorphous(surf_dens[solid], surf_dens['Pyroxene'], kappas[solid][size], kappas['Pyroxene'][size], Tg, amor_temp, mass_fracs[solid][size])
 				# plot_tau(tau[solid][size], solid, size, folder)
 				
-				F_map = flux_map(tau[solid][size], I[solid][size])
-				# plot_fluxmap(solid, size, fmaxs[solid], F_map, lamdas[solid][size], R_arr, folder, **kwargs) 
-				F_map_sum += F_map
+				F_map[solid][size] = flux_map(tau[solid][size], I[solid][size])
+				# plot_fluxmap(solid, size, fmaxs[solid], F_map[solid][size], lamdas[solid][size], R_arr, folder, **kwargs) 
+				F_map_sum += F_map[solid][size]
 				
-				intflux[solid][size] = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
+				intflux[solid][size] = calculate_spectra(F_map[solid][size], R_arr, Rmin, Rmax, dist_pc)  
 				# plot_spectra(lamdas[solid][size], intflux[solid][size], solid, size, fmaxs[solid], Rmin, Rmax, folder)
 				intflux_sum += intflux[solid][size]
 				
@@ -199,11 +199,11 @@ def main():
 				tau[solid][size] = tau_calc(surf_dens[solid], kappas[solid][size], mass_fracs[solid][size])
 				# plot_tau(tau[solid][size], solid, size, folder)
 				
-				F_map = flux_map(tau[solid][size], I[solid][size])
-				# plot_fluxmap(solid, size, fmaxs[solid], F_map, lamdas[solid][size], R_arr, folder, **kwargs)
-				F_map_sum += F_map
+				F_map[solid][size] = flux_map(tau[solid][size], I[solid][size])
+				# plot_fluxmap(solid, size, fmaxs[solid], F_map[solid][size], lamdas[solid][size], R_arr, folder, **kwargs)
+				F_map_sum += F_map[solid][size]
 				
-				intflux[solid][size] = calculate_spectra(F_map, R_arr, Rmin, Rmax, dist_pc)  
+				intflux[solid][size] = calculate_spectra(F_map[solid][size], R_arr, Rmin, Rmax, dist_pc)  
 				# plot_spectra(lamdas[solid][size], intflux[solid][size], solid, size, fmaxs[solid], Rmin, Rmax, folder)
 				intflux_sum += intflux[solid][size]
 			
@@ -259,26 +259,26 @@ def main():
 		i += 1
 		
 	axs[0].plot(lamda, intflux_sum, color="black", label='Model')
-	axs[0].plot(wl, flux, color="grey", label="van Boekel (2005)")
+	axs[0].plot(wl, flux, color="grey", label="Data")
 	
 	# 8 to 13 microns zoomed in version of the above plot 
-	first = np.where(lamda >= 8 * u.micron)[0][0]
-	last = np.where(lamda <= 13 * u.micron)[0][-1]
 	i, j = 0, 0
-	
+
 	for solid in top5_solids:
 		for size in gs_ranges:
 			
 			if lamdas[solid][size] == None or solid=="Olivine" or solid=="Pyroxene":
 				print("Skipping: ", solid, size)
 				continue
-					
+			
+			first = np.where(lamdas[solid][size] >= 8 * u.micron)[0][0]
+			last = np.where(lamdas[solid][size] <= 13 * u.micron)[0][-1]		
 			axs[1].plot(lamdas[solid][size][first: last+1], intflux[solid][size][first: last+1], color=colours[i], linestyle=styles[j], label=r"{0} {1}$\mu$m".format(latex_name(solid), size))
 			j += 1
 		i += 1
 			
 	axs[1].plot(lamda[first: last+1], intflux_sum[first: last+1], color="black", label='Model')
-	axs[1].plot(wl, flux, color="grey", label="van Boekel (2005)")
+	axs[1].plot(wl, flux, color="grey", label="Data")
 	
 	textstr = add_textbox(**kwargs)
 	
@@ -287,7 +287,7 @@ def main():
 		ax.set_ylabel('Flux (Jy)')
 		ax.label_outer()
 		
-	axs[0].text(0.15, 0.85, textstr, transform=axs[0].transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))		
+	axs[0].text(0.15, 0.7, textstr, transform=axs[0].transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))		
 	axs[0].set_title(r"0 to 20 $\mu$m")
 	axs[1].set_title(r"8 to 13 $\mu$m")
 	fig.suptitle("Combined Spectrum for all Solids")
@@ -297,7 +297,11 @@ def main():
 	plt.savefig(folder + "Overall_spectrum_multgs_R{0}-{1}.png".format(Rmin.value, Rmax.value))
 	plt.show()
 	
-	################################################################### Plotting the overall spectrum before and after the gap ###############################################################################
+	
+	######################################################################## Creating stacked bar graph of flux contributions #################################################################################
+	
+	
+	################################################################### Plotting the overall spectrum before and after the gap/ring ###########################################################################
 	if add_gap:
 		
 		R_gap1 = np.round(R_arr[wgap_ind1], 1)
@@ -322,6 +326,32 @@ def main():
 		plt.legend(loc='upper right')	
 		plt.tight_layout()
 		plt.savefig(folder + "Gap_spectra.png")
+		plt.show()	
+		
+	if add_ring:
+		
+		R_ring1 = np.round(R_arr[wring_ind1], 1)
+		R_ring2 = np.round(R_arr[wring_ind2], 1)
+		
+		# Calculating and plotting the spectrum before the ring
+		intflux_beforering = calculate_spectra(F_map_sum, R_arr, Rmin, R_ring1, dist_pc)	
+		plt.plot(lamda, intflux_beforering, label=r"Before Ring = ({0},{1}) AU".format(Rmin.value, R_ring1.value))
+		
+		# Calculating and plotting the spectrum in the ring
+		intflux_ring = calculate_spectra(F_map_sum, R_arr, R_ring1, R_ring2, dist_pc)	
+		plt.plot(lamda, intflux_ring, label=r"Ring = ({0},{1}) AU".format(R_ring1.value, R_ring2.value))
+		
+		# Calculating and plotting the spectrum after the ring
+		intflux_afterring = calculate_spectra(F_map_sum, R_arr, R_ring2, Rmax, dist_pc)	
+		plt.plot(lamda, intflux_afterring, label=r"After Ring = ({0},{1}) AU".format(R_ring2.value, Rmax.value))
+		
+		plt.xlabel(r'$\lambda$ ($\mu$m)')
+		plt.ylabel('Flux (Jy)')
+		
+		plt.title(r'Ring Spectra')
+		plt.legend(loc='upper right')	
+		plt.tight_layout()
+		plt.savefig(folder + "Ring_spectra.png")
 		plt.show()		
 		
 	############################################################## Plotting the overall spectrum considering multiple radii limits ###########################################################################
@@ -340,7 +370,7 @@ def main():
 		j += 1
 		
 	textstr = add_textbox(**kwargs)	
-	plt.text(0.15, 0.85, textstr, transform=ax.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
+	plt.text(0.15, 0.7, textstr, transform=ax.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
 	
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Flux (Jy)')
@@ -356,10 +386,18 @@ def main():
 	i = 0
 	
 	for Bl in B_small:
-		
-		corr_flux_absB = hankel_transform(F_map_sum, R_arr, lamda, 0.0, Bl, dist_pc, wl_array = True) 
-		axs[0].plot(lamda, corr_flux_absB, color = colours[i], label = 'B = {0} m'.format(Bl.value))
-		axs[1].plot(lamda[first: last+1], corr_flux_absB[first: last+1], color = colours[i], label = 'B = {0} m'.format(Bl.value))	
+		corr_flux = np.zeros(lsize) * u.Jy
+		for solid in top5_solids:
+			for size in gs_ranges:
+				
+				if solid == 'CaMgSi2O6' and size == '2.0':
+					continue
+				elif solid == 'Olivine' or solid == 'Pyroxene':
+					continue
+					
+				corr_flux += np.abs(hankel_transform(F_map[solid][size], R_arr, lamdas[solid][size], 0.0, Bl, dist_pc, wl_array = True)) 
+		axs[0].plot(lamda, corr_flux, color = colours[i], label = 'B = {0} m'.format(Bl.value))
+		axs[1].plot(lamda[first: last+1], corr_flux[first: last+1], color = colours[i], label = 'B = {0} m'.format(Bl.value))	
 		i += 1
 	
 	textstr = add_textbox(**kwargs)	
@@ -370,13 +408,13 @@ def main():
 		ax.label_outer()
 		ax.legend(loc='upper right')
 	
-	axs[0].text(0.15, 0.85, textstr, transform=axs[0].transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
+	axs[0].text(0.15, 0.7, textstr, transform=axs[0].transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
 	axs[0].set_title(r"0 to 20 $\mu$m")
 	axs[1].set_title(r"8 to 13 $\mu$m")
 		             
 	fig.suptitle(r"Correlated Flux: Multiple Baselines")
 	fig.tight_layout()
-	plt.savefig(folder + 'Correlated_flux_multB_multgs.png')
+	plt.savefig(folder + 'Correlated_flux_multB_multgs_other.png')
 	plt.show()
 	
 	##################################################### Plotting the correlated flux density for a single wavelength against baselines ######################################################################
@@ -403,12 +441,12 @@ def main():
 		ax.legend(loc='upper right')
 		
 	axs[0].text(0.7, 0.6, textstr, transform=axs[0].transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
-	axs[0].set_title(r"$All wavelengths$")
+	axs[0].set_title(r"All wavelengths")
 	axs[1].set_title(r"Zoomed-in version")
 	
 	fig.suptitle(r"Correlated Flux: Multiple Wavelengths")
 	fig.tight_layout()
-	plt.savefig(folder + "Correlated_flux_multWL_multgs.png")
+	plt.savefig(folder + "Correlated_flux_multWL_multgs_other.png")
 	plt.show()
 
 
