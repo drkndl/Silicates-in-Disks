@@ -15,19 +15,19 @@ from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import add_textbox, Qcurve_plotter, plot_surf_dens_radial, plot_surf_dens_disk, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
 from compare_grain_sizes import get_paper_spectra
-from HD144432_q0373_p07_S4900_Tamf1350_mfchange4_gap.properties import *
+from HD144432_gapring.properties import *
 
 
 plt.rcParams["font.family"] = "serif"
 plt.rcParams['font.serif'] = ['TeX Gyre Schola']
 plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['lines.linewidth'] = 2
-plt.rcParams['axes.labelsize'] = 12
-plt.rcParams['axes.titlesize'] = 14
-plt.rcParams['xtick.labelsize'] = 12
-plt.rcParams['ytick.labelsize'] = 12
-plt.rcParams['legend.fontsize'] = 11
-plt.rcParams['figure.titlesize'] = 14
+plt.rcParams['axes.labelsize'] = 15
+plt.rcParams['axes.titlesize'] = 16
+plt.rcParams['xtick.labelsize'] = 13
+plt.rcParams['ytick.labelsize'] = 13
+plt.rcParams['legend.fontsize'] = 13
+plt.rcParams['figure.titlesize'] = 16
 
 
 # Some constants in CGS
@@ -80,6 +80,7 @@ def main():
 	# Plotting the abunances as a function of radius and temperature
 	R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk, NELEM, NMOLE, NDUST)
 	
+	dfhwbfjwe
 	# Finding the most abundant condensates
 	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST) 
 	top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr, solid_names) 
@@ -241,27 +242,68 @@ def main():
 	wl, flux = get_paper_spectra(datfile)
 	
 	n = len(top5_solids)
-	fig, axs = plt.subplots(1, 2, figsize=(14, 7))
-	# colours = cmr.take_cmap_colors('cmr.wildfire', n, cmap_range=(0.1, 0.9))
-	colours = plt.cm.jet(np.linspace(0,1,n))
-	styles = np.tile(['solid', 'dashed'], n)
-	i, j = 0, 0
+	# ~ fig, axs = plt.subplots(1, 2, figsize=(14, 7))
+	# ~ # colours = cmr.take_cmap_colors('cmr.wildfire', n, cmap_range=(0.1, 0.9))
+	# ~ colours = plt.cm.jet(np.linspace(0,1,n))
+	# ~ styles = np.tile(['solid', 'dashed'], n)
+	# ~ i, j = 0, 0
 	
-	for solid in top5_solids:
-		for size in gs_ranges:
+	# ~ for solid in top5_solids:
+		# ~ for size in gs_ranges:
 			
-			if lamdas[solid][size] == None or solid=="Olivine" or solid=="Pyroxene":
-				print("Skipping: ", solid, size)
-				continue
+			# ~ if lamdas[solid][size] == None or solid=="Olivine" or solid=="Pyroxene":
+				# ~ print("Skipping: ", solid, size)
+				# ~ continue
 				
-			axs[0].plot(lamdas[solid][size], intflux[solid][size], color=colours[i], linestyle=styles[j], label=r"{0} {1}$\mu$m".format(latex_name(solid), size))
-			j += 1
-		i += 1
+			# ~ axs[0].plot(lamdas[solid][size], intflux[solid][size], color=colours[i], linestyle=styles[j], label=r"{0} {1}$\mu$m".format(latex_name(solid), size))
+			# ~ j += 1
+		# ~ i += 1
 		
-	axs[0].plot(lamda, intflux_sum, color="black", label='Model')
-	axs[0].plot(wl, flux, color="grey", label="Data")
+	# ~ axs[0].plot(lamda, intflux_sum, color="black", label='Model')
+	# ~ axs[0].plot(wl, flux, color="grey", label="Data")
 	
-	# 8 to 13 microns zoomed in version of the above plot 
+	# ~ # 8 to 13 microns zoomed in version of the above plot 
+	# ~ i, j = 0, 0
+
+	# ~ for solid in top5_solids:
+		# ~ for size in gs_ranges:
+			
+			# ~ if lamdas[solid][size] == None or solid=="Olivine" or solid=="Pyroxene":
+				# ~ print("Skipping: ", solid, size)
+				# ~ continue
+			
+			# ~ first = np.where(lamdas[solid][size] >= 8 * u.micron)[0][0]
+			# ~ last = np.where(lamdas[solid][size] <= 13 * u.micron)[0][-1]		
+			# ~ axs[1].plot(lamdas[solid][size][first: last+1], intflux[solid][size][first: last+1], color=colours[i], linestyle=styles[j], label=r"{0} {1}$\mu$m".format(latex_name(solid), size))
+			# ~ j += 1
+		# ~ i += 1
+			
+	# ~ axs[1].plot(lamda[first: last+1], intflux_sum[first: last+1], color="black", label='Model')
+	# ~ axs[1].plot(wl, flux, color="grey", label="Data")
+	
+	# ~ textstr = add_textbox(**kwargs)
+	
+	# ~ for ax in axs:
+		# ~ ax.set_xlabel(r'$\lambda$ ($\mu$m)')
+		# ~ ax.set_ylabel('Flux (Jy)')
+		# ~ ax.label_outer()
+		
+	# ~ axs[0].text(0.15, 0.7, textstr, transform=axs[0].transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))		
+	# ~ axs[0].set_title(r"0 to 20 $\mu$m")
+	# ~ axs[1].set_title(r"8 to 13 $\mu$m")
+	# ~ fig.suptitle("Combined Spectrum for all Solids")
+	# ~ axs[1].legend(loc='upper left', bbox_to_anchor=(1, 1))
+	
+	# ~ fig.tight_layout()
+	# ~ plt.savefig(folder + "Overall_spectrum_multgs_R{0}-{1}.png".format(Rmin.value, Rmax.value))
+	# ~ plt.show()	
+	
+	fig, axs = plt.subplots(1, 1, figsize=(12,10))
+	# colours = cmr.take_cmap_colors('cmr.wildfire', n, cmap_range=(0.1, 0.9))
+	# ~ colours = plt.cm.jet(np.linspace(0,1,n))
+	# ~ colours = cmr.take_cmap_colors('cmr.tropical', n, cmap_range=(0.0, 1.0))
+	colours = ['saddlebrown', 'red', 'orange', 'green', 'purple', 'blue', 'gold', 'darkorchid', 'limegreen']
+	styles = np.tile(['solid', 'dashed'], n)
 	i, j = 0, 0
 
 	for solid in top5_solids:
@@ -273,35 +315,30 @@ def main():
 			
 			first = np.where(lamdas[solid][size] >= 8 * u.micron)[0][0]
 			last = np.where(lamdas[solid][size] <= 13 * u.micron)[0][-1]		
-			axs[1].plot(lamdas[solid][size][first: last+1], intflux[solid][size][first: last+1], color=colours[i], linestyle=styles[j], label=r"{0} {1}$\mu$m".format(latex_name(solid), size))
+			axs.plot(lamdas[solid][size][first: last+1], intflux[solid][size][first: last+1], color=colours[i], linestyle=styles[j], label=r"{0} {1}$\mu$m".format(latex_name(solid), size))
 			j += 1
 		i += 1
 			
-	axs[1].plot(lamda[first: last+1], intflux_sum[first: last+1], color="black", label='Model')
-	axs[1].plot(wl, flux, color="grey", label="Data")
+	axs.plot(lamda[first: last+1], intflux_sum[first: last+1], color="black", label='Model')
+	axs.plot(wl, flux, color="grey", label="MATISSE Data")
 	
 	textstr = add_textbox(**kwargs)
 	
-	for ax in axs:
-		ax.set_xlabel(r'$\lambda$ ($\mu$m)')
-		ax.set_ylabel('Flux (Jy)')
-		ax.label_outer()
+	axs.set_xlabel(r'$\lambda$ ($\mu$m)')
+	axs.set_ylabel('Flux (Jy)')
+		# ~ ax.label_outer()
 		
-	axs[0].text(0.15, 0.7, textstr, transform=axs[0].transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))		
-	axs[0].set_title(r"0 to 20 $\mu$m")
-	axs[1].set_title(r"8 to 13 $\mu$m")
-	fig.suptitle("Combined Spectrum for all Solids")
-	axs[1].legend(loc='upper left', bbox_to_anchor=(1, 1))
+	axs.text(0.15, 0.85, textstr, transform=axs.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 13, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))		
+	fig.suptitle("Single Dish Spectrum with Solid Contributions: Data vs Model")
+	axs.legend(loc='upper left', bbox_to_anchor=(1, 1))
 	
 	fig.tight_layout()
-	plt.savefig(folder + "Overall_spectrum_multgs_R{0}-{1}.png".format(Rmin.value, Rmax.value))
+	plt.savefig(folder + "Presentation_Overall_spectrum_multgs_R{0}-{1}.png".format(Rmin.value, Rmax.value))
 	plt.show()
-	
-	
-	######################################################################## Creating stacked bar graph of flux contributions #################################################################################
-	
+
 	
 	################################################################### Plotting the overall spectrum before and after the gap/ring ###########################################################################
+	
 	if add_gap:
 		
 		R_gap1 = np.round(R_arr[wgap_ind1], 1)
@@ -309,23 +346,23 @@ def main():
 		
 		# Calculating and plotting the spectrum before the gap
 		intflux_beforegap = calculate_spectra(F_map_sum, R_arr, Rmin, R_gap1, dist_pc)	
-		plt.plot(lamda, intflux_beforegap, label=r"Before Gap = ({0},{1}) AU".format(Rmin.value, R_gap1.value))
+		plt.plot(lamda, intflux_beforegap, color='blue', label=r"Before Gap = ({0},{1}) AU".format(Rmin.value, R_gap1.value))
 		
 		# Calculating and plotting the spectrum in the gap
-		intflux_gap = calculate_spectra(F_map_sum, R_arr, R_gap1, R_gap2, dist_pc)	
-		plt.plot(lamda, intflux_gap, label=r"Gap = ({0},{1}) AU".format(R_gap1.value, R_gap2.value))
+		# ~ intflux_gap = calculate_spectra(F_map_sum, R_arr, R_gap1, R_gap2, dist_pc)	
+		# ~ plt.plot(lamda, intflux_gap, label=r"Gap = ({0},{1}) AU".format(R_gap1.value, R_gap2.value))
 		
 		# Calculating and plotting the spectrum after the gap
 		intflux_aftergap = calculate_spectra(F_map_sum, R_arr, R_gap2, Rmax, dist_pc)	
-		plt.plot(lamda, intflux_aftergap, label=r"After Gap = ({0},{1}) AU".format(R_gap2.value, Rmax.value))
+		plt.plot(lamda, intflux_aftergap, color='red', linestyle='dashed', label=r"After Gap = ({0},{1}) AU".format(R_gap2.value, Rmax.value))
 		
 		plt.xlabel(r'$\lambda$ ($\mu$m)')
 		plt.ylabel('Flux (Jy)')
 		
-		plt.title(r'Gap Spectra')
+		plt.title(r'Single Dish Spectra Before and After Gap')
 		plt.legend(loc='upper right')	
 		plt.tight_layout()
-		plt.savefig(folder + "Gap_spectra.png")
+		plt.savefig(folder + "Presentation_Gap_spectra.png")
 		plt.show()	
 		
 	if add_ring:

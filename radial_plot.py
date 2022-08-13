@@ -22,11 +22,11 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	styl = ['solid']*Ncolor + ['dotted']*Ncolor + ['dashed']*Ncolor + ['dashdot']*Ncolor + ['(0, (1, 10))']*Ncolor*7
 	widt = [2]*Ncolor*10
 	
-	ymin  = -7.0                # Minimum exponent on y-axis
+	ymin  = -6.0                # Minimum exponent on y-axis
 	ymax = -4.0                  # Maximum exponent on y-axis
 	csize = 5
 	
-	filename = folder + 'abundances_vs_R.pdf'
+	filename = folder + 'Presentation_abundances_vs_R.pdf'
 	
 	points = np.where((R_arr>Rmin) & (R_arr<Rmax))[0]             # Excluding the indices of the maximum and minimum gas temperature
 	solids = []
@@ -44,7 +44,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	pp = PdfPages(filename)
 	
 	# Creating the plots
-	fig, ax = plt.subplots(figsize=(14, 7))
+	fig, ax = plt.subplots(figsize=(10, 15))
 	ax2 = ax.twiny()                                        # Adding the temperatures as an X-axis on top of the plot
 	indices = np.argsort(smean)
 	
@@ -68,9 +68,9 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	
 		
 	# Plot formatting
-	Tlimit = 200 * u.K 
-	Rlimit = r_from_T(R_in, Tlimit, T0, q)                                            # Radius limit for zoomed in plot (AU)
-	# Rlimit = Rmax
+	# ~ Tlimit = 200 * u.K 
+	# ~ Rlimit = r_from_T(R_in, Tlimit, T0, q)                                            # Radius limit for zoomed in plot (AU)
+	Rlimit = 4.0 * u.AU
 	plt.title('{0} Abundances of Condensates vs R'.format(disk), fontsize=14)
 	ax.set_xlabel(r'$R\ \mathrm{[AU]}$', fontsize=12)
 	ax.set_ylabel(r'$\mathrm{log}_{10}\ n_\mathrm{solid}/n_\mathrm{\langle H\rangle}$', fontsize=12)
@@ -87,10 +87,10 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	ax2.set_xticklabels(T_ticks.value)
 	ax2.set_xlabel(r"$T \mathrm{[K]}$", fontsize=12)
 	
-	leg = plt.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize=9, fancybox=True, handlelength=0.5, prop={'size':csize}, ncol=2)       # Legend properties
-	for color, text in zip(colors, leg.get_texts()):
-		text.set_color(color)
-		text.set_size(10)
+	# ~ leg = plt.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize=14, fancybox=True, handlelength=0.5, prop={'size':csize}, ncol=2)       # Legend properties
+	# ~ for color, text in zip(colors, leg.get_texts()):
+		# ~ text.set_color(color)
+		# ~ text.set_size(10)
 	  
 	plt.tight_layout()
 	plt.savefig(pp,format='pdf')

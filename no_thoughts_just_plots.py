@@ -117,8 +117,8 @@ def plot_surf_dens_radial(surf_dens, R_arr, folder, **kwargs):
 			
 		i += 1
 		
-	plt.ylim(10**-13, 10**-6)
-	plt.xlim(0, 10)
+	plt.ylim(10**-13, 10**-7)
+	plt.xlim(0, 8)
 	
 	plt.title("Radial distribution of surface densities".format(latex_name(solid)))
 	plt.ylabel(r"Surface density $\Sigma$ ($g/cm^2)$")
@@ -127,7 +127,7 @@ def plot_surf_dens_radial(surf_dens, R_arr, folder, **kwargs):
 	plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 	# textstr = add_textbox(q, e, Qr, Sigma0.value, amor_temp.value, add_gap, rgap.value, wgap.value, sgap)	
 	textstr = add_textbox(**kwargs)
-	plt.text(1.1, 0.35, textstr, transform=ax.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
+	plt.text(1.15, 0.25, textstr, transform=ax.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 13, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
 	
 	plt.tight_layout()
 	plt.savefig(folder + "surf_dens_vs_R.png")
@@ -147,7 +147,7 @@ def plot_surf_dens_disk(surf_dens, R_arr, folder, **kwargs):
 	"""
 	
 	# Plotting the disk surface density only for 10 AU
-	ind10 = np.where(R_arr <= 10 *u.AU)[0]
+	ind10 = np.where(R_arr <= 3 *u.AU)[0]
 	R = R_arr[ind10]
 	
 	phi = np.linspace(0, 360, len(R))
@@ -171,7 +171,7 @@ def plot_surf_dens_disk(surf_dens, R_arr, folder, **kwargs):
 	plt.title("Disk surface density (assuming azimuthal symmetry)")
 	
 	textstr = add_textbox(**kwargs)	
-	plt.text(0.15, 0.7, textstr, transform=ax.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
+	plt.text(0.15, 0.7, textstr, transform=ax.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 13, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
 	
 	plt.tight_layout()
 	plt.colorbar(pad=0.005, label=r"log($\Sigma$) ($g/cm^2$)")

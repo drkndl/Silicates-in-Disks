@@ -24,12 +24,12 @@ plt.rcParams["font.family"] = "serif"
 plt.rcParams['font.serif'] = ['TeX Gyre Schola']
 plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['lines.linewidth'] = 2
-plt.rcParams['axes.labelsize'] = 12
-plt.rcParams['axes.titlesize'] = 14
-plt.rcParams['xtick.labelsize'] = 12
-plt.rcParams['ytick.labelsize'] = 12
-plt.rcParams['legend.fontsize'] = 11
-plt.rcParams['figure.titlesize'] = 14
+plt.rcParams['axes.labelsize'] = 15
+plt.rcParams['axes.titlesize'] = 16
+plt.rcParams['xtick.labelsize'] = 13
+plt.rcParams['ytick.labelsize'] = 13
+plt.rcParams['legend.fontsize'] = 13
+plt.rcParams['figure.titlesize'] = 16
 
 
 # Some constants in CGS
@@ -258,9 +258,25 @@ def main():
 	
 	plt.xlabel(r'$\lambda$ ($\mu$m)')
 	plt.ylabel('Correlated flux (Jy)')
-	plt.title("Correlated flux from Data")
+	plt.title("HD144432 Baseline Plot - MATISSE")
 	plt.legend()
 	plt.savefig(folder + "data_corrflux.png")	
+	plt.show()
+	
+	################################################################################# Plotting the data spectrum ########################################################################################
+	
+	hdul = fits.open('HD_144432_2022-03-22T09_11_24_N_TARGET_FINALCAL_INT_VISCORRFLUX.fits')
+	data = hdul['OI_FLUX'].data
+	single_dish_spectrum = data.field('FLUXDATA')
+	plot_wl = hdul['OI_WAVELENGTH'].data['EFF_WAVE'] * 1e6 * u.micron
+	
+	plt.plot(plot_wl, single_dish_spectrum[0,:])
+	
+	plt.xlabel(r'$\lambda$ ($\mu$m)')
+	plt.ylabel('Flux (Jy)')
+	plt.title("HD144432 Spectrum - MATISSE")
+	plt.legend()
+	plt.savefig(folder + "data_spectrum.png")	
 	plt.show()
 	
 	##################################################### Plotting the correlated flux density for multiple baselines against wavelengths #####################################################################
@@ -272,8 +288,9 @@ def main():
 	
 	axes = [axs[0, 0], axs[0, 1], axs[0, 2], axs[1,0], axs[1, 1], axs[1, 2]]
 	n = len(top5_solids)
-	colours = plt.cm.jet(np.linspace(0,1,n))
+	# ~ colours = plt.cm.jet(np.linspace(0,1,n))
 	# ~ colours = ['darkblue', 'blue',  'teal', 'darkgreen', 'green', 'goldenrod', 'orangered', 'red', 'orchid']
+	colours = ['saddlebrown', 'red', 'orange', 'green', 'purple', 'blue', 'gold', 'darkorchid', 'limegreen']
 	styles = np.tile(['solid', 'dashed'], n)
 	
 	for i in range(len(Blines)):
@@ -292,18 +309,42 @@ def main():
 				
 				corr_flux = hankel_transform_individual(F_map[solid][size], R_arr, lamdas[solid][size], Blines[i], dist_pc) 
 				corr_flux_total += corr_flux
-				axes[i].plot(lamdas[solid][size][first: last+1], corr_flux[first: last+1], color=colours[j], linestyle=styles[k], label = '{0} {1}'.format(latex_name(solid), size))	
+				if Blines[i].value == 62.2:
+					axs[0,2].plot(lamdas[solid][size][first: last+1], corr_flux[first: last+1], color=colours[j], linestyle=styles[k], label = '{0} {1}'.format(latex_name(solid), size))
+				elif Blines[i].value == 46.3:
+					axs[0,0].plot(lamdas[solid][size][first: last+1], corr_flux[first: last+1], color=colours[j], linestyle=styles[k], label = '{0} {1}'.format(latex_name(solid), size))	
+				else:
+					axes[i].plot(lamdas[solid][size][first: last+1], corr_flux[first: last+1], color=colours[j], linestyle=styles[k], label = '{0} {1}'.format(latex_name(solid), size))	
 				k += 1
 			j += 1
 		
 		# Plot the complete model	
-		# corr_flux_absB = hankel_transform(F_map_sum, R_arr, lamda, 0.0, Blines[i], dist_pc, wl_array = True) 
-		axes[i].plot(lamda[first: last+1], np.abs(corr_flux_total[first: last+1]), color = 'black', label = 'Model')
-		axes[i].set_ylim([-1.0, 5.0])
-		axes[i].set_title("B = {0} m".format(Blines[i].value))
+		if Blines[i].value == 62.2:
+			axs[0,2].plot(lamda[first: last+1], np.abs(corr_flux_total[first: last+1]), color = 'black', label = 'Model')
+			axs[0,2].set_ylim([-1.0, 5.0])
+			axs[0,2].set_title("B = {0} m".format(Blines[i].value))
+		elif Blines[i].value == 46.3:
+			axs[0,0].plot(lamda[first: last+1], np.abs(corr_flux_total[first: last+1]), color = 'black', label = 'Model')	
+			axs[0,0].set_ylim([-1.0, 5.0])
+			axs[0,0].set_title("B = {0} m".format(Blines[i].value))
+		else:
+			axes[i].plot(lamda[first: last+1], np.abs(corr_flux_total[first: last+1]), color = 'black', label = 'Model')
+			axes[i].set_ylim([-1.0, 5.0])
+			axes[i].set_title("B = {0} m".format(Blines[i].value))
+			
+		# ~ axes[i].plot(lamda[first: last+1], np.abs(corr_flux_total[first: last+1]), color = 'black', label = 'Model')
+		# ~ axes[i].set_ylim([-1.0, 5.0])
+		# ~ axes[i].set_title("B = {0} m".format(Blines[i].value))
 		
 		# Plot the data
-		axes[i].plot(plot_wl, corrflux[i], color='grey', label='Data')
+		if Blines[i].value == 62.2:
+			axs[0,2].plot(plot_wl, corrflux[i], color='grey', label='MATISSE Data')
+		elif Blines[i].value == 46.3:
+			axs[0,0].plot(plot_wl, corrflux[i], color='grey', label='MATISSE Data')	
+		else:
+			axes[i].plot(plot_wl, corrflux[i], color='grey', label='MATISSE Data')
+			
+		# ~ axes[i].plot(plot_wl, corrflux[i], color='grey', label='MATISSE Data')
 		
 	textstr = add_textbox(**kwargs)	
 	
@@ -313,7 +354,7 @@ def main():
 		ax.label_outer()
 		# ax.legend(loc='upper right')
 	
-	axes[0].text(0.15, 0.8, textstr, transform=axes[0].transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
+	# ~ axes[0].text(0.15, 0.8, textstr, transform=axes[0].transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 13, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
 	
 	handles, labels = axes[0].get_legend_handles_labels()
 	lgd = fig.legend(handles, labels, loc='upper left', bbox_to_anchor=(1, 1), bbox_transform=axes[2].transAxes)
@@ -321,7 +362,7 @@ def main():
 	          
 	fig.suptitle(r"Solid-wise Correlated Flux: Multiple Baselines")
 	fig.tight_layout()
-	plt.savefig(folder + 'Correlated_flux_multsolid_multB_multgs.png', bbox_extra_artists=(lgd,), bbox_inches='tight')
+	plt.savefig(folder + 'Presentation_Correlated_flux_multsolid_multB_multgs.png', bbox_extra_artists=(lgd,), bbox_inches='tight')
 	plt.show()
 
 
