@@ -26,7 +26,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	ymax = -4.0                  # Maximum exponent on y-axis
 	csize = 5
 	
-	filename = folder + 'Presentation_abundances_vs_R.pdf'
+	filename = folder + 'abundances_vs_R.pdf'
 	
 	points = np.where((R_arr>Rmin) & (R_arr<Rmax))[0]             # Excluding the indices of the maximum and minimum gas temperature
 	solids = []
@@ -68,9 +68,9 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	
 		
 	# Plot formatting
-	# ~ Tlimit = 200 * u.K 
-	# ~ Rlimit = r_from_T(R_in, Tlimit, T0, q)                                            # Radius limit for zoomed in plot (AU)
-	Rlimit = 4.0 * u.AU
+	Tlimit = 200 * u.K 
+	Rlimit = r_from_T(R_in, Tlimit, T0, q)                                            # Radius limit for zoomed in plot (AU)
+	# Rlimit = 4.0 * u.AU
 	plt.title('{0} Abundances of Condensates vs R'.format(disk), fontsize=14)
 	ax.set_xlabel(r'$R\ \mathrm{[AU]}$', fontsize=12)
 	ax.set_ylabel(r'$\mathrm{log}_{10}\ n_\mathrm{solid}/n_\mathrm{\langle H\rangle}$', fontsize=12)
@@ -87,10 +87,10 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	ax2.set_xticklabels(T_ticks.value)
 	ax2.set_xlabel(r"$T \mathrm{[K]}$", fontsize=12)
 	
-	# ~ leg = plt.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize=14, fancybox=True, handlelength=0.5, prop={'size':csize}, ncol=2)       # Legend properties
-	# ~ for color, text in zip(colors, leg.get_texts()):
-		# ~ text.set_color(color)
-		# ~ text.set_size(10)
+	leg = plt.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize=14, fancybox=True, handlelength=0.5, prop={'size':csize}, ncol=2)       # Legend properties
+	for color, text in zip(colors, leg.get_texts()):
+		text.set_color(color)
+		text.set_size(10)
 	  
 	plt.tight_layout()
 	plt.savefig(pp,format='pdf')
