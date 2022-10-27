@@ -15,6 +15,7 @@ from T_plot import T_plot
 from radial_plot import R_plot
 from compare_grain_sizes import get_paper_spectra
 from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
+import corner 
 
 
 # Some constants in CGS
@@ -29,7 +30,7 @@ Rc = const.R.cgs           					# Ideal gas constant (erg K^-1 mol^-1)
 G = const.G.cgs           					# Gravitational constant (cm^3 g^-1 s^-2)
 
 
-################################################### Defining all the non-parameters and other arguments for the MCMC ###########################################################################################
+########################### Defining all the non-parameters and other arguments for the MCMC #######################################
 
 T0 = 1500.0 * u.K                          				# Dust sublimation temperature (K)
 Qr = 3                                  				# Ratio of absorption efficiencies 
@@ -46,8 +47,8 @@ H = 1.0 * u.cm 								    		# Scale height (cm)
 # rc = 1 * u.AU
 add_gap = True                                         # True if adding a gap to the disk
 add_ring = False
-sgap = 10**-3  											# The amount by which the surface density is to be dampened in the gap
-sring = 10**-3  											# The amount by which the surface density is to be dampened in the gap
+sgap = 10**-2  											# The amount by which the surface density is to be dampened in the gap
+sring = 10**2  											# The amount by which the surface density is to be dampened in the gap
 
 disk = 'MCMC_HD144432' 										# The name of the disk
 folder = disk + '/'  								    # Path where output files are saved
@@ -137,24 +138,26 @@ if len(wl) != lsize:
 	flux = spl2(new_indices)
 
 flux_err = 0.05 * np.mean(flux)
-# data = (q, e, Sigma0, Tg, R_in, R_arr, H, nHtot, molwt, top5_solids, add_gap, add_ring, sgap, sring, lamdas, kappas, topabunds_radii, dist_pc, flux, flux_err)
 data = (lamdas['Mg2SiO4']['0.1'], flux, flux_err)
 nwalkers = 24
-niter = 3000
-initial = np.array([0.5, 0.2, 0.5, 0.2, 1350.0, 1.0, 0.0, 0.25, 0.35, 0.5, 0.5])
+niter = 10000
+initial = np.array([0.4, 0.2, 0.4, 0.2, 1000.0, 1.0, 0.0, 0.25, 0.35, 0.5, 0.5])
 ndim = len(initial)
-p0 = [np.array(initial) + 1e-2 * np.random.randn(ndim) for i in range(nwalkers)]
+p0 = [np.array(initial) + 1e-1 * np.random.randn(ndim) for i in range(nwalkers)]
+
+# For amorphous temperature limit, an accuracy of 1e1 instead of 1e-1 (latter does not allow it to explore entire parameter space)
+for i in range(len(p0)):
+	p0[i][4] = initial[4] + 1e1 * np.random.randn()
 
 
-###############################################################################################################################################################################################################
+######################################################################################################################################
 
 
 def model(theta, q=q, p=e, Sigma0=Sigma0, T=Tg, Rin=R_in, R_arr=R_arr, H=H, nHtot=nHtot, mol=molwt, solids=top5_solids, add_gap=add_gap, add_ring=add_ring, sgap=sgap, sring=sring, lamdas=lamdas, kappas=kappas, topabunds=topabunds_radii, dist_pc=dist_pc):
 	
 	# Model parameters
-	# rgap, wgap, rring, wring, amor_temp, mf_ol_01, mf_py_01, mf_fors_01, mf_ens_01, mf_Fe_01, mf_FeS_01 = theta
 	rgap_ul, wgap_ul, rring_ul, wring_ul, amor_temp_ul, mf_ol_01, mf_py_01, mf_fors_01, mf_ens_01, mf_Fe_01, mf_FeS_01 = theta
-	print(rgap_ul, wgap_ul, amor_temp_ul, mf_ol_01, mf_py_01, mf_fors_01, mf_ens_01, mf_Fe_01, mf_FeS_01)
+	# print(rgap_ul, wgap_ul, amor_temp_ul, mf_ol_01, mf_py_01, mf_fors_01, mf_ens_01, mf_Fe_01, mf_FeS_01)
 	
 	# Adding units to the model
 	rgap = rgap_ul * u.AU
@@ -279,16 +282,29 @@ def lnprob(theta, x, y, yerr):
     return lp + lnlike(theta, x, y, yerr)
     
     
-def main(p0,nwalkers,niter,ndim,lnprob,data):
+def main(p0, nwalkers, niter, ndim, lnprob, data):
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=data)
 
     print("Running burn-in...")
-    p0, _, _ = sampler.run_mcmc(p0, 300, progress=True)
+
+    # On some iterations, wgap is greater than rgap. Try-except is to avoid considering these values
+    try:
+    	p0, _, _ = sampler.run_mcmc(p0, 300, progress=True)
+    except:
+    	IndexError()
+
     sampler.reset()
 
     print("Running production...")
-    pos, prob, state = sampler.run_mcmc(p0, niter, progress=True)
 
+    # On some iterations, wgap is greater than rgap. Try-except is to avoid considering these values
+    try:
+    	pos, prob, state = sampler.run_mcmc(p0, niter, progress=True)
+    except:
+    	IndexError()
+
+    print(data)
+    
     return sampler, pos, prob, state
 
 
@@ -297,11 +313,23 @@ samples = sampler.flatchain
 
 theta_max  = samples[np.argmax(sampler.flatlnprobability)]
 print(theta_max)
+
+# Save the best fit parameters into a file
+with open(folder + 'HD144432_MCMC_params.dat', 'w') as file:
+	for i in range(len(theta_max)):
+		file.write(str(theta_max[i]))
+
 best_fit_model = model(theta_max)
 
-diskname = disk.split('_')[0]
-datfile = folder + 'van_Boekel_' + diskname + '.dat'
-wl, flux = get_paper_spectra(datfile)
+################################################### Plotting the corner plot ####################################################
+
+lbls = ['rgap', 'wgap', 'rring', 'wring', 'amor_temp', 'mf_ol_01', 'mf_py_01', 'mf_fors_01', 'mf_ens_01', 'mf_Fe_01', 'mf_FeS_01']
+figure = corner.corner(samples, labels=lbls)
+figure.savefig(folder + "cornerplot.png")
+
+################################################ Plotting the best fit spectrum #################################################
+
+fig, ax = plt.subplots(1, 1)
 
 if add_gap:
 	
@@ -355,12 +383,13 @@ else:
 				r'$mf_{Fe,0.1}=%.3f$' % (theta_max[9], ),
 				r'$mf_{FeS,0.1}=%.3f$' % (theta_max[10], )))
 
-plt.plot(lamdas['Mg2SiO4']['0.1'], best_fit_model, color="black", label="Best Fit")
-plt.plot(wl, flux, color="grey", label = "Data")
-plt.text(0.15, 0.85, textstr, transform=axs[0].transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
-plt.xlabel(r"Wavelength $\lambda$ ($\mu$m)")
-plt.ylabel(r"Flux (Jy)")
-plt.title("Spectrum with MCMC Best Fit")
-plt.legend()
-plt.savefig(folder + "bets_fit_spectrum.png")
+ax.plot(lamdas['Mg2SiO4']['0.1'], best_fit_model, color="black", label="Best Fit")
+ax.plot(wl, flux, color="grey", label = "Data")
+ax.text(0.1, 0.75, textstr, transform=ax.transAxes, horizontalalignment='center', verticalalignment='center', fontsize = 10, bbox = dict(boxstyle='round', facecolor = 'white', alpha = 0.5))
+ax.set_xlabel(r"Wavelength $\lambda$ ($\mu$m)")
+ax.set_ylabel(r"Flux (Jy)")
+ax.set_title("Spectrum with MCMC Best Fit")
+ax.legend()
+fig.tight_layout()
+fig.savefig(folder + "best_fit_spectrum.png")
 plt.show()

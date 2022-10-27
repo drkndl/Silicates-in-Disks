@@ -15,7 +15,7 @@ from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import add_textbox, Qcurve_plotter, plot_surf_dens_radial, plot_surf_dens_disk, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
 from compare_grain_sizes import get_paper_spectra
-from HD144432_check.properties import *
+from HD144432_MgSi_036_log.properties import *
 
 
 plt.rcParams["font.family"] = "serif"
@@ -237,7 +237,8 @@ def main():
 	######################################################## Plotting the solid spectra, overall spectrum and the paper spectrum #############################################################################
 	lamda = lamdas['Mg2SiO4']['0.1']
 	diskname = disk.split('_')[0]
-	datfile = folder + 'van_Boekel_' + diskname + '.dat'
+	# datfile = folder + 'van_Boekel_' + diskname + '.dat'
+	datfile = folder + 'van_Boekel_HD144432.dat'
 	wl, flux = get_paper_spectra(datfile)
 	
 	n = len(top5_solids)

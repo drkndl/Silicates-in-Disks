@@ -22,7 +22,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	styl = ['solid']*Ncolor + ['dotted']*Ncolor + ['dashed']*Ncolor + ['dashdot']*Ncolor + ['(0, (1, 10))']*Ncolor*7
 	widt = [2]*Ncolor*10
 	
-	ymin  = -6.0                # Minimum exponent on y-axis
+	ymin  = -6.5                # Minimum exponent on y-axis
 	ymax = -4.0                  # Maximum exponent on y-axis
 	csize = 5
 	
@@ -44,7 +44,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	pp = PdfPages(filename)
 	
 	# Creating the plots
-	fig, ax = plt.subplots(figsize=(10, 15))
+	fig, ax = plt.subplots(figsize=(12, 6))
 	ax2 = ax.twiny()                                        # Adding the temperatures as an X-axis on top of the plot
 	indices = np.argsort(smean)
 	
