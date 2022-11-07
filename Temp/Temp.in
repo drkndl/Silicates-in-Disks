@@ -17,11 +17,11 @@ dispol_WoitkeRefit.dat                  ! dispol_file3
 .false.                ! model_pconst
 1500.0                ! Tmax [K]
 100.0                 ! Tmin [K]      (if model_dim>0)
-0.00472                   ! pmax [bar]    (if pconst=.true.)
-1.926E-13                   ! pmin [bar]
-3.666E+16                ! nHmax [cm-3]  (if pconst=.false.)
-2.246E+07                ! nHmin [cm-3]
-200                   ! Npoints       
+1.0                   ! pmax [bar]    (if pconst=.true.)
+1.0                   ! pmin [bar]
+1.863E+17                ! nHmax [cm-3]  (if pconst=.false.)
+8.346E+10                ! nHmin [cm-3]
+500                   ! Npoints       
 5                     ! NewBackIt  
 1000.0                ! Tfast
 

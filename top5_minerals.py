@@ -8,7 +8,8 @@ def final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST):
 	"""
 	Returns the abundances (log10 n_solid/n<H>) for each condensate
 	
-	Parameters:-
+	Parameters:
+
 	keyword:        1D list of the Static_Conc.dat column heading names, used to identify the various solids
 	minerals:       1D list of the condensates whose abundances are extracted
 	dat:            File that contains the output (headers skipped)
@@ -16,8 +17,13 @@ def final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST):
 	NMOLE:          Number of molecules created
 	NDUST:          Number of condensates created
 	
-	Returns abundances, a 2D array of shape (NPOINT, no.of minerals) and the corresponding solid names as a 1D list named solid_names
+	Returns:
+
+	abundances:		Abundances, a 2D array of shape (NPOINT, no.of minerals) (floats)
+	solid_names: 	Corresponding solid names as a 1D list (strings)
+	abunds_dict:
 	"""
+
 	abundances = []
 	solid_names = []
 	
@@ -44,14 +50,18 @@ def most_abundant(top, NPOINT, abundances, R_arr, min_names):
     """
     Finds the top N most abundant minerals at each radial bin
 
-    Parameters:-
+    Parameters:
+
     top:            Top X condensates whose abundance is the highest (integer)
     NPOINT:         Number of points in the simulation, also the length of R_arr (integer)
     abundances:     2D array of abundances for all the condensates present. Shape: (NPOINT, no.of condensates)
     R_arr:          1D array of derived radii from the temperature array in the output file
     min_names:      1D list of the condensate names
 
-    Returns the 1D array of radial bins (R_bins), 2D array (shape: (top, NBins)) of the abundances of the top X most abundant species at each radial bin (top_abunds) and the corresponding solid names (top_solids), also as a 2D array of the same shape
+    Returns:
+
+    top_abunds: 	2D array (shape: (top, NPOINT)) of the abundances of the top X most abundant species at each radius
+    top_solids: 	Corresponding solid names, also as a 2D array of the same shape
     """
 
     indices = range(len(R_arr))                                                
@@ -87,15 +97,15 @@ def topabunds_by_radii(top_solids, solid_names, top_abunds, abunds_dict):
 	
 	# ----------------------------- THE -300 IMPLEMENTATION ----------------------------------
 	
-	# ~ # Make dictionary of all minerals to save radii at which the minerals are top 5 most abundant
-	# ~ topabunds_radii = {key: np.full(500, -300.0) for key in top5_solids}
+	# Make dictionary of all minerals to save radii at which the minerals are top 5 most abundant
+	# topabunds_radii = {key: np.full(500, -300.0) for key in top5_solids}
 	
-	# ~ # Radii indices where the solids are top 5 most abundant    
-	# ~ for solid in topabunds_radii.keys():
+	# Radii indices where the solids are top 5 most abundant    
+	# for solid in topabunds_radii.keys():
 		
-		# ~ idx = np.where(top_solids == solid)
-		# ~ radii = idx[0]
-		# ~ topabunds_radii[solid][radii] = top_abunds[idx]
+		# idx = np.where(top_solids == solid)
+		# radii = idx[0]
+		# topabunds_radii[solid][radii] = top_abunds[idx]
 		
 	# ----------------------------- THE NON -300 IMPLEMENTATION -------------------------------
 	

@@ -15,7 +15,7 @@ from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import add_textbox, Qcurve_plotter, plot_surf_dens_radial, plot_surf_dens_disk, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
 from compare_grain_sizes import get_paper_spectra
-from HD144432_MgSi_036_log.properties import *
+from Temp.properties import *
 
 
 plt.rcParams["font.family"] = "serif"
@@ -83,6 +83,12 @@ def main():
 	# Finding the most abundant condensates
 	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST) 
 	top_abunds, top_solids = most_abundant(top, NPOINT, abundances, R_arr, solid_names) 
+	print(np.shape(abundances))
+	print('\n')
+	print(top_abunds, np.shape(top_abunds))
+	print('\n')
+	print(top_solids, np.shape(top_solids))
+	ehrrch 
 	top5_solids, topabunds_radii = topabunds_by_radii(top_solids, solid_names, top_abunds, abunds_dict)
 	
 	# Write down abundances and corresponding solids element by element in a file in a human readable format 

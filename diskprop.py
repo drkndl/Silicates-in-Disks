@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.constants import astropyconst20 as const
-from HD144432_MgSi_036_log.properties import *
+from Temp.properties import *
 
 # Some constants in CGS
 Na = const.N_A.cgs                    		# Avogadro's number in /mol
@@ -20,14 +20,22 @@ sb = const.sigma_sb.cgs 					# Stefan-Boltzmann constant in CGS units
 
 
 def star_radius(L, T):
-	
-	"""
-	Finding the stellar radius from the luminosity formula
-	"""
-	
-	R = np.sqrt(L / (4 * np.pi * sb * T**4))
-	
-	return R
+
+    """
+    Finding the stellar radius from the luminosity formula
+
+    Parameters:
+
+    L:      Stellar luminosity in erg/s (float)
+    T:      Effective temperature of the star in K (float)
+
+    Returns:
+
+    R:      Stellar radius in cm (float)
+    """
+
+    R = np.sqrt(L / (4 * np.pi * sb * T**4)).to(u.cm)
+    return R
 	
 	
 def inner_radius(Qr, T0, R_star, T_star):
@@ -153,7 +161,8 @@ def density(Sigma, H):
     """
 
     rho = 0.5 * np.pi * Sigma / H
-    nH = 0.7 * rho / mp                # 0.7 factor assumes the disk is made of 70% Hydrogen (from Planet_forming_disk_model.ipynb by Merijn)
+    # nH = 0.7 * rho / mp                # 0.7 factor assumes the disk is made of 70% Hydrogen (from Planet_forming_disk_model.ipynb by Merijn)
+    nH = rho / mp
     return rho, nH
 
 
@@ -177,59 +186,59 @@ def pressure(rho, T):
 
 
 def main():
-	
-	R_star = star_radius(L_star, T_star).to(u.AU)   		# Star's radius (AU) 
-	r_arr = np.linspace(0.05*u.AU, 2.5*u.AU, 100)
-	R_in = inner_radius(Qr, T0, R_star, T_star)
-	R_out = r_from_T(R_in, 100.0 * u.K, T0, q)
-	# r_arr = np.linspace(R_in, R_out, 200)
-	T_arr = midplaneT_profile(R_in, T0, r_arr, q)	
-	
-	Sigma = surface_density(Sigma0, r_arr, e)
-	H = scale_height(M_star, r_arr, T_arr)
-	
-	rho, nH = density(Sigma, H)
-	print("Number density nH: ", nH)
 
-	P = pressure(rho, T_arr)
-	# print("Pressure: ", P)
-	
-	# Plotting the temperature vs radius profile of the disk
-	R_label = np.round(R_star/R_sun, 1)
-	M_label = np.round(M_star/M_sun, 1)
-	plt.plot(r_arr, T_arr)
-	plt.xlabel("Radius R [AU]")
-	plt.ylabel("Temperature T [K]")
-	plt.title(r"$T_{{mid}}$ vs R, $R_{{star}}$ = {0}$R_\odot$, $T_{{star}}$ = {1} K, $M_{{star}}$ = {2}$M_\odot$, $\Sigma_0$ = {3} $g/cm^2$".format(R_label.value, T_star.value, M_label.value, Sigma0.value), fontsize=10)
-	plt.savefig(folder + "Tmid_vs_R.png")
-	plt.show()
-	
-	# Plotting the radial profile of pressure and density 
-	plt.semilogy(r_arr, rho, label = r"Density $\rho$ [$gm/cm^3$]")
-	plt.semilogy(r_arr, P, label = "Pressure [bar]")
-	plt.xlabel("Radius R [AU]")
-	plt.ylabel("Properties")
-	plt.title(r"Radial dependence of $\rho$, P")
-	plt.legend()
-	plt.savefig(folder + "Pandrho_vs_R.png")
-	plt.show()
-	
-	# Plot for presentation
-	plt.semilogy(r_arr, T_arr, color='blue', label = r"Temperature T [K]")
-	plt.semilogy(r_arr, Sigma, color='red', linestyle='dashed', label = r"Surface Density $\rho$ [$gm/cm^3$]")
-	plt.xlabel("Radius R [AU]")
-	plt.title(r"Radial profile of T, $\Sigma$")
-	plt.legend()
-	plt.savefig(folder + "presentation_plot.png")
-	plt.show()
-	
-	# Write the disk property values required for GGchem to a file
-	with open(folder + 'disk_props.dat', 'w') as f:
-		f.write('R_in' + '\t' + str(R_in) + '\n')
-		f.write('\n')
-		f.write('Prop \t Max \t Min \n')
-		f.write('P' + '\t' + str(P.max()) + '\t' + str(P.min()) + '\n')
-		f.write('nH' + '\t' + str(format(nH.max(),'.3E')) + '\t' + str(format(nH.min(),'.3E')) + '\n')
+    R_star = star_radius(L_star, T_star).to(u.AU)   		# Star's radius (AU) 
+    # r_arr = np.linspace(0.05*u.AU, 2.5*u.AU, 100)
+    R_in = inner_radius(Qr, T0, R_star, T_star)
+    R_out = r_from_T(R_in, 100.0 * u.K, T0, q)
+    r_arr = np.linspace(R_in, R_out, 200)
+    T_arr = midplaneT_profile(R_in, T0, r_arr, q)	
+
+    Sigma = surface_density(Sigma0, r_arr, e)
+    H = scale_height(M_star, r_arr, T_arr)
+
+    rho, nH = density(Sigma, H)
+    print("Number density nH: ", nH)
+
+    P = pressure(rho, T_arr)
+    # print("Pressure: ", P)
+
+    # Plotting the temperature vs radius profile of the disk
+    R_label = np.round(R_star/R_sun, 1)
+    M_label = np.round(M_star/M_sun, 1)
+    plt.plot(r_arr, T_arr)
+    plt.xlabel("Radius R [AU]")
+    plt.ylabel("Temperature T [K]")
+    plt.title(r"$T_{{mid}}$ vs R, $R_{{star}}$ = {0}$R_\odot$, $T_{{star}}$ = {1} K, $M_{{star}}$ = {2}$M_\odot$, $\Sigma_0$ = {3} $g/cm^2$".format(R_label.value, T_star.value, M_label.value, Sigma0.value), fontsize=10)
+    plt.savefig(folder + "Tmid_vs_R.png")
+    plt.show()
+
+    # Plotting the radial profile of pressure and density 
+    plt.semilogy(r_arr, rho, label = r"Density $\rho$ [$gm/cm^3$]")
+    plt.semilogy(r_arr, P, label = "Pressure [bar]")
+    plt.xlabel("Radius R [AU]")
+    plt.ylabel("Properties")
+    plt.title(r"Radial dependence of $\rho$, P")
+    plt.legend()
+    plt.savefig(folder + "Pandrho_vs_R.png")
+    plt.show()
+
+    # Plot for presentation
+    plt.semilogy(r_arr, T_arr, color='blue', label = r"Temperature T [K]")
+    plt.semilogy(r_arr, Sigma, color='red', linestyle='dashed', label = r"Surface Density $\rho$ [$gm/cm^3$]")
+    plt.xlabel("Radius R [AU]")
+    plt.title(r"Radial profile of T, $\Sigma$")
+    plt.legend()
+    plt.savefig(folder + "presentation_plot.png")
+    plt.show()
+
+    # Write the disk property values required for GGchem to a file
+    with open(folder + 'disk_props.dat', 'w') as f:
+    	f.write('R_in' + '\t' + str(R_in) + '\n')
+    	f.write('\n')
+    	f.write('Prop \t Max \t Min \n')
+    	f.write('P' + '\t' + str(P.max()) + '\t' + str(P.min()) + '\n')
+    	f.write('nH' + '\t' + str(format(nH.max(),'.3E')) + '\t' + str(format(nH.min(),'.3E')) + '\n')
 	
 
 if __name__ == "__main__":
