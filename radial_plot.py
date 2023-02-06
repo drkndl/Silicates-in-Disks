@@ -23,7 +23,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	widt = [2]*Ncolor*10
 	
 	ymin  = -6.5                # Minimum exponent on y-axis
-	ymax = -4.0                  # Maximum exponent on y-axis
+	ymax = -3.5                  # Maximum exponent on y-axis
 	csize = 5
 	
 	filename = folder + 'abundances_vs_R.pdf'
@@ -68,7 +68,10 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	
 		
 	# Plot formatting
-	Tlimit = 200 * u.K 
+	# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+	# Tlimit = 850 * u.K 
+	Tlimit = 200 * u.K
+	# T0 = 4000 * u.K
 	Rlimit = r_from_T(R_in, Tlimit, T0, q)                                            # Radius limit for zoomed in plot (AU)
 	# Rlimit = 4.0 * u.AU
 	plt.title('{0} Abundances of Condensates vs R'.format(disk), fontsize=14)
@@ -78,6 +81,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	ax.set_ylim(ymin, ymax)
 	
 	# Adding the temperature axis on top
+	# Rmin = 0.01 * u.AU # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 	x_ticks = np.linspace(Rmin, Rlimit, 7) 
 	print(x_ticks)
 	T_ticks = midplaneT_profile(R_in, T0, x_ticks, q).astype(int)
