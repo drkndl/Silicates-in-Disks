@@ -15,20 +15,24 @@ from fancy_name import latex_name
 def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk, NELEM, NMOLE, NDUST):
 	
 	# Some stylistic choices
-	colo = ['blue', 'black', 'red', 'darkorange', 'gold', 'darkorchid', 'aqua', 'cadetblue', 'cornflowerblue', 'chartreuse', 'limegreen', 'darkgreen', 'chocolate', 'darkgoldenrod', 'darkolivegreen', 'darkmagenta', 'crimson', 'darkcyan', 'springgreen', 'darkslateblue', 'hotpink']
+	colo = ['blue', 'black', 'red', 'darkorange', 'green', 'darkorchid', 'aqua', 'cadetblue', 'cornflowerblue', 'chartreuse', 'limegreen', 'gold', 'chocolate', 'darkgoldenrod', 'darkolivegreen', 'darkmagenta', 'crimson', 'darkcyan', 'springgreen', 'darkslateblue', 'hotpink']
 	#, 'bisque', 'indigo', 'peru', 'sienna', 'orangered', 'lightskyblue', 'navy', 'paleturquoise', 'deepskyblue', 'springgreen', 'plum', 'darkslateblue', 'mediumslateblue', 'goldenrod', 'gray', 'royalblue', 'cornflowerblue', 'lightcoral', 'rosybrown', 'saddlebrown', 'lime', 'forestgreen', 'lavender', 'hotpink', 'deeppink', 'gainsboro', 'peachpuff', 'beige']
 	Ncolor = len(colo)
 	colo = colo*10
 	styl = ['solid']*Ncolor + ['dotted']*Ncolor + ['dashed']*Ncolor + ['dashdot']*Ncolor + ['(0, (1, 10))']*Ncolor*7
-	widt = [2]*Ncolor*10
+	widt = [3]*Ncolor*10
 	
-	ymin  = -6.5                # Minimum exponent on y-axis
-	ymax = -3.5                  # Maximum exponent on y-axis
+	ymin  = -5.4                # Minimum exponent on y-axis
+	ymax = -4.4                  # Maximum exponent on y-axis
 	csize = 5
+	# Tlimit = 200 * u.K
+	# T0 = 4000 * u.K
+	# Rlimit = r_from_T(R_in, Tlimit, T0, q)                                            # Radius limit for zoomed in plot (AU)
+	Rlimit = 5.0 * u.AU
 	
-	filename = folder + 'abundances_vs_R.pdf'
+	filename = folder + 'abundances_vs_R.png'
 	
-	points = np.where((R_arr>Rmin) & (R_arr<Rmax))[0]             # Excluding the indices of the maximum and minimum gas temperature
+	points = np.where((R_arr>Rmin) & (R_arr<Rlimit))[0]             # Excluding the indices of the maximum and minimum gas temperature
 	solids = []
 	smean = []
 	
@@ -41,7 +45,7 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 			solids.append(solid[1:])                        # Saves the name of the current solid without the S at the beginning
 			smean.append(np.mean(dat[points,i]))            # Calculates the mean of the above solid data (excluding the maximum and minimum temperatures)
 	
-	pp = PdfPages(filename)
+	# pp = PdfPages(filename)
 	
 	# Creating the plots
 	fig, ax = plt.subplots(figsize=(12, 6))
@@ -68,20 +72,14 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	
 		
 	# Plot formatting
-	# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-	# Tlimit = 850 * u.K 
-	Tlimit = 200 * u.K
-	# T0 = 4000 * u.K
-	Rlimit = r_from_T(R_in, Tlimit, T0, q)                                            # Radius limit for zoomed in plot (AU)
-	# Rlimit = 4.0 * u.AU
-	plt.title('{0} Abundances of Condensates vs R'.format(disk), fontsize=14)
-	ax.set_xlabel(r'$R\ \mathrm{[AU]}$', fontsize=12)
-	ax.set_ylabel(r'$\mathrm{log}_{10}\ n_\mathrm{solid}/n_\mathrm{\langle H\rangle}$', fontsize=12)
+	# plt.title('{0} Abundances of Condensates vs R'.format(disk), fontsize=14)
+	ax.set_xlabel(r'$R\ \mathrm{[AU]}$', fontsize=19)
+	ax.set_ylabel(r'$\mathrm{log}_{10}\ n_\mathrm{solid}/n_\mathrm{\langle H\rangle}$', fontsize=19)
 	ax.set_xlim(Rmin.value, Rlimit.value)
 	ax.set_ylim(ymin, ymax)
 	
 	# Adding the temperature axis on top
-	# Rmin = 0.01 * u.AU # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+	# Rmin = 0.01 * u.AU 
 	x_ticks = np.linspace(Rmin, Rlimit, 7) 
 	print(x_ticks)
 	T_ticks = midplaneT_profile(R_in, T0, x_ticks, q).astype(int)
@@ -89,16 +87,21 @@ def R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk,
 	ax2.set_xlim(ax.get_xlim())
 	ax2.set_xticks(x_ticks.value)
 	ax2.set_xticklabels(T_ticks.value)
-	ax2.set_xlabel(r"$T \mathrm{[K]}$", fontsize=12)
+	ax2.set_xlabel(r"$T \mathrm{[K]}$", fontsize=19)
+
+	ax.tick_params(axis='x', labelsize=17)
+	ax.tick_params(axis='y', labelsize=17)
+	ax2.tick_params(axis='x', labelsize=17)
 	
-	leg = plt.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize=14, fancybox=True, handlelength=0.5, prop={'size':csize}, ncol=2)       # Legend properties
+	leg = plt.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize=19, fancybox=True, handlelength=0.5, prop={'size':csize}, ncol=1)       # Legend properties
 	for color, text in zip(colors, leg.get_texts()):
 		text.set_color(color)
-		text.set_size(10)
+		text.set_size(19)
 	  
 	plt.tight_layout()
-	plt.savefig(pp,format='pdf')
+	# plt.savefig(pp,format='pdf')
+	plt.savefig(filename)
 	plt.show()
 	plt.clf()
-	pp.close()
+	# pp.close()
 

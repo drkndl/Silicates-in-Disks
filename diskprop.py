@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.constants import astropyconst20 as const
-from HD144432_CO_150_log_lowPres3.properties import *
+from truth_is_pain.properties import *
 
 # Some constants in CGS
 Na = const.N_A.cgs                    		# Avogadro's number in /mol
@@ -100,7 +100,7 @@ def r_from_T(R_in, T_arr, T0, q):
     return R_arr
 
 
-def surface_density(Sigma0, r, p):
+def surface_dens(Sigma0, r, p):
 
     """
     Calculates the surface density Sigma (in g/cm^2)
@@ -144,7 +144,7 @@ def scale_height(M_star, r, T):
     return H
 
 
-def density(Sigma, H):
+def dens(Sigma, H):
     
     """
     Calculates the mass density (g/cm^3) and number density (/cm^3) of the gas
@@ -191,13 +191,13 @@ def main():
     # r_arr = np.linspace(0.05*u.AU, 2.5*u.AU, 100)
     R_in = inner_radius(Qr, T0, R_star, T_star)
     R_out = r_from_T(R_in, 100.0 * u.K, T0, q)
-    r_arr = np.linspace(R_in, R_out, 200)
+    r_arr = np.linspace(R_in, R_out, 500)
     T_arr = midplaneT_profile(R_in, T0, r_arr, q)	
 
-    Sigma = surface_density(Sigma0, r_arr, e)
+    Sigma = surface_dens(Sigma0, r_arr, e)
     H = scale_height(M_star, r_arr, T_arr)
 
-    rho, nH = density(Sigma, H)
+    rho, nH = dens(Sigma, H)
     print("Number density nH: ", nH)
 
     P = pressure(rho, T_arr)

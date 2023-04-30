@@ -8,19 +8,19 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from fancy_name import latex_name
 from all_solids import get_all_solids
 from molmass import Formula
-from diskprop import inner_radius, r_from_T, scale_height, star_radius
+from diskprop import inner_radius, r_from_T, scale_height, star_radius, midplaneT_profile, surface_dens, scale_height, dens
 from T_plot import T_plot
 from radial_plot import R_plot
 from top5_minerals import final_abundances, most_abundant, topabunds_by_radii
 from spectra import molecular_weight, surface_density, r_to_rad, slice_lQ, get_l_and_k, Plancks, tau_calc, tau_calc_amorphous, flux_map, calculate_spectra, hankel_transform
 from no_thoughts_just_plots import add_textbox, Qcurve_plotter, plot_surf_dens_radial, plot_surf_dens_disk, plot_Bv, plot_tau, plot_fluxmap, plot_spectra
 from compare_grain_sizes import get_paper_spectra
-from HD144432_CO_150_log_lowPres3.properties import *
+from HD144432_gapring.properties import *
 
 
-plt.rcParams["font.family"] = "serif"
-plt.rcParams['font.serif'] = ['TeX Gyre Schola']
-plt.rcParams['mathtext.fontset'] = 'stix'
+# plt.rcParams["font.family"] = "serif"
+# plt.rcParams['font.serif'] = ['TeX Gyre Schola']
+# plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['lines.linewidth'] = 2
 plt.rcParams['axes.labelsize'] = 15
 plt.rcParams['axes.titlesize'] = 16
@@ -74,11 +74,24 @@ def main():
 	Rmin = np.round(np.min(R_arr), 1) 						# Minimum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
 	Rmax = np.round(np.max(R_arr), 1)						# Maximum radius for spectrum plotting (AU) ENSURE IT IS ONLY 3 DECIMAL PLACES LONG
 	# H = scale_height(M_star, R_arr, Tg)
-	
+
+	# Calculating nH theoretical because nH from GGCHEM does not follow the prescribed disk shape; it is log linear
+	# R_star = star_radius(L_star, T_star).to(u.AU)   		# Star's radius (AU) 
+	# R_in = inner_radius(Qr, T0, R_star, T_star)
+	# R_out = r_from_T(R_in, 100.0 * u.K, T0, q)
+	# r_arr = np.linspace(R_in, R_out, 500)
+	# T_arr = midplaneT_profile(R_in, T0, r_arr, q)	
+
+	# Sigma = surface_dens(Sigma0, r_arr, e)
+	# H = scale_height(M_star, r_arr, T_arr)
+	# rho, nH = dens(Sigma, H)
+	# nHtot = nH
+
 	minerals = get_all_solids(keyword, dat, NELEM, NMOLE, NDUST)
 	
 	# Plotting the abunances as a function of radius and temperature
 	R_plot(minerals, dat, keyword, R_arr, R_in, Rmin, Rmax, T0, q, folder, disk, NELEM, NMOLE, NDUST)
+	frejfejrfbejfb
 	
 	# Finding the most abundant condensates
 	abundances, solid_names, abunds_dict = final_abundances(keyword, minerals, dat, NELEM, NMOLE, NDUST) 
